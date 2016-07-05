@@ -6,11 +6,11 @@ Created on Jul 4, 2016
 
 from sklearn.base import TransformerMixin
 
-from models.spacy_model import load_spacy_pipeline
+from models.spacy_model import load_spacy
 
 
 # load Spacy parser    
-parser = load_spacy_pipeline
+parser = load_spacy
 
 # Every step in a pipeline needs to be a "transformer". 
 # Define a custom transformer to clean text using spaCy

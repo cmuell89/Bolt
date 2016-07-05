@@ -14,14 +14,14 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.pipeline import Pipeline
 from textacy.preprocess import normalize_whitespace
 
-from models.spacy_model import load_spacy_pipeline
+from models.spacy_model import load_spacy
 from transformers.CleanTextTransformer import CleanTextTransformer
 from utils import io
 
 
 # from sklearn import naive_bayes
 # load Spacy pipeline from cached model    
-nlp = load_spacy_pipeline
+nlp = load_spacy
 
 # A custom stoplist
 STOPLIST = set(stopwords.words('english') + ["n't", "'s", "'m", "ca"] + list(ENGLISH_STOP_WORDS))
