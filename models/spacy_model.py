@@ -1,8 +1,8 @@
 '''
 Created on Jul 4, 2016
 
-This might simply be replaced by textacy's caching form which this code is taken. 
-I want to see it in action up close before I make used of textacy's loading functions
+This might simply be replaced by textacy's caching from which this code is taken. 
+I want to see it in action up close before I make use of textacy for calls to SpaCy
 
 
 @author: carl
