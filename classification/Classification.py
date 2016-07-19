@@ -87,9 +87,6 @@ def trainClassificationPipeline(pipeline=None, training_data=None):
     else:
         training_set = training_data[0]
         training_labels = training_data[1]
-    
-    print(training_set)
-    print(training_labels)
     return pipeline.fit(training_set, training_labels)
 
 def classifyDocument(pipeline, document):

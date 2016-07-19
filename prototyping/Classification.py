@@ -134,7 +134,7 @@ clf = svm.LinearSVC()
 pipe = Pipeline([('cleanText', CleanTextTransformer()), ('vectorizer', vectorizer), ('clf', clf)])
 
 # Extract training data from intents.json
-trainingData = createTrainingDataFromJSON("./intents.json");
+trainingData = createTrainingDataFromJSON("../resources/intents.json");
 train = trainingData[0]
 labelsTrain = trainingData[1]
 
