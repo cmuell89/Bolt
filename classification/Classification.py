@@ -83,7 +83,7 @@ def trainClassificationPipeline(pipeline=None, training_data=None):
     if pipeline is None:
         pipeline = buildClassificationPipeline()
     if training_data is None:
-        training_set, training_labels = io.createTrainingDataFromJSON('./resources/intents.json')
+        training_set, training_labels = io.create_data_for_pipeline('./resources/intents.json')
     else:
         training_set = training_data[0]
         training_labels = training_data[1]
