@@ -32,7 +32,7 @@ class NLP_Database:
                 print(e)
                 pass
         else:
-            raise Exception('method expects valid intent string as argument')
+            raise Exception("method expects valid intent string as argument")
                 
     
     def get_intents_and_expressions(self):
