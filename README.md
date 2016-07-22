@@ -17,5 +17,11 @@ Additional dependencies may be required for individual packages required by Bolt
 #### Development TODO's
 - [x] Create table 'intent_expressions', in schema 'nlp', in local server database 'test'
 - [ ] Update training of classifier to use intents/expressions in postgres
+	- [ ] code
+	- [ ] test
 - [ ] Create routes to add expressions to postgres
+	- [ ] code
+	- [ ] test
 - [ ] Create route to update classification model with new expressions
+	- [ ] code
+	- [ ] test
