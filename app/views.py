@@ -5,11 +5,10 @@ Created on Jul 18, 2016
 '''
 from app import app
 from flask import request
-import json
 
-from classification.Classification import trainClassificationPipeline, classifyDocument
+from classification.Classification import train_classification_pipeline, classify_document
 
-clf = trainClassificationPipeline()
+clf = train_classification_pipeline()
 
 @app.route('/')
 @app.route('/index')
@@ -19,4 +18,4 @@ def index():
 @app.route('/classification', methods = ['POST'])
 def classify():
     data = request.get_json(silent=True)
-    return str(classifyDocument(clf, data['query']))
+    return str(classify_document(clf, data['query']))

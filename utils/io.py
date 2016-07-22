@@ -4,21 +4,50 @@ Created on Jul 4, 2016
 @author: carl
 '''
 import json
+from database.database import NLP_Database
 
+def create_data_for_pipeline_from_file(file_address):
+    '''
+    Function that returns an array of array of training data stored in a JSON file.
 
-# Function that returns an array of array of training data. First array are documents, second array is the labels.
-def create_data_for_pipeline(fileAddress):
-    file = open(fileAddress)
-    data = json.load(file)
-    intents = data["intents"]
-    docs = []
+    Args:
+        file_address: filepath to training data .JSON file
+    Returns:
+        :tuple<String[],String[]>: paired lists of training documents and labels
+    Raises:
+        :IOError Raises IOError if file not found or does not exist.
+    '''
+    try:
+        file = open(file_address)
+        data = json.load(file)
+        intents = data["intents"]
+        docs = []
+        labels = []
+        for intent in intents:
+            docs = docs + intent["expressions"]
+            for i in range(len(intent["expressions"])):
+                labels.append(intent["name"])
+        return [docs,labels]
+    except IOError as e:
+        print("IO error: ", e)
+    
+def create_data_for_pipeline_from_database():
+    '''
+    Function that returns an array of array of training data stored in Bolt's postgreSQL database.
+
+    Returns:
+        :tuple<String[],String[]>: paired lists of training documents and labels, in that order.
+    '''
+    
+    db = NLP_Database()
     labels = []
-    for intent in intents:
-        docs = docs + intent["expressions"]
-        for i in range(len(intent["expressions"])):
-            labels.append(intent["name"])
-    return [docs,labels]
-
+    docs = []
+    data = db.get_intents_and_expressions()
+    for datum in data:
+        labels.append(datum[0])
+        docs.append(datum[1])
+    return [docs, labels]
+    
 def get_intents_from_JSON_data(fileAddress):
     file = open(fileAddress)
     data = json.load(file)

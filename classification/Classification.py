@@ -28,11 +28,12 @@ STOPLIST = set(stopwords.words('english') + ["n't", "'s", "'m", "ca"] + list(ENG
 SYMBOLS = " ".join(string.punctuation).split(" ") + ["-----", "---", "...", "“", "”", "'ve"]
 
 
-def tokenizeText(sample):
+def tokenize_text(sample):
     '''
     Function that tokenizes, lemmatizes, removes potential stopwords/stopsymbols, and cleans whitespace.
     Lemmas may be useful only for intent classification but not other types of functionality (traits like plurality etc,.)
     '''
+    sample = normalize_whitespace(sample)
     tokens = nlp(sample)
         
     # lemmatize
@@ -52,7 +53,7 @@ def tokenizeText(sample):
 
     return tokens
 
-def buildClassificationPipeline():
+def build_classification_pipeline():
     '''
     Function that builds a sklearn pipeline.
     Currently the estimators used in this build function are hard-coded
@@ -65,12 +66,12 @@ def buildClassificationPipeline():
         LinearSVC(): Multitlcass capable support vector machine
         MultinomialNB(): Multinomial Naive Bayes classifier
     '''
-    vectorizer = CountVectorizer(tokenizer=tokenizeText, ngram_range=(1,2))
+    vectorizer = CountVectorizer(tokenizer=tokenize_text, ngram_range=(1,2))
     clf = svm.LinearSVC()
     #clf = naive_bayes.MultinomialNB()
     return Pipeline([('cleanText', CleanTextTransformer()), ('vectorizer', vectorizer), ('clf', clf)])
 
-def trainClassificationPipeline(pipeline=None, training_data=None):
+def train_classification_pipeline(pipeline=None, training_data=None):
     '''
      Args:
         pipeline: (scikit-learn Pipeline): Scikit-Learn Pipeline object
@@ -81,16 +82,16 @@ def trainClassificationPipeline(pipeline=None, training_data=None):
         RuntimeError: if package can't be loaded
     '''
     if pipeline is None:
-        pipeline = buildClassificationPipeline()
+        pipeline = build_classification_pipeline()
     if training_data is None:
-        training_set, training_labels = io.create_data_for_pipeline('./resources/intents.json')
+        training_set, training_labels = io.create_data_for_pipeline_from_database()
     else:
         training_set = training_data[0]
         training_labels = training_data[1]
     return pipeline.fit(training_set, training_labels)
 
-def classifyDocument(pipeline, document):
-    return pipeline.predict([document])
+def classify_document(pipeline, document):
+    return pipeline.predict([document])[0]
     
     
 
