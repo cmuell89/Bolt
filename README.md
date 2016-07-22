@@ -13,18 +13,20 @@ Additional dependencies may be required for individual packages required by Bolt
 - Scikit learn classification pipeline training and use
 - Caching of SpaCy model
 - Route that returns intent of given query (returns name of intent only)
+- Intent and Expression data stored in postgreSQL tables used to train classifier upon server startup.
 
 #### Development TODO's
-- [x] Create table 'intent_expressions', in schema 'nlp', in local server database 'test'
-- [x] NLP_Database class to pull intents and expressiosn from pg database
-	- [x] code
-	- [x] test
-- [ ] Update training of classifier to use intents/expressions in postgres
-	- [ ] code
-	- [ ] test
+
 - [ ] Create routes to add expressions to postgres
 	- [ ] code
 	- [ ] test
 - [ ] Create route to update classification model with new expressions
 	- [ ] code
 	- [ ] test
+- [x] Create table 'intent_expressions', in schema 'nlp', in local server database 'test'
+- [x] NLP_Database class to pull intents and expressiosn from pg database
+	- [x] code
+	- [x] test
+- [x] Update training of classifier to use intents/expressions in postgres
+	- [x] code
+	- [x] test
