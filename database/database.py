@@ -17,8 +17,8 @@ class NLP_Database:
 
     def get_intents(self):
         try:    
-            self.cur.execute("SELECT nlp.intents.intents, nlp.expressions.expressions FROM nlp.intents INNER JOIN nlp.expressions ON nlp.intents.id = nlp.expressions.intent_id;")
-            return self.cur.fetchall()
+            self.cur.execute("SELECT nlp.intents.intents FROM nlp.intents;")
+            return list(map(lambda x: x[0], self.cur.fetchall()))
         except Exception as e:
             print(e)
             pass
@@ -26,8 +26,8 @@ class NLP_Database:
     def get_intent_expressions(self,intent):
         if intent:
             try:
-                self.cur.execute("SELECT intents FROM nlp.intents WHERE intents = intent")
-                return self.cur.fetchall()
+                self.cur.execute("SELECT nlp.expressions.expressions FROM nlp.intents INNER JOIN nlp.expressions ON nlp.intents.id = nlp.expressions.intent_id WHERE nlp.intents.intents = %s;", (intent,))
+                return list(map(lambda x: x[0], self.cur.fetchall()))
             except Exception as e:
                 print(e)
                 pass
