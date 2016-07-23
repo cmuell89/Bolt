@@ -9,6 +9,7 @@ import psycopg2
 class NLP_Database:
     def __init__(self, properties=None):
         if properties:
+            # unsure if this will work
             self.conn = psycopg2.connect(properties)
         else:
             self.conn = psycopg2.connect(database="postgres", user="carl", password="007", host='/var/run/postgresql')
@@ -21,7 +22,6 @@ class NLP_Database:
             return list(map(lambda x: x[0], self.cur.fetchall()))
         except Exception as e:
             print(e)
-            pass
 
     def get_intent_expressions(self,intent):
         if intent:
@@ -30,7 +30,6 @@ class NLP_Database:
                 return list(map(lambda x: x[0], self.cur.fetchall()))
             except Exception as e:
                 print(e)
-                pass
         else:
             raise Exception("method expects valid intent string as argument")
                 
@@ -41,7 +40,27 @@ class NLP_Database:
             return self.cur.fetchall()
         except Exception as e:
             print(e)
-            pass
+    
+    def add_intent(self, intent):
+        try:
+            self.cur.execute("INSERT INTO nlp.intents (intents) VALUES (%s);", (intent,))
+            return self.get_intents()
+        except Exception as e:
+            print(e)
+    
+    def delete_intent(self, intent):
+        try:
+            self.cur.execute("DELETE FROM nlp.intents WHERE nlp.intents.intents = %s;", (intent,))
+            return self.get_intents()
+        except Exception as e:
+            print(e)
+    
+    def delete_all_intent_expressions(self, intent):
+        try:
+            self.cur.execute("DELETE FROM nlp.expressions WHERE nlp.expressions.intent_id = (SELECT id FROM nlp.intents WHERE intent = %s);", (intent,))
+        except Exception as e:
+            print(e)
+
         
     def close_database_connection(self):
         self.cur.close()

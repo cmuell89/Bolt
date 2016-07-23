@@ -10,19 +10,35 @@ Packages can be installed via the conda package manager or pip.
 Additional dependencies may be required for individual packages required by Bolt
 
 #### Current Release Features
-- Scikit learn classification pipeline training and use
+- Scikit learn based classfication
+	- Scikit learn pipeline
+	- training data pulled from postgres db
 - Caching of SpaCy model
-- Route that returns intent of given query (returns name of intent only)
-- Intent and Expression data stored in postgreSQL tables used to train classifier upon server startup.
+- Routes
+	- /classify => returns intent classification of a given expression
+- Database
+	- Add intent
+	- delete intent
+	- Get all intents
+	- Get all intent expressions
+	- Get all intents and expressions
 
 #### Development TODO's
 
-- [ ] Create routes to add expressions to postgres
-	- [ ] code
-	- [ ] test
 - [ ] Create route to update classification model with new expressions
 	- [ ] code
 	- [ ] test
+- [ ] Create database method to remove all expressions from an intent
+	- [ ] code
+	- [ ] test
+- [ ] Create tests for existing routes.
+- [ ] Create routes to add expressions to postgres
+	- [ ] code
+	- [ ] test
+	
+- [x] Create database methods to add and remove an intent
+	- [x] code
+	- [x] test 
 - [x] Create table 'intent_expressions', in schema 'nlp', in local server database 'test'
 - [x] NLP_Database class to pull intents and expressiosn from pg database
 	- [x] code
