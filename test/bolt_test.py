@@ -6,7 +6,7 @@ Created on Jul 21, 2016
 import unittest
 import sklearn
 import os
-import app
+from app import app
 from classification.Classification import tokenize_text, train_classification_pipeline, build_classification_pipeline, classify_document
 from database.database import NLP_Database
 
