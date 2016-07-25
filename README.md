@@ -28,14 +28,14 @@ Additional dependencies may be required for individual packages required by Bolt
 - [ ] Create route to update classification model with new expressions
 	- [ ] code
 	- [ ] test
-- [ ] Create database method to remove all expressions from an intent
-	- [ ] code
-	- [ ] test
 - [ ] Create tests for existing routes.
 - [ ] Create routes to add expressions to postgres
 	- [ ] code
 	- [ ] test
-	
+
+- [x] Create database method to remove all expressions from an intent
+	- [x] code
+	- [x] test
 - [x] Create database methods to add and remove an intent
 	- [x] code
 	- [x] test 

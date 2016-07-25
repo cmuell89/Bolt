@@ -19,7 +19,7 @@ class NLP_Database:
     def get_intents(self):
         try:    
             self.cur.execute("SELECT nlp.intents.intents FROM nlp.intents;")
-            return list(map(lambda x: x[0], self.cur.fetchall()))
+            return self.cur.fetchall()
         except Exception as e:
             print(e)
 
@@ -27,7 +27,7 @@ class NLP_Database:
         if intent:
             try:
                 self.cur.execute("SELECT nlp.expressions.expressions FROM nlp.intents INNER JOIN nlp.expressions ON nlp.intents.id = nlp.expressions.intent_id WHERE nlp.intents.intents = %s;", (intent,))
-                return list(map(lambda x: x[0], self.cur.fetchall()))
+                return self.cur.fetchall()
             except Exception as e:
                 print(e)
         else:
@@ -48,6 +48,17 @@ class NLP_Database:
         except Exception as e:
             print(e)
     
+    def add_expressions_to_intent(self, intent, expressions):
+        try:
+            self.cur.execute("SELECT nlp.intents.id FROM nlp.intents WHERE nlp.intents.intents = %s;", (intent,))
+            intentID = self.cur.fetchone()
+            for expression in expressions:
+                self.cur.execute("INSERT INTO nlp.expressions (expressions, intent_id) VALUES (%s, %s)", (expression, intentID))
+            return self.get_intent_expressions(intent)
+        except Exception as e:
+            print(e)
+            
+            
     def delete_intent(self, intent):
         try:
             self.cur.execute("DELETE FROM nlp.intents WHERE nlp.intents.intents = %s;", (intent,))
@@ -57,7 +68,8 @@ class NLP_Database:
     
     def delete_all_intent_expressions(self, intent):
         try:
-            self.cur.execute("DELETE FROM nlp.expressions WHERE nlp.expressions.intent_id = (SELECT id FROM nlp.intents WHERE intent = %s);", (intent,))
+            self.cur.execute("DELETE FROM nlp.expressions WHERE nlp.expressions.intent_id = (SELECT id FROM nlp.intents WHERE nlp.intents.intents = %s);", (intent,))
+            return self.get_intents_and_expressions()
         except Exception as e:
             print(e)
 

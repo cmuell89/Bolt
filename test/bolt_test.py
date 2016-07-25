@@ -1,7 +1,7 @@
 '''
 Created on Jul 21, 2016
 
-@author: carl
+@author: Carl Mueller
 '''
 import unittest
 import sklearn
@@ -49,7 +49,7 @@ class NLP_Database_Test(unittest.TestCase, CustomAssertions):
     def test_get_intents(self):
         print("Testing get_intents...")
         db = NLP_Database()
-        obj = db.get_intents()
+        obj = list(map(lambda x: x[0], db.get_intents())) 
         self.assertListOfString(obj)
         db.close_database_connection()
         print("Success!\n")
@@ -57,7 +57,7 @@ class NLP_Database_Test(unittest.TestCase, CustomAssertions):
     def test_get_intent_expressions(self):
         print("Testing get_intent_expressions...")
         db = NLP_Database()
-        obj = db.get_intent_expressions('get-order')
+        obj =list(map(lambda x: x[0], db.get_intent_expressions('get-order')))
         self.assertListOfString(obj)
         db.close_database_connection()
         print("Success!\n")
@@ -65,14 +65,10 @@ class NLP_Database_Test(unittest.TestCase, CustomAssertions):
     def test_add_intent(self):
         print("Testing add_intent...")
         db = NLP_Database()
-        obj = db.add_intent('some-new-intent')
+        obj = list(map(lambda x: x[0], db.add_intent('some-new-intent')))
         self.assertIn('some-new-intent', obj)
         db.close_database_connection()
         print("Success!\n")
-    
-    def test_add_expressions_to_intent(self):
-        print("Testing add_expressions_to_intent not completed...\n")
-        pass
         
     def test_delete_intent(self):
         print("Testing delete_intent...")
@@ -83,9 +79,32 @@ class NLP_Database_Test(unittest.TestCase, CustomAssertions):
         print("Success!\n")
     
     def test_delete_expressions_from_intent(self):
-        print("Testing delete_expressions_from_intent not completed...\n")
-        pass
+        print("Testing delete_expressions_from_intent...")
+        db = NLP_Database()
+        db.add_intent('expressionless')
+        db.add_expressions_to_intent('expressionless', ["Expression one", "Expression two", "Expression three"])
+        obj = db.delete_all_intent_expressions('expressionless')
+        self.assertListOfTuples(obj)
+        for tup in obj:
+            self.assertNotEqual('expressionless', tup[0])
+        db.delete_intent('expressionless')
+        db.close_database_connection()
+        print("Success!\n")
+    
+    def test_add_expressions_to_intent(self):
+        print("Testing add_expressions_to_intent...")
+        db = NLP_Database()
+        db.add_intent('expressionless')
+        query = db.add_expressions_to_intent('expressionless', ["Expression one", "Expression two", "Expression three"])
+        obj = list(map(lambda x: x[0], query))
+        self.assertListOfString(obj)
+        self.assertListEqual(["Expression one", "Expression two", "Expression three"], obj)
+        db.close_database_connection()
+        print("Success!\n")
         
+    
+    
+     
         
 class Classification_Test(unittest.TestCase):
     '''
@@ -95,22 +114,30 @@ class Classification_Test(unittest.TestCase):
     '''
     
     def test_tokenize_text(self):
+        print("Testing tokenize_text...")
         test = tokenize_text("What is the best selling item of  all  time?")
         actual = [u"what", u"be", u"the", u"best", u"sell", u"item", u"of", u"all", u"time"]
         self.assertListEqual(test, actual)
+        print("Success!\n")
     
     def test_build_classification_pipeline(self):
+        print("Testing build_classification_pipeline...")
         pipeline = build_classification_pipeline()
         self.assertIsInstance(pipeline, sklearn.pipeline.Pipeline)
+        print("Success!\n")
     
     def test_train_classification_pipeline(self):
+        print("Testing train_classification_pipeline...")
         pipeline = train_classification_pipeline()
         self.assertIsInstance(pipeline, sklearn.pipeline.Pipeline)
+        print("Success!\n")
         
     def test_classify_document(self):
+        print("Testing classify_document...")
         pipeline = train_classification_pipeline()
         result = classify_document(pipeline, "What is the best selling item of all time?")
         self.assertIsInstance(result, str)
+        print("Success!\n")
 
 # class Route_Test(unittest.TestCase):    
       

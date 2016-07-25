@@ -9,7 +9,7 @@ from utils import io
 conn = psycopg2.connect(database="postgres", user="carl", password="007", host='/var/run/postgresql')
 cur = conn.cursor()
 
-training_set, training_labels = io.create_data_for_pipeline('../resources/intents.json')
+training_set, training_labels = io.create_data_for_pipeline_from_file('../resources/intents.json')
 
 labels = io.get_intents_from_JSON_data('../resources/intents.json')
 
