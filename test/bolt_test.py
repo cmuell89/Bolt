@@ -5,12 +5,14 @@ Created on Jul 21, 2016
 '''
 import unittest
 import sklearn
+import os
+import app
 from classification.Classification import tokenize_text, train_classification_pipeline, build_classification_pipeline, classify_document
 from database.database import NLP_Database
 
 class CustomAssertions:
     '''
-    Class for creating custom assertions used in testing the Bolt system.
+    Mixin class for creating custom assertions used in testing the Bolt system.
     
     '''
     
@@ -31,6 +33,14 @@ class CustomAssertions:
             raise AssertionError("Method failed to return a populated list.")
         else:
             assert isinstance(obj[0], str)
+
+class App_Test(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        pass
+
     
 class NLP_Database_Test(unittest.TestCase, CustomAssertions):
     '''
@@ -101,16 +111,13 @@ class NLP_Database_Test(unittest.TestCase, CustomAssertions):
         self.assertListEqual(["Expression one", "Expression two", "Expression three"], obj)
         db.close_database_connection()
         print("Success!\n")
-        
-    
-    
-     
+
         
 class Classification_Test(unittest.TestCase):
     '''
     Class for unit testing all methods with the classification.Classification.
     Most methods are not functionally testable in the sense that they really only build objects.
-    However they will be tested to ensure the correct objects are made.
+    However they will be tested to ensure the correct objects are made via isInstance() methods
     '''
     
     def test_tokenize_text(self):
@@ -138,8 +145,7 @@ class Classification_Test(unittest.TestCase):
         result = classify_document(pipeline, "What is the best selling item of all time?")
         self.assertIsInstance(result, str)
         print("Success!\n")
-
-# class Route_Test(unittest.TestCase):    
+        
       
 if __name__ == '__main__':
     unittest.main()
