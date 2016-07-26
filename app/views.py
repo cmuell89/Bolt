@@ -10,6 +10,11 @@ from classification.Classification import train_classification_pipeline, classif
 
 clf = train_classification_pipeline()
 
+@app.route('/test', methods = ['GET'])
+def test():
+    return u'Test response'
+
+
 @app.route('/classify', methods = ['POST'])
 def classify():
     data = request.get_json(silent=True)

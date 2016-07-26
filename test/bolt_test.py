@@ -36,8 +36,20 @@ class CustomAssertions:
 
 class App_Test(unittest.TestCase):
     def setUp(self):
-        pass
-
+        self.app = app.test_client()
+        self.app.testing = True
+    
+    def test_test_route(self):
+        print("Testing test_route")
+        # sends HTTP GET request to the application
+        # on the specified path
+        result = self.app.get('/test')
+        # assert the status code of the response
+        self.assertEqual(result.status_code, 200) 
+        # must decode bytes (flask http) to unicode utf_8
+        self.assertEqual(result.data.decode('utf_8'), u"Test response")
+        print("Success\n")
+        
     def tearDown(self):
         pass
 
