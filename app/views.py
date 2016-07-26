@@ -10,12 +10,12 @@ from classification.Classification import train_classification_pipeline, classif
 
 clf = train_classification_pipeline()
 
-@app.route('/test', methods = ['GET'])
+@app.route('/test_classify', methods = ['GET'])
 def test():
     return u'Test response'
 
 
-@app.route('/classify', methods = ['POST'])
+@app.route('/classification/classify', methods = ['POST'])
 def classify():
     data = request.get_json(silent=True)
     return str(classify_document(clf, data['query']))
