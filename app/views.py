@@ -10,7 +10,7 @@ from classification.Classification import train_classification_pipeline, classif
 
 clf = train_classification_pipeline()
 
-@app.route('/test_classify', methods = ['GET'])
+@app.route('/test', methods = ['GET'])
 def test():
     return u'Test response'
 
