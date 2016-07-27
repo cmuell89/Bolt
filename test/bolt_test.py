@@ -43,24 +43,30 @@ class App_Test(unittest.TestCase):
     
     def test_test_route(self):
         print("Testing test_route")
-        # sends HTTP GET request to the application
-        # on the specified path
-        result = self.app.get('/test')
-        # assert the status code of the response
-        self.assertEqual(result.status_code, 200) 
-        # must decode bytes (flask http) to unicode utf_8
-        self.assertEqual(result.data.decode('utf_8'), u"Test response")
+        response = self.app.get('/test')
+        self.assertEqual(response.status_code, 200) 
+        result = json.loads(response.get_data(as_text=True))
+        self.assertEqual(result['message'], u'Test response')
         print("Success\n")
     
     def test_classify(self):
-        print("Testing 'GET' '/classification/classify' route...")
+        print("Testing 'POST' '/classification/classify' route...")
         response = self.app.post('/classification/classify', data=json.dumps(dict(query='What is order 2313?')),
                        content_type = 'application/json')
+        self.assertEqual(response.status_code, 200) 
         result = json.loads(response.get_data(as_text=True))
         self.assertEqual(result['intent'], u"get-order")
         print("Success\n")
-        
     
+    def test_train(self):
+        print("Testing 'GET' '/classification/train' route...")
+        print("Note: Still needs functional test")
+        response = self.app.get('/classification/train')  
+        self.assertEqual(response.status_code, 200) 
+        result = json.loads(response.get_data(as_text=True))
+        self.assertEqual(result['message'], "Classifier successfully trained!")
+        print("Success\n")
+        
     def tearDown(self):
         pass
 

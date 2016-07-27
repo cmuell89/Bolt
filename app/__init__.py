@@ -1,7 +1,9 @@
 from flask import Flask
 from flask import jsonify
-from werkzeug.exceptions import default_exceptions
-from werkzeug.exceptions import HTTPException
+from flask_restful import Api
+from app import resource_views as Resources
+# from werkzeug.exceptions import default_exceptions
+# from werkzeug.exceptions import HTTPException
 
 __all__ = ['app']
 
@@ -29,6 +31,8 @@ __all__ = ['app']
 #     return app
 
 app = Flask(__name__)
+api = Api(app)
 
-
-from app import views
+api.add_resource(Resources.Test, '/test')
+api.add_resource(Resources.Classify, '/classification/classify')
+api.add_resource(Resources.Train, '/classification/train')

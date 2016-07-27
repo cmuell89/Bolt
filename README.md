@@ -32,7 +32,7 @@ Additional dependencies may be required for individual packages required by Bolt
 
 ##### Not Started:
 
-- [ ] Explore potential use of Flask Restful extension rather than using smaller basic extensions (reinventing wheel?)
+
 - [ ] Create route to update classification model with new expressions
 	- [ ] code
 	- [ ] test
@@ -41,9 +41,11 @@ Additional dependencies may be required for individual packages required by Bolt
 	- [ ] test
 
 ##### In-Progress:
-- [ ] Convert all server responses to JSON format rather than HTML as standard in flask
+- [ ] Convert all server responses to JSON format rather than HTML as standard in flask (This might be alleviated by flask-restful. Exploring
 
 ##### Completed:
+
+- [x] Explore potential use of Flask Restful extension rather than using smaller basic extensions (reinventing wheel?)
 - [x] Create tests for existing routes.
 - [x] Create database method to remove all expressions from an intent
 	- [x] code
