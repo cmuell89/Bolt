@@ -12,8 +12,7 @@ from database.database import NLP_Database
 
 class CustomAssertions:
     """
-    Mixin class for creating custom assertions used in testing the Bolt system.
-    
+    Mixin class for creating custom assertions used in this testing module.
     """
     
     def assertListOfTuples(self, obj):
@@ -35,9 +34,9 @@ class CustomAssertions:
             assert isinstance(obj[0], str)
 
 class App_Test(unittest.TestCase):
-    '''
-    Class for unit testing rotues in 
-    '''
+    """
+    Class for unit testing rotues in app.views.
+    """
     def setUp(self):
         self.app = app.test_client()
         self.app.testing = True
@@ -69,7 +68,6 @@ class App_Test(unittest.TestCase):
 class NLP_Database_Test(unittest.TestCase, CustomAssertions):
     """
     Class for unit testing all methods with the database.database.NLP_Database class
-    
     """
     
     def test_get_intents_and_expressions(self):
@@ -143,7 +141,6 @@ class Classification_Test(unittest.TestCase):
     
     Most methods are not functionally testable in the sense that they really only build objects.
     However they will be tested to ensure the correct objects are made via isInstance() methods
-    
     """
     
     def test_tokenize_text(self):

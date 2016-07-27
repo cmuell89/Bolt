@@ -35,8 +35,6 @@ def classify():
 def train():
     """
     Trains the existing classifier object accessed by all '/classification/*' routes.
-    
-    
     """
     clf = train_classification_pipeline()
     resp = Response()
