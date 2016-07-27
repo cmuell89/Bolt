@@ -15,24 +15,36 @@ Additional dependencies may be required for individual packages required by Bolt
 	- training data pulled from postgres db
 - Caching of SpaCy model
 - Routes
-	- /classify => returns intent classification of a given expression
+	- /classification/classify => returns intent classification of a given expression
 - Database
+	- Intent table
+	- Expression table (join on intent_id)
+- Database functionality:
 	- Add intent
 	- delete intent
 	- Get all intents
 	- Get all intent expressions
 	- Get all intents and expressions
+	- Delete all expressions from an intent
+	- Delete intent
 
 #### Development TODO's
 
+##### Not Started:
+
+- [ ] Explore potential use of Flask Restful extension rather than using smaller basic extensions (reinventing wheel?)
 - [ ] Create route to update classification model with new expressions
 	- [ ] code
 	- [ ] test
-- [ ] Create tests for existing routes.
 - [ ] Create routes to add expressions to postgres
 	- [ ] code
 	- [ ] test
 
+##### In-Progress:
+- [ ] Convert all server responses to JSON format rather than HTML as standard in flask
+
+##### Completed:
+- [x] Create tests for existing routes.
 - [x] Create database method to remove all expressions from an intent
 	- [x] code
 	- [x] test
@@ -46,3 +58,9 @@ Additional dependencies may be required for individual packages required by Bolt
 - [x] Update training of classifier to use intents/expressions in postgres
 	- [x] code
 	- [x] test
+- [x] Initial push to git:
+	- Basic classification module
+	- Transformers
+	- caching of Spacy model
+	- basic Flask app
+	- resources

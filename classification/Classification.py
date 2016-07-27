@@ -29,10 +29,10 @@ SYMBOLS = " ".join(string.punctuation).split(" ") + ["-----", "---", "...", "“
 
 
 def tokenize_text(sample):
-    '''
+    """
     Function that tokenizes, lemmatizes, removes potential stopwords/stopsymbols, and cleans whitespace.
     Lemmas may be useful only for intent classification but not other types of functionality (traits like plurality etc,.)
-    '''
+    """
     sample = normalize_whitespace(sample)
     tokens = nlp(sample)
         
@@ -54,7 +54,7 @@ def tokenize_text(sample):
     return tokens
 
 def build_classification_pipeline():
-    '''
+    """
     Function that builds a sklearn pipeline.
     Currently the estimators used in this build function are hard-coded
     
@@ -65,14 +65,14 @@ def build_classification_pipeline():
             Note that I changed the tokenizer in CountVectorizer to use a custom function 'tokenizeText' using spaCy's tokenizer
         LinearSVC(): Multitlcass capable support vector machine
         MultinomialNB(): Multinomial Naive Bayes classifier
-    '''
+    """
     vectorizer = CountVectorizer(tokenizer=tokenize_text, ngram_range=(1,2))
     clf = svm.LinearSVC()
     #clf = naive_bayes.MultinomialNB()
     return Pipeline([('cleanText', CleanTextTransformer()), ('vectorizer', vectorizer), ('clf', clf)])
 
 def train_classification_pipeline(pipeline=None, training_data=None):
-    '''
+    """
      Args:
         pipeline: (scikit-learn Pipeline): Scikit-Learn Pipeline object
         training_data: (tuple<String[],String[]>): paired arrays of training documents and labels
@@ -80,7 +80,7 @@ def train_classification_pipeline(pipeline=None, training_data=None):
         :class:``
     Raises:
         RuntimeError: if package can't be loaded
-    '''
+    """
     if pipeline is None:
         pipeline = build_classification_pipeline()
     if training_data is None:

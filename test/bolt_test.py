@@ -5,16 +5,16 @@ Created on Jul 21, 2016
 '''
 import unittest
 import sklearn
-import os
+import json
 from app import app
 from classification.Classification import tokenize_text, train_classification_pipeline, build_classification_pipeline, classify_document
 from database.database import NLP_Database
 
 class CustomAssertions:
-    '''
+    """
     Mixin class for creating custom assertions used in testing the Bolt system.
     
-    '''
+    """
     
     def assertListOfTuples(self, obj):
         if isinstance(obj, str):
@@ -35,6 +35,9 @@ class CustomAssertions:
             assert isinstance(obj[0], str)
 
 class App_Test(unittest.TestCase):
+    '''
+    Class for unit testing rotues in 
+    '''
     def setUp(self):
         self.app = app.test_client()
         self.app.testing = True
@@ -50,6 +53,13 @@ class App_Test(unittest.TestCase):
         self.assertEqual(result.data.decode('utf_8'), u"Test response")
         print("Success\n")
     
+    def test_classify(self):
+        print("Testing 'GET' '/classification/classify' route...")
+        response = self.app.post('/classification/classify', data=json.dumps(dict(query='What is order 2313?')),
+                       content_type = 'application/json')
+        result = json.loads(response.get_data(as_text=True))
+        self.assertEqual(result['intent'], u"get-order")
+        print("Success\n")
         
     
     def tearDown(self):
@@ -57,10 +67,10 @@ class App_Test(unittest.TestCase):
 
     
 class NLP_Database_Test(unittest.TestCase, CustomAssertions):
-    '''
+    """
     Class for unit testing all methods with the database.database.NLP_Database class
     
-    '''
+    """
     
     def test_get_intents_and_expressions(self):
         print("Testing get_intents_and_expressions...")
@@ -128,11 +138,13 @@ class NLP_Database_Test(unittest.TestCase, CustomAssertions):
 
         
 class Classification_Test(unittest.TestCase):
-    '''
+    """
     Class for unit testing all methods with the classification.Classification.
+    
     Most methods are not functionally testable in the sense that they really only build objects.
     However they will be tested to ensure the correct objects are made via isInstance() methods
-    '''
+    
+    """
     
     def test_tokenize_text(self):
         print("Testing tokenize_text...")
