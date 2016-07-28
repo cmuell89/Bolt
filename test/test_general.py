@@ -2,73 +2,16 @@
 Created on Jul 21, 2016
 
 @author: Carl Mueller
+
+Unit tests for general Bolt module functions, classes and methods. 
+
+These tests are either too succinct or non-specific to warrant their own module. 
 '''
 import unittest
 import sklearn
-import json
-from app import app
+from utils.custom_assertions import CustomAssertions
 from classification.Classification import tokenize_text, train_classification_pipeline, build_classification_pipeline, classify_document
 from database.database import NLP_Database
-
-class CustomAssertions:
-    """
-    Mixin class for creating custom assertions used in this testing module.
-    """
-    
-    def assertListOfTuples(self, obj):
-        if isinstance(obj, str):
-            raise AssertionError("Returned a string argument but expected a list of tuples of length 2")
-        if len(obj) == 0:
-            raise AssertionError("Method failed to return a populated list.")
-        else:
-            assert len(obj[0]) == 2
-            assert isinstance(obj[0][0], str)
-            assert isinstance(obj[0][1], str)
-            
-    def assertListOfString(self, obj):
-        if isinstance(obj, str):
-            raise AssertionError("Returned a string argument but expected a list of tuples of length 2")
-        if len(obj) == 0:
-            raise AssertionError("Method failed to return a populated list.")
-        else:
-            assert isinstance(obj[0], str)
-
-class App_Test(unittest.TestCase):
-    """
-    Class for unit testing rotues in app.views.
-    """
-    def setUp(self):
-        self.app = app.test_client()
-        self.app.testing = True
-    
-    def test_test_route(self):
-        print("Testing test_route")
-        response = self.app.get('/test')
-        self.assertEqual(response.status_code, 200) 
-        result = json.loads(response.get_data(as_text=True))
-        self.assertEqual(result['message'], u'Test response')
-        print("Success\n")
-    
-    def test_classify(self):
-        print("Testing 'POST' '/classification/classify' route...")
-        response = self.app.post('/classification/classify', data=json.dumps(dict(query='What is order 2313?')),
-                       content_type = 'application/json')
-        self.assertEqual(response.status_code, 200) 
-        result = json.loads(response.get_data(as_text=True))
-        self.assertEqual(result['intent'], u"get-order")
-        print("Success\n")
-    
-    def test_train(self):
-        print("Testing 'GET' '/classification/train' route...")
-        print("Note: Still needs functional test")
-        response = self.app.get('/classification/train')  
-        self.assertEqual(response.status_code, 200) 
-        result = json.loads(response.get_data(as_text=True))
-        self.assertEqual(result['message'], "Classifier successfully trained!")
-        print("Success\n")
-        
-    def tearDown(self):
-        pass
 
     
 class NLP_Database_Test(unittest.TestCase, CustomAssertions):
@@ -77,47 +20,47 @@ class NLP_Database_Test(unittest.TestCase, CustomAssertions):
     """
     
     def test_get_intents_and_expressions(self):
-        print("Testing get_intents_and_expressions...")
+        print("\nTesting get_intents_and_expressions...")
         db = NLP_Database()
         obj = db.get_intents_and_expressions()
         self.assertListOfTuples(obj)
         db.close_database_connection()
-        print("Success!\n")
+        print("Success!")
         
     def test_get_intents(self):
-        print("Testing get_intents...")
+        print("\nTesting get_intents...")
         db = NLP_Database()
         obj = list(map(lambda x: x[0], db.get_intents())) 
         self.assertListOfString(obj)
         db.close_database_connection()
-        print("Success!\n")
+        print("Success!")
     
     def test_get_intent_expressions(self):
-        print("Testing get_intent_expressions...")
+        print("\nTesting get_intent_expressions...")
         db = NLP_Database()
         obj =list(map(lambda x: x[0], db.get_intent_expressions('get-order')))
         self.assertListOfString(obj)
         db.close_database_connection()
-        print("Success!\n")
+        print("Success!")
         
     def test_add_intent(self):
-        print("Testing add_intent...")
+        print("\nTesting add_intent...")
         db = NLP_Database()
         obj = list(map(lambda x: x[0], db.add_intent('some-new-intent')))
         self.assertIn('some-new-intent', obj)
         db.close_database_connection()
-        print("Success!\n")
+        print("Success!")
         
     def test_delete_intent(self):
-        print("Testing delete_intent...")
+        print("\nTesting delete_intent...")
         db = NLP_Database()
         db.add_intent('soon-to-be-deleted')
         obj = db.delete_intent('soon-to-be-deleted')
         self.assertNotIn('soon-to-be-deleted', obj)
-        print("Success!\n")
+        print("Success!")
     
     def test_delete_expressions_from_intent(self):
-        print("Testing delete_expressions_from_intent...")
+        print("\nTesting delete_expressions_from_intent...")
         db = NLP_Database()
         db.add_intent('expressionless')
         db.add_expressions_to_intent('expressionless', ["Expression one", "Expression two", "Expression three"])
@@ -127,10 +70,10 @@ class NLP_Database_Test(unittest.TestCase, CustomAssertions):
             self.assertNotEqual('expressionless', tup[0])
         db.delete_intent('expressionless')
         db.close_database_connection()
-        print("Success!\n")
+        print("Success!")
     
     def test_add_expressions_to_intent(self):
-        print("Testing add_expressions_to_intent...")
+        print("\nTesting add_expressions_to_intent...")
         db = NLP_Database()
         db.add_intent('expressionless')
         query = db.add_expressions_to_intent('expressionless', ["Expression one", "Expression two", "Expression three"])
@@ -138,44 +81,43 @@ class NLP_Database_Test(unittest.TestCase, CustomAssertions):
         self.assertListOfString(obj)
         self.assertListEqual(["Expression one", "Expression two", "Expression three"], obj)
         db.close_database_connection()
-        print("Success!\n")
+        print("Success!")
 
         
-class Classification_Test(unittest.TestCase):
+class Classifier_Test(unittest.TestCase):
     """
     Class for unit testing all methods with the classification.Classification.
     
     Most methods are not functionally testable in the sense that they really only build objects.
     However they will be tested to ensure the correct objects are made via isInstance() methods
+    Apart from the tokenize_tect testing, these tests may be removed since they're likely not providing much information.
     """
     
     def test_tokenize_text(self):
-        print("Testing tokenize_text...")
+        print("\nTesting tokenize_text...")
         test = tokenize_text("What is the best selling item of  all  time?")
         actual = [u"what", u"be", u"the", u"best", u"sell", u"item", u"of", u"all", u"time"]
         self.assertListEqual(test, actual)
-        print("Success!\n")
+        print("Success!")
     
     def test_build_classification_pipeline(self):
-        print("Testing build_classification_pipeline...")
+        print("\nTesting build_classification_pipeline...")
         pipeline = build_classification_pipeline()
         self.assertIsInstance(pipeline, sklearn.pipeline.Pipeline)
-        print("Success!\n")
+        print("Success!")
     
     def test_train_classification_pipeline(self):
-        print("Testing train_classification_pipeline...")
+        print("\nTesting train_classification_pipeline...")
         pipeline = train_classification_pipeline()
         self.assertIsInstance(pipeline, sklearn.pipeline.Pipeline)
-        print("Success!\n")
+        print("Success!")
         
     def test_classify_document(self):
-        print("Testing classify_document...")
+        print("\nTesting classify_document...")
         pipeline = train_classification_pipeline()
         result = classify_document(pipeline, "What is the best selling item of all time?")
         self.assertIsInstance(result, str)
-        print("Success!\n")
+        print("Success!")
         
-      
-if __name__ == '__main__':
-    unittest.main()
+
     
