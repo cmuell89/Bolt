@@ -28,6 +28,8 @@ class Classification_Test(unittest.TestCase):
         self.assertEqual(response.status_code, 200) 
         result = json.loads(response.get_data(as_text=True))
         self.assertEqual(result['intent'], u"get-order")
+        secondResponse = self.app.post('/classification/classify', data=json.dumps(dict(query='What is order 2313?')))
+        self.assertEqual(secondResponse.status_code, 415) 
         print("Success!")
     
     def test_train_route(self):
@@ -52,19 +54,22 @@ class Expressions_Test(unittest.TestCase):
     def tearDownClass(self):
         pass
     
-    def test_add_intent_route(self):
-        print("\nTesting 'POST' '/expression' route...")
-        response = self.app.post('/classification/train')  
-        self.assertEqual(response.status_code, 200) 
+    def test_add_expressions_to_intent_route(self):
+        print("\nTesting 'POST' '/expressions/?intent=<intent>' route...")
+        expressions = ["get order #12341234"]
+        response = self.app.post('/expressions/get-order', data=json.dumps(dict(expressions=expressions)), content_type = 'application/json')
         result = json.loads(response.get_data(as_text=True))
-        self.assertEqual(result['message'], "Classifier successfully trained!")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("get order #12341234", result['expressions']) 
+        secondResponse = self.app.post('/expressions/get-order', data=json.dumps(dict(expressions=expressions)))
+        self.assertEqual(secondResponse.status_code, 415) 
         print("Success!")
         
-    def test_add_expression_route(self):
-        print("\nTesting 'POST' '/add_expression' route...")
-        response = self.app.post('/classification/train')  
-        self.assertEqual(response.status_code, 200) 
-        result = json.loads(response.get_data(as_text=True))
-        self.assertEqual(result['message'], "Classifier successfully trained!")
+    def test_get_intent_expressions_route(self):
+        print("\nTesting 'GET' '/expressions/<intent>' route...")
+        response = self.app.get('/expressions/get-order')  
+        result = json.loads(response.get_data(as_text=True)) 
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("what is order 3216", result['expressions']) 
         print("Success!")
                  
