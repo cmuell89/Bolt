@@ -31,7 +31,7 @@ class NLP_Database:
             except Exception as e:
                 print(e)
         else:
-            raise Exception("method expects valid intent string as argument")
+            raise Exception("Method expects valid intent string as argument")
                 
     
     def get_intents_and_expressions(self):
@@ -49,15 +49,20 @@ class NLP_Database:
             print(e)
     
     def add_expressions_to_intent(self, intent, expressions):
-        try:
-            self.cur.execute("SELECT nlp.intents.id FROM nlp.intents WHERE nlp.intents.intents = %s;", (intent,))
-            intentID = self.cur.fetchone()
-            for expression in expressions:
-                self.cur.execute("INSERT INTO nlp.expressions (expressions, intent_id) VALUES (%s, %s)", (expression, intentID))
-            return self.get_intent_expressions(intent)
-        except Exception as e:
-            print(e)
-            
+        if intent:
+            try:
+                self.cur.execute("SELECT nlp.intents.id FROM nlp.intents WHERE nlp.intents.intents = %s;", (intent,))
+                intentID = self.cur.fetchone()
+                if len(expressions) > 0:
+                    for expression in expressions:
+                        self.cur.execute("INSERT INTO nlp.expressions (expressions, intent_id) VALUES (%s, %s)", (expression, intentID))
+                    return self.get_intent_expressions(intent)
+                else:
+                    raise Exception("Method expects a non-empty list of  expressions")
+            except Exception as e:
+                print(e)
+        else:
+            raise Exception("Method expects valid intent string as argument")   
             
     def delete_intent(self, intent):
         try:
