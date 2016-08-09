@@ -33,5 +33,6 @@ __all__ = ['app']
 app = Flask(__name__)
 api = Api(app)
 
+api.add_resource(resources.Expressions, '/expressions/<string:intent>')
 api.add_resource(resources.Classify, '/classification/classify')
 api.add_resource(resources.Train, '/classification/train')
