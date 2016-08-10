@@ -18,49 +18,52 @@ class NLP_Database_Test(unittest.TestCase, CustomAssertions):
     """
     Class for unit testing all methods with the database.database.NLP_Database class
     """
+    @classmethod
+    def setUpClass(self):
+        print("\nTesting for NLP_Database methods:")
+        
+    @classmethod
+    def tearDownClass(self):
+        pass
+    
     
     def test_get_intents_and_expressions(self):
-        print("\nTesting get_intents_and_expressions...")
+        
         db = NLP_Database()
         obj = db.get_intents_and_expressions()
         self.assertListOfTuples(obj)
         db.close_database_connection()
-        print("Success!")
+        print("\n\tTesting for 'get_intents_and_expressions' a success!")
         
     def test_get_intents(self):
-        print("\nTesting get_intents...")
         db = NLP_Database()
         obj = list(map(lambda x: x[0], db.get_intents())) 
         self.assertListOfString(obj)
         db.close_database_connection()
-        print("Success!")
+        print("\n\tTesting for 'get_intents' a success!")
     
     def test_get_intent_expressions(self):
-        print("\nTesting get_intent_expressions...")
         db = NLP_Database()
         obj =list(map(lambda x: x[0], db.get_intent_expressions('get-order')))
         self.assertListOfString(obj)
         db.close_database_connection()
-        print("Success!")
+        print("\n\tTesting for 'get_intent_expressions' a success!")
         
     def test_add_intent(self):
-        print("\nTesting add_intent...")
         db = NLP_Database()
         obj = list(map(lambda x: x[0], db.add_intent('some-new-intent')))
         self.assertIn('some-new-intent', obj)
         db.close_database_connection()
-        print("Success!")
+        print("\n\tTesting for 'add_intent' a success!")
         
     def test_delete_intent(self):
-        print("\nTesting delete_intent...")
         db = NLP_Database()
         db.add_intent('soon-to-be-deleted')
         obj = db.delete_intent('soon-to-be-deleted')
         self.assertNotIn('soon-to-be-deleted', obj)
-        print("Success!")
+        print("\n\tTesting for 'delete_intent' a success!")
     
     def test_delete_expressions_from_intent(self):
-        print("\nTesting delete_expressions_from_intent...")
         db = NLP_Database()
         db.add_intent('expressionless')
         db.add_expressions_to_intent('expressionless', ["Expression one", "Expression two", "Expression three"])
@@ -70,10 +73,9 @@ class NLP_Database_Test(unittest.TestCase, CustomAssertions):
             self.assertNotEqual('expressionless', tup[0])
         db.delete_intent('expressionless')
         db.close_database_connection()
-        print("Success!")
+        print("\n\tTesting for 'delete_expressions_from_intent' a success!")
     
     def test_add_expressions_to_intent(self):
-        print("\nTesting add_expressions_to_intent...")
         db = NLP_Database()
         db.add_intent('expressionless')
         query = db.add_expressions_to_intent('expressionless', ["Expression one", "Expression two", "Expression three"])
@@ -81,7 +83,7 @@ class NLP_Database_Test(unittest.TestCase, CustomAssertions):
         self.assertListOfString(obj)
         self.assertListEqual(["Expression one", "Expression two", "Expression three"], obj)
         db.close_database_connection()
-        print("Success!")
+        print("\n\tTesting for 'add_expressions_to_intent' a success!")
 
         
 class Classifier_Test(unittest.TestCase):
@@ -93,31 +95,36 @@ class Classifier_Test(unittest.TestCase):
     Apart from the tokenize_tect testing, these tests may be removed since they're likely not providing much information.
     """
     
+    @classmethod
+    def setUpClass(self):
+        print("\nTesting for Classification methods:")
+        
+    @classmethod
+    def tearDownClass(self):
+        pass
+    
+    
     def test_tokenize_text(self):
-        print("\nTesting tokenize_text...")
         test = tokenize_text("What is the best selling item of  all  time?")
         actual = [u"what", u"be", u"the", u"best", u"sell", u"item", u"of", u"all", u"time"]
         self.assertListEqual(test, actual)
-        print("Success!")
+        print("\n\tTesting for 'tokenize_text' a success")
     
     def test_build_classification_pipeline(self):
-        print("\nTesting build_classification_pipeline...")
         pipeline = build_classification_pipeline()
         self.assertIsInstance(pipeline, sklearn.pipeline.Pipeline)
-        print("Success!")
+        print("\n\tTesting for 'build_classification_pipeline' a success")
     
     def test_train_classification_pipeline(self):
-        print("\nTesting train_classification_pipeline...")
         pipeline = train_classification_pipeline()
         self.assertIsInstance(pipeline, sklearn.pipeline.Pipeline)
-        print("Success!")
+        print("\n\tTesting for 'train_classification_pipeline' a success")
         
     def test_classify_document(self):
-        print("\nTesting classify_document...")
         pipeline = train_classification_pipeline()
         result = classify_document(pipeline, "What is the best selling item of all time?")
         self.assertIsInstance(result, str)
-        print("Success!")
+        print("\n\tTesting for 'classify_document' a success")
         
 
     
