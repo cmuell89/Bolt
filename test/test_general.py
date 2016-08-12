@@ -28,7 +28,6 @@ class NLP_Database_Test(unittest.TestCase, CustomAssertions):
     
     
     def test_get_intents_and_expressions(self):
-        
         db = NLP_Database()
         obj = db.get_intents_and_expressions()
         self.assertListOfTuples(obj)
@@ -53,24 +52,23 @@ class NLP_Database_Test(unittest.TestCase, CustomAssertions):
         db = NLP_Database()
         obj = list(map(lambda x: x[0], db.add_intent('some-new-intent')))
         self.assertIn('some-new-intent', obj)
+        db.delete_intent('some-new-intent')
         db.close_database_connection()
         print("\n\tTesting for 'add_intent' a success!")
         
     def test_delete_intent(self):
         db = NLP_Database()
         db.add_intent('soon-to-be-deleted')
-        obj = db.delete_intent('soon-to-be-deleted')
-        self.assertNotIn('soon-to-be-deleted', obj)
+        after = db.delete_intent('soon-to-be-deleted')
+        self.assertNotIn(('soon-to-be-deleted',), after)
         print("\n\tTesting for 'delete_intent' a success!")
     
     def test_delete_expressions_from_intent(self):
         db = NLP_Database()
         db.add_intent('expressionless')
         db.add_expressions_to_intent('expressionless', ["Expression one", "Expression two", "Expression three"])
-        obj = db.delete_all_intent_expressions('expressionless')
-        self.assertListOfTuples(obj)
-        for tup in obj:
-            self.assertNotEqual('expressionless', tup[0])
+        obj = list(map(lambda x: x[0], db.delete_all_intent_expressions('expressionless')))
+        self.assertEqual(len(obj), 0)
         db.delete_intent('expressionless')
         db.close_database_connection()
         print("\n\tTesting for 'delete_expressions_from_intent' a success!")
@@ -82,6 +80,7 @@ class NLP_Database_Test(unittest.TestCase, CustomAssertions):
         obj = list(map(lambda x: x[0], query))
         self.assertListOfString(obj)
         self.assertListEqual(["Expression one", "Expression two", "Expression three"], obj)
+        db.delete_intent('expressionless')
         db.close_database_connection()
         print("\n\tTesting for 'add_expressions_to_intent' a success!")
 
