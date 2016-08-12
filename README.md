@@ -20,9 +20,14 @@ Additional dependencies may be required for individual packages required by Bolt
 	- /database/expressions/<string:intent>
 		- post => add expression/s to the intent passed in the url
 		- get => get expressions for the intent passed in the url
+		- delete => deletes expression/s for intent passed in url.
+			- json payload: 
+				- param: all: True/False => delete all expressions
+				- param: expressions: [type:string] => delete all expressions in the array
 	- /database/intents/
 		- post => Add intent passed in request payload to database
 		- get => Gets all the existing intents stored in the database
+		- delete => Deletes intent and all associated expressions
 - Database
 	- Intent table
 	- Expression table (join on intent_id)
@@ -43,6 +48,10 @@ Additional dependencies may be required for individual packages required by Bolt
 #### Development TODO's
 
 ##### Not Started:
+- [ ] Host Server on Heroku
+- [ ] Authentication:
+	- [ ] Identify a MongoDB driver to use for authetication purposes
+	- [ ] Connect to existing MongoDB instance that API connect to.
 - [ ] Improve classification response to show scoring metrics if possible for LinearSVM
 - [ ] Implement different classify responses based on Naive Bayes or LinearSV<
 - [ ] Allow choice between Naive Bayes and LinearSVM during constructions of sk-learn pipeline
@@ -51,14 +60,16 @@ Additional dependencies may be required for individual packages required by Bolt
 	- [ ] test
 
 ##### In-Progress:
-- [ ] Create route to delete intent and make sure all expressions are deleted too
-	- [x] code
-	- [ ] test
-- [ ] Create route to delete expression/s
-	- [x] code
-	- [ ] test
+- [ ] Implement request parsing and parameter validation middleware or library
+	- Currently writing too much if/elif/else paramter checking
 
 ##### Completed:
+- [x] Create route to delete intent and make sure all expressions are deleted too
+	- [x] code
+	- [x] test
+- [x] Create route to delete expression/s
+	- [x] code
+	- [x] test
 - [x] Create custom exceptions for to raise up to the route level for Database Errors and Database Intput Errors
 - [x] Convert all server responses to JSON format rather than HTML as standard in flask (This might be alleviated by flask-restful.
 	- Implemented through the jsonify(key1=value1, key2=value2, ...) method that creates a Flask resp with passed in key/value pairs
