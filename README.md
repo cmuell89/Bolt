@@ -58,6 +58,8 @@ Additional dependencies may be required for individual packages required by Bolt
 - [ ] Create route to rebuild classifier with new options
 	- [ ] code
 	- [ ] test
+- [ ] Build out logging capabilities
+- [ ] COMMENT/DOCUMENTATION OVERHAUL => START STRONG, FINISH STRONG
 
 ##### In-Progress:
 - [ ] Implement request parsing and parameter validation middleware or library
