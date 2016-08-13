@@ -60,10 +60,14 @@ Additional dependencies may be required for individual packages required by Bolt
 	- [ ] test
 - [ ] Build out logging capabilities
 - [ ] COMMENT/DOCUMENTATION OVERHAUL => START STRONG, FINISH STRONG
+- [ ] Start prototyping 'Trait' parsing
 
 ##### In-Progress:
 - [ ] Implement request parsing and parameter validation middleware or library
 	- Currently writing too much if/elif/else paramter checking
+- [ ] Prototype 'Entity' parsing
+	- [ ] Gazetteer
+	- [ ] SpaCy NER
 
 ##### Completed:
 - [x] Create route to delete intent and make sure all expressions are deleted too
