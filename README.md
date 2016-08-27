@@ -63,6 +63,7 @@ Additional dependencies may be required for individual packages required by Bolt
 - [ ] Start prototyping 'Trait' parsing
 
 ##### In-Progress:
+- [ ] Implement config/environment files for use in configuring app.
 - [ ] Implement request parsing and parameter validation middleware or library
 	- Currently writing too much if/elif/else paramter checking
 - [ ] Prototype 'Entity' parsing
