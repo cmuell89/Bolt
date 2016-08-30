@@ -13,9 +13,10 @@ from nltk.inference.prover9 import expressions
 
 """
 Module accessible objects:
-    clf: the NLP classification pipeline built using sk-learn
+    clf: the NLP classification pipeline built using sk-learn (defaults to Naive Bayes 'nb' but can be retrained using Linear SVM 'svm')
     db: the NLP_Database() object used to make calls to the associated Bolt postrgres database
 """
+# Defaults to Naive Bayes Classifier
 clf = train_classification_pipeline()
 db = NLP_Database()
 
