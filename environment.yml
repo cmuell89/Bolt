@@ -11,7 +11,6 @@ dependencies:
   - pytz == 2016.6.1
   - pip:
     - cachetools == 1.1.6
-    - textacy == 0.2.2
     - flask-restful == 0.3.5
     - parsedatetime == 2.1
     - dateparser == 0.4.0
