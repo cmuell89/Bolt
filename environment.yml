@@ -4,7 +4,6 @@ dependencies:
   - libffi == 3.2.1
   - flask == 0.11.1
   - nltk == 3.2.1
-  - numpy == 1.11.0
   - spacy == 0.101.0
   - scikit-learn=0.17.1=np111py35_2
   - psycopg2 == 2.6.2
