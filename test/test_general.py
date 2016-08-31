@@ -87,7 +87,7 @@ class NLP_Database_Test(unittest.TestCase, CustomAssertions):
         
 class Classifier_Test(unittest.TestCase):
     """
-    Class for unit testing all methods with the classification.Classification.
+    Class for unit testing all methods with the classification.classification.
     
     Most methods are not functionally testable in the sense that they really only build objects.
     However they will be tested to ensure the correct objects are made via isInstance() methods

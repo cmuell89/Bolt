@@ -73,7 +73,6 @@ def build_classification_pipeline(skl_classifier=None):
         clf = svm.LinearSVC()
     elif (skl_classifier == 'nb'):
         clf = naive_bayes.MultinomialNB()
-    print(clf)
     return Pipeline([('cleanText', CleanTextTransformer()), ('vectorizer', vectorizer), ('clf', clf)])
 
 def train_classification_pipeline(pipeline=None, training_data=None, skl_classifier=None):
