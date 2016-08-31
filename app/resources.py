@@ -8,8 +8,6 @@ from flask import request
 from database.database import NLP_Database
 from flask_restful import Resource
 from classification.Classification import train_classification_pipeline, classify_document
-from nltk.inference.prover9 import expressions
-
 
 """
 Module accessible objects:
