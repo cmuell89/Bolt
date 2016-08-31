@@ -5,11 +5,12 @@ dependencies:
   - nltk == 3.2.1
   - numpy == 1.11.0
   - spacy == 0.101.0
-  - utils == 0.12
-  - scikit_learn == 0.17.1
+  - scikit-learn=0.17.1=np111py35_2
   - psycopg2 == 2.6.2
+  - pytz == 2016.6.1
   - pip:
     - cachetools == 1.1.6
     - textacy == 0.2.2
     - flask-restful == 0.3.5
-    - logging == 0.4.9.6
+    - parsedatetime == 2.1
+    - dateparser == 0.4.0

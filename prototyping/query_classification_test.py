@@ -4,7 +4,7 @@ Created on Jul 5, 2016
 @author: carl
 '''
 
-from classification.Classification import build_classification_pipeline, train_classification_pipeline, classify_document
+from classification.classification import build_classification_pipeline, train_classification_pipeline, classify_document
 
 clf = build_classification_pipeline()
 trained_clf = train_classification_pipeline(clf)

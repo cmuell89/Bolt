@@ -5,7 +5,6 @@ Created on Jul 3, 2016
 '''
 import parsedatetime
 from pytz import timezone
-import pytz
 
 
 cal = parsedatetime.Calendar()

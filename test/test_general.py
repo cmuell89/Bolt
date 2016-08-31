@@ -10,7 +10,7 @@ These tests are either too succinct or non-specific to warrant their own module.
 import unittest
 import sklearn
 from utils.custom_assertions import CustomAssertions
-from classification.Classification import tokenize_text, train_classification_pipeline, build_classification_pipeline, classify_document
+from classification.classification import tokenize_text, train_classification_pipeline, build_classification_pipeline, classify_document
 from database.database import NLP_Database
 
     
