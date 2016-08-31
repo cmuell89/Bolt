@@ -5,7 +5,6 @@ Created on Jul 21, 2016
 '''
 import psycopg2
 import logging
-import exceptions as error
     
 
 
@@ -27,7 +26,7 @@ class NLP_Database:
         except psycopg2.Error as e:
             self.conn.rollback()
             logging.exception(e.pgerror)
-            raise error.DatabaseError(e.pgerror)
+            raise Exception.DatabaseError(e.pgerror)
 
     def get_intent_expressions(self,intent):
         if intent:
@@ -38,11 +37,11 @@ class NLP_Database:
             except psycopg2.Error as e:
                 self.conn.rollback()
                 logging.exception(e.pgerror)
-                raise error.DatabaseError(e.pgerror)
+                raise Exception.DatabaseError(e.pgerror)
         else:
             msg = "Method expects valid intent string as argument"
             logging.exception(msg)
-            raise error.DatabaseInputError(msg)
+            raise Exception.DatabaseInputError(msg)
                 
     
     def get_intents_and_expressions(self):
@@ -53,7 +52,7 @@ class NLP_Database:
         except psycopg2.Error as e:
             self.conn.rollback()
             logging.exception(e.pgerror)
-            raise error.DatabaseError(e.pgerror)
+            raise Exception.DatabaseError(e.pgerror)
     
     def add_intent(self, intent):
         try:
@@ -64,7 +63,7 @@ class NLP_Database:
         except psycopg2.Error as e:
             self.conn.rollback()
             logging.exception(e.pgerror)
-            raise error.DatabaseError(e.pgerror)
+            raise Exception.DatabaseError(e.pgerror)
     
     def add_expressions_to_intent(self, intent, expressions):
         if intent:
@@ -80,11 +79,11 @@ class NLP_Database:
                 else:
                     msg = "Method expects a non-empty list of expressions"
                     logging.exception(msg)
-                    raise error.DatabaseInputError(msg)
+                    raise Exception.DatabaseInputError(msg)
             except psycopg2.Error as e:
                 self.conn.rollback()
                 logging.exception(e.pgerror)
-                raise error.DatabaseError(e.pgerror)
+                raise Exception.DatabaseError(e.pgerror)
         else:
             msg = "Method expects valid intent string as argument"
             logging.exception(msg)
@@ -100,7 +99,7 @@ class NLP_Database:
         except psycopg2.Error as e:
             self.conn.rollback()
             logging.exception(e.pgerror)
-            raise error.DatabaseError(e.pgerror)
+            raise Exception.DatabaseError(e.pgerror)
     
     def delete_all_intent_expressions(self, intent):
         try:
@@ -111,7 +110,7 @@ class NLP_Database:
         except psycopg2.Error as e:
             self.conn.rollback()
             logging.exception(e.pgerror)
-            raise error.DatabaseError(e.pgerror)
+            raise Exception.DatabaseError(e.pgerror)
     
     def delete_expressions_from_intent(self, intent, expressions):
         try:
@@ -123,7 +122,7 @@ class NLP_Database:
         except psycopg2.Error as e:
             self.conn.rollback()
             logging.exception(e.pgerror)
-            raise error.DatabaseError(e.pgerror)
+            raise Exception.DatabaseError(e.pgerror)
 
         
     def close_database_connection(self):

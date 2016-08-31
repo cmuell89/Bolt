@@ -17,7 +17,7 @@ from textacy.preprocess import normalize_whitespace
 from models.spacy_model import load_spacy
 from transformers.CleanTextTransformer import CleanTextTransformer
 from utils import io
-# from sklearn import naive_bayes
+from sklearn import naive_bayes
 
 # load Spacy pipeline from cached model    
 nlp = load_spacy('en')
@@ -53,7 +53,7 @@ def tokenize_text(sample):
 
     return tokens
 
-def build_classification_pipeline():
+def build_classification_pipeline(skl_classifier=None):
     """
     Function that builds a sklearn pipeline.
     Currently the estimators used in this build function are hard-coded
@@ -66,12 +66,17 @@ def build_classification_pipeline():
         LinearSVC(): Multitlcass capable support vector machine
         MultinomialNB(): Multinomial Naive Bayes classifier
     """
+    if(skl_classifier==None):
+        skl_classifier = 'svm'
     vectorizer = CountVectorizer(tokenizer=tokenize_text, ngram_range=(1,2))
-    clf = svm.LinearSVC()
-    #clf = naive_bayes.MultinomialNB()
+    if(skl_classifier == 'svm'):
+        clf = svm.LinearSVC()
+    elif (skl_classifier == 'nb'):
+        clf = naive_bayes.MultinomialNB()
+    print(clf)
     return Pipeline([('cleanText', CleanTextTransformer()), ('vectorizer', vectorizer), ('clf', clf)])
 
-def train_classification_pipeline(pipeline=None, training_data=None):
+def train_classification_pipeline(pipeline=None, training_data=None, skl_classifier=None):
     """
      Args:
         pipeline: (scikit-learn Pipeline): Scikit-Learn Pipeline object
@@ -81,8 +86,10 @@ def train_classification_pipeline(pipeline=None, training_data=None):
     Raises:
         RuntimeError: if package can't be loaded
     """
+    if(skl_classifier==None):
+        skl_classifier = 'svm'
     if pipeline is None:
-        pipeline = build_classification_pipeline()
+        pipeline = build_classification_pipeline(skl_classifier)
     if training_data is None:
         training_set, training_labels = io.create_data_for_pipeline_from_database()
     else:

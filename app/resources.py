@@ -8,15 +8,15 @@ from flask import request
 from database.database import NLP_Database
 from flask_restful import Resource
 from classification.Classification import train_classification_pipeline, classify_document
-from exceptions import DatabaseError, DatabaseInputError
 from nltk.inference.prover9 import expressions
 
 
 """
 Module accessible objects:
-    clf: the NLP classification pipeline built using sk-learn
+    clf: the NLP classification pipeline built using sk-learn (defaults to Naive Bayes 'nb' but can be retrained using Linear SVM 'svm')
     db: the NLP_Database() object used to make calls to the associated Bolt postrgres database
 """
+# Defaults to Naive Bayes Classifier
 clf = train_classification_pipeline()
 db = NLP_Database()
 
@@ -62,11 +62,11 @@ class Expressions(Resource):
                 resp = jsonify(intent=intent,expressions=expressions)
                 resp.status_code = 200
                 return resp
-            except DatabaseError as error:
+            except Exception.DatabaseError as error:
                 resp = jsonify(error=error.value)
                 resp.status_code = 500
                 return resp
-            except DatabaseInputError as error:
+            except Exception.DatabaseInputError as error:
                 resp = jsonify(error=error.value)
                 resp.status_code = 400
                 return resp
@@ -85,11 +85,11 @@ class Expressions(Resource):
             resp = jsonify(intent=intent,expressions=expressions)
             resp.status_code = 200
             return resp
-        except DatabaseError as error:
+        except Exception.DatabaseError as error:
             resp = jsonify(error=error.value)
             resp.status_code = 500
             return resp
-        except DatabaseInputError as error:
+        except Exception.DatabaseInputError as error:
             resp = jsonify(error=error.value)
             resp.status_code = 400
             return resp
@@ -107,11 +107,11 @@ class Expressions(Resource):
                     expressions = list(map(lambda tup: tup[0], result))
                     resp = jsonify(intent=intent,expressions=expressions)
                     return resp
-                except DatabaseError as error:
+                except Exception.DatabaseError as error:
                     resp = jsonify(error=error.value)
                     resp.status_code = 500
                     return resp
-                except DatabaseInputError as error:
+                except Exception.DatabaseInputError as error:
                     resp = jsonify(error=error.value)
                     resp.status_code = 400
                     return resp   
@@ -121,11 +121,11 @@ class Expressions(Resource):
                     expressions = list(map(lambda tup: tup[0], result))
                     resp = jsonify(intent=intent,expressions=expressions)
                     return resp
-                except DatabaseError as error:
+                except Exception.DatabaseError as error:
                     resp = jsonify(error=error.value)
                     resp.status_code = 500
                     return resp
-                except DatabaseInputError as error:
+                except Exception.DatabaseInputError as error:
                     resp = jsonify(error=error.value)
                     resp.status_code = 400
                     return resp 
@@ -152,11 +152,11 @@ class Intents(Resource):
                 resp = jsonify(intents=intents)
                 resp.status_code = 200
                 return resp
-            except DatabaseError as error:
+            except Exception.DatabaseError as error:
                 resp = jsonify(error=error)
                 resp.status_code = 500
                 return resp
-            except DatabaseInputError as error:
+            except Exception.DatabaseInputError as error:
                 resp = jsonify(error=error)
                 resp.status_code = 400
                 return resp
@@ -177,7 +177,7 @@ class Intents(Resource):
     
     def delete(self):
         """
-        Deltes an intent including all its associated expressions
+        Deletes an intent including all its associated expressions
         """
         if request.headers['Content-Type'] == 'application/json':
             data = request.get_json()
@@ -187,11 +187,11 @@ class Intents(Resource):
                 resp = jsonify(intents=intents)
                 resp.status_code = 200
                 return resp
-            except DatabaseError as error:
+            except Exception.DatabaseError as error:
                 resp = jsonify(error=error)
                 resp.status_code = 500
                 return resp
-            except DatabaseInputError as error:
+            except Exception.DatabaseInputError as error:
                 resp = jsonify(error=error)
                 resp.status_code = 400
                 return resp

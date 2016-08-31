@@ -6,6 +6,7 @@ from app import resources
 __all__ = ['app']
 
 app = Flask(__name__)
+
 api = Api(app)
 
 api.add_resource(resources.Expressions, '/database/expressions/<string:intent>')
