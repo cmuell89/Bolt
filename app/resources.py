@@ -36,11 +36,13 @@ class Classify(Resource):
             return resp
         
 class Train(Resource):
-    def get(self):
+    def get(self, classifier):
         """
         Trains the existing classifier object accessed by all '/classification/*' routes.
         """
-        clf = train_classification_pipeline()
+        if not classifier == 'svm' or classifier == 'nb':
+            classifier = 'svm'
+        clf = train_classification_pipeline(classifier)
         response_message = "Classifier successfully trained!"
         resp = jsonify(message=response_message)
         resp.status_code = 200
