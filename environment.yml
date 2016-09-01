@@ -7,9 +7,6 @@ dependencies:
   - spacy == 0.101.0
   - scikit-learn=0.17.1=np111py35_2
   - psycopg2 == 2.6.2
-  - pytz == 2016.6.1
   - pip:
     - cachetools == 1.1.6
     - flask-restful == 0.3.5
-    - parsedatetime == 2.1
-    - dateparser == 0.4.0
