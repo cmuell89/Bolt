@@ -1,14 +1,14 @@
-# .pdf
+# Filetypes:
 *.pdf
 
-# Byte-compiled / optimized / DLL files
+# Byte-compiled / optimized / DLL files:
 __pycache__/
 *.py[cod]
 
-# C extensions
+# C extensions stuff:
  *.so
 
-# Distribution / packaging
+# Distribution / packaging:
 bin/
 build/
 develop-eggs/
@@ -37,20 +37,14 @@ coverage.xml
 # Translations
 *.mo
 
-# Mr Developer
-.mr.developer.cfg
-.project
+# IDE stuff:
 .pydevproject
 
-# Rope
-.ropeproject
+# Flask stuff:
+.slugignore
 
-# Django stuff:
-*.log
-*.pot
-
-# Sphinx documentation
+# Sphinx documentation stuff:
 docs/_build/
 
-# Configuration
+# Configuration stuff
 .env
