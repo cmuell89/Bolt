@@ -45,6 +45,10 @@ Additional dependencies may be required for individual packages required by Bolt
 - Logging
 	- Start of implementation of python's native logging module to make print() go the way of the dodo bird
 
+#### Development Notes
+- Installed nomkl to avoid intel's mkl optimization for numpy and scipy libraries. https://github.com/BVLC/caffe/issues/3884
+- Now using Gunicorn web server to run app in production environment.
+
 #### Development TODO's
 
 ##### Not Started:
@@ -66,7 +70,7 @@ Additional dependencies may be required for individual packages required by Bolt
 - [ ] Implement config/environment files for use in configuring app.
 - [ ] Implement request parsing and parameter validation middleware or library
 	- Currently writing too much if/elif/else paramter checking
-- [ ] Allow choice between Naive Bayes and LinearSVM during constructions of sk-learn pipeline
+- [ ] Allow choice between Naive Bayes and LinearSVM during construction of sk-learn pipeline
 - [ ] Create route to rebuild classifier with new options
 	- [ ] code
 	- [ ] test
