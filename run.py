@@ -16,6 +16,8 @@ load_dotenv(dotenv_path)
 
 if __name__ == "__main__":
     if os.environ.get('ENVIRONMENT')=='dev':
+        print("Running in dev mode!")
         app.run(host=os.environ.get('HOST'),port=os.environ.get('PORT'), debug=True, use_reloader=False)
     else:
+        print("Running if production mode!")
         app.run()
