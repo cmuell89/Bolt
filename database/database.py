@@ -5,8 +5,6 @@ Created on Jul 21, 2016
 '''
 import psycopg2
 import logging
-    
-
 
 class NLP_Database:
     def __init__(self, properties=None):
@@ -16,27 +14,28 @@ class NLP_Database:
         else:
             self.conn = psycopg2.connect(database="postgres", user="carl", password="007", host='/var/run/postgresql')
         self.cur = self.conn.cursor()
+        self.logger = logging.getLogger('bolt.nlpDB')
 
 
     def get_intents(self):
         try:
             self.cur.execute("SELECT nlp.intents.intents FROM nlp.intents;")
-            logging.info("Retrieving all intents")
+            self.logger.info("Retrieving all intents")
             return self.cur.fetchall()
         except psycopg2.Error as e:
             self.conn.rollback()
-            logging.exception(e.pgerror)
+            self.logger.exception(e.pgerror)
             raise Exception.DatabaseError(e.pgerror)
 
     def get_intent_expressions(self,intent):
         if intent:
             try:
                 self.cur.execute("SELECT nlp.expressions.expressions FROM nlp.intents INNER JOIN nlp.expressions ON nlp.intents.id = nlp.expressions.intent_id WHERE nlp.intents.intents = %s;", (intent,))
-                logging.info("Retrieving all expressions for the intent: %s", intent)
+                self.logger.info("Retrieving all expressions for the intent: %s", intent)
                 return self.cur.fetchall()
             except psycopg2.Error as e:
                 self.conn.rollback()
-                logging.exception(e.pgerror)
+                self.logger.exception(e.pgerror)
                 raise Exception.DatabaseError(e.pgerror)
         else:
             msg = "Method expects valid intent string as argument"
@@ -47,22 +46,22 @@ class NLP_Database:
     def get_intents_and_expressions(self):
         try:
             self.cur.execute("SELECT nlp.intents.intents, nlp.expressions.expressions FROM nlp.intents INNER JOIN nlp.expressions ON nlp.intents.id = nlp.expressions.intent_id;")
-            logging.info("Retrieving all intents and expressions.")
+            self.logger.info("Retrieving all intents and expressions.")
             return self.cur.fetchall()
         except psycopg2.Error as e:
             self.conn.rollback()
-            logging.exception(e.pgerror)
+            self.logger.exception(e.pgerror)
             raise Exception.DatabaseError(e.pgerror)
     
     def add_intent(self, intent):
         try:
             self.cur.execute("INSERT INTO nlp.intents (intents) VALUES (%s);", (intent,))
             self.conn.commit()
-            logging.info("Adding intent: %s", intent)
+            self.logger.info("Adding intent: %s", intent)
             return self.get_intents()
         except psycopg2.Error as e:
             self.conn.rollback()
-            logging.exception(e.pgerror)
+            self.logger.exception(e.pgerror)
             raise Exception.DatabaseError(e.pgerror)
     
     def add_expressions_to_intent(self, intent, expressions):
@@ -74,19 +73,19 @@ class NLP_Database:
                     for expression in expressions:
                         self.cur.execute("INSERT INTO nlp.expressions (expressions, intent_id) VALUES (%s, %s)", (expression, intentID))
                         self.conn.commit()
-                    logging.info("Adding expressions to intent: %s", intent)
+                    self.logger.info("Adding expressions to intent: %s", intent)
                     return self.get_intent_expressions(intent)
                 else:
                     msg = "Method expects a non-empty list of expressions"
-                    logging.exception(msg)
+                    self.logger.exception(msg)
                     raise Exception.DatabaseInputError(msg)
             except psycopg2.Error as e:
                 self.conn.rollback()
-                logging.exception(e.pgerror)
+                self.logger.exception(e.pgerror)
                 raise Exception.DatabaseError(e.pgerror)
         else:
             msg = "Method expects valid intent string as argument"
-            logging.exception(msg)
+            self.logger.exception(msg)
             raise e.DatabaseInputError(msg)
             
     def delete_intent(self, intent):
@@ -94,34 +93,34 @@ class NLP_Database:
             self.delete_all_intent_expressions(intent)
             self.cur.execute("DELETE FROM nlp.intents WHERE nlp.intents.intents = %s;", (intent,))
             self.conn.commit()
-            logging.info("Deleting intent: %s", intent)
+            self.logger.info("Deleting intent: %s", intent)
             return self.get_intents()
         except psycopg2.Error as e:
             self.conn.rollback()
-            logging.exception(e.pgerror)
+            self.logger.exception(e.pgerror)
             raise Exception.DatabaseError(e.pgerror)
     
     def delete_all_intent_expressions(self, intent):
         try:
             self.cur.execute("DELETE FROM nlp.expressions WHERE nlp.expressions.intent_id = (SELECT id FROM nlp.intents WHERE nlp.intents.intents = %s);", (intent,))
             self.conn.commit()
-            logging.info("Deleting all expressions from intent: %s", intent)
+            self.logger.info("Deleting all expressions from intent: %s", intent)
             return self.get_intent_expressions(intent)
         except psycopg2.Error as e:
             self.conn.rollback()
-            logging.exception(e.pgerror)
+            self.logger.exception(e.pgerror)
             raise Exception.DatabaseError(e.pgerror)
     
     def delete_expressions_from_intent(self, intent, expressions):
         try:
             for expression in expressions:
                 self.cur.execute("DELETE FROM nlp.expressions WHERE nlp.expressions.intent_id = (SELECT id FROM nlp.intents WHERE nlp.intents.intents = %s) AND nlp.expressions.expressions = %s;", (intent, expression))
-                logging.info("Deleting the expression: '%s' from intent: %s", expression, intent)
+                self.logger.info("Deleting the expression: '%s' from intent: %s", expression, intent)
                 self.conn.commit()
             return self.get_intent_expressions(intent)
         except psycopg2.Error as e:
             self.conn.rollback()
-            logging.exception(e.pgerror)
+            self.logger.exception(e.pgerror)
             raise Exception.DatabaseError(e.pgerror)
 
         

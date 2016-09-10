@@ -48,3 +48,8 @@ docs/_build/
 
 # Configuration stuff
 .env
+
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml

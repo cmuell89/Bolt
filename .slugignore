@@ -1,9 +1,0 @@
-# Packages
-docs/
-prototyping/
-test/
-resources/
-
-# Modules
-test.py
-

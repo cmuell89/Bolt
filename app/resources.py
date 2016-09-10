@@ -5,6 +5,7 @@ Created on Jul 27, 2016
 '''
 from flask import jsonify
 from flask import request
+from flask import Response
 from database.database import NLP_Database
 from flask_restful import Resource
 from classification.classification import train_classification_pipeline, classify_document
@@ -198,5 +199,12 @@ class Intents(Resource):
             resp.status_code = 415
             return resp
         
+class Health(Resource):
+    def get(self):
+        """
+        Gets the current intents stored in the NLP database
+        """
+        resp = Response(status_code=200)
+        return resp
         
         
