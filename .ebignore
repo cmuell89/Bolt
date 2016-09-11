@@ -60,3 +60,5 @@ docs/
 # Configuration stuff
 .env
 
+# Temp
+spacy.config
