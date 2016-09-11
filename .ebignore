@@ -24,11 +24,20 @@ var/
 .installed.cfg
 *.egg
 
+# Project Folders
+/prototyping
+/scripts
+/resources
+
+# virtualenv
+/bolt
+
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
 
 # Unit test / coverage reports
+test/
 .tox/
 .coverage
 .cache
@@ -40,21 +49,14 @@ coverage.xml
 
 # IDE stuff:
 .pydevproject
+.settings/
 
-# Flask stuff:
+# Heroku stuff:
 .slugignore
 
 # Sphinx documentation stuff:
-docs/_build/
+docs/
 
 # Configuration stuff
 .env
-
-# virtualenv
-/bolt
-
-# Elastic Beanstalk Files
-.elasticbeanstalk/*
-!.elasticbeanstalk/*.cfg.yml
-!.elasticbeanstalk/*.global.yml
 

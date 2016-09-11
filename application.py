@@ -5,7 +5,7 @@ Created on Jul 18, 2016
 '''
 import os
 import logging
-from app import app
+from app import app as application
 from os.path import join, dirname
 from dotenv import load_dotenv
 
@@ -19,12 +19,12 @@ logger = logging.getLogger('bolt')
 if os.environ.get('ENVIRONMENT')=='dev':
     logger.setLevel(logging.DEBUG)
     logger.info("Running in dev mode using eclipse/python interpreter")
-    app.run(host=os.environ.get('HOST'), debug=True, use_reloader=True)
+    application.run(host=os.environ.get('HOST'), debug=True, use_reloader=True)
 elif os.environ.get('ENVIRONMENT')=='test':
     logger.setLevel(logging.INFO)
     logger.info("Running in test mode using eclipse/python interpreter")
-    app.run(host=os.environ.get('HOST'), port=os.environ.get('PORT'), debug=False, use_reloader=False)
+    application.run(host=os.environ.get('HOST'), port=os.environ.get('PORT'), debug=False, use_reloader=False)
 elif os.environ.get('ENVIRONMENT'=='prod'):
     logger.setLevel(logging.INFO)
     logger.info("Running in production mode...")
-    app.run()
+    application.run()
