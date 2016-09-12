@@ -50,7 +50,9 @@ Additional dependencies may be required for individual packages required by Bolt
 	- postgresql94-devel.x86_64
   	- libffi-devel.x86_64 0:3.0.13-11.4.amzn1
   	- gcc-c++
-
+  	- libpng-devel.x86_64 2:1.2.49-2.14.amzn1 
+	- freetype-devel.x86_64 0:2.3.11-15.14.amzn1 
+	
 #### Development TODO's
 
 ##### Not Started:
