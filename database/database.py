@@ -5,14 +5,11 @@ Created on Jul 21, 2016
 '''
 import psycopg2
 import logging
+import os
 
 class NLP_Database:
-    def __init__(self, properties=None):
-        if properties:
-            # unsure if this will work
-            self.conn = psycopg2.connect(properties)
-        else:
-            self.conn = psycopg2.connect(database="postgres", user="carl", password="007", host='/var/run/postgresql')
+    def __init__(self):
+        self.conn = psycopg2.connect(database=os.environ.get('PGSQL_DB_NAME'), user=os.environ.get('PGSQL_DB_USER'), password=os.environ.get('PGSQL_DB_PASSWORD'), host=os.environ.get('PGSQL_DB_HOST'), port=os.environ.get('PGSQL_DB_PORT'))
         self.cur = self.conn.cursor()
         self.logger = logging.getLogger('bolt.nlpDB')
 
