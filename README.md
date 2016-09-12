@@ -46,8 +46,9 @@ Additional dependencies may be required for individual packages required by Bolt
 	- Start of implementation of python's native logging module to make print() go the way of the dodo bird
 
 #### Development Notes
-- Installed nomkl to avoid intel's mkl optimization for numpy and scipy libraries. https://github.com/BVLC/caffe/issues/3884
-- Now using Gunicorn web server to run app in production environment.
+- Installed: 
+	- postgresql94-devel.x86_64
+  	- libffi-devel.x86_64 0:3.0.13-11.4.amzn1  
 
 #### Development TODO's
 
