@@ -46,9 +46,10 @@ Additional dependencies may be required for individual packages required by Bolt
 	- Start of implementation of python's native logging module to make print() go the way of the dodo bird
 
 #### Development Notes
-- Installed: 
+- Installed via yum on Amazon Linux EC2 instance: 
 	- postgresql94-devel.x86_64
-  	- libffi-devel.x86_64 0:3.0.13-11.4.amzn1  
+  	- libffi-devel.x86_64 0:3.0.13-11.4.amzn1
+  	- gcc-c++
 
 #### Development TODO's
 
