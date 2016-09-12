@@ -9,7 +9,10 @@ import os
 
 class NLP_Database:
     def __init__(self):
-        self.conn = psycopg2.connect(database=os.environ.get('PGSQL_DB_NAME'), user=os.environ.get('PGSQL_DB_USER'), password=os.environ.get('PGSQL_DB_PASSWORD'), host=os.environ.get('PGSQL_DB_HOST'), port=os.environ.get('PGSQL_DB_PORT'))
+        if 'RDS_HOSTNAME' in os.environ:
+            self.conn = psycopg2.connect(database=os.environ.get('RDS_DB_NAME'), user=os.environ.get('RDS_USERNAME'), password=os.environ.get('RDS_PASSWORD'), host=os.environ.get('RDS_HOSTNAME'), port=os.environ.get('RDS_PORT'))
+        else:
+            self.conn = psycopg2.connect(database=os.environ.get('PGSQL_DB_NAME'), user=os.environ.get('PGSQL_DB_USER'), password=os.environ.get('PGSQL_DB_PASSWORD'), host=os.environ.get('PGSQL_DB_HOST'), port=os.environ.get('PGSQL_DB_PORT'))
         self.cur = self.conn.cursor()
         self.logger = logging.getLogger('bolt.nlpDB')
 
