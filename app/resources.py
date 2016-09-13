@@ -17,11 +17,19 @@ Module accessible objects:
     db: the NLP_Database() object used to make calls to the associated Bolt postrgres database
 """
 
-logger = logging.getLogger('BOLT-api')
-# Defaults to Naive Bayes Classifier
-clf = train_classification_pipeline()
-logger.info('Created default NB classifier on startup')
-db = NLP_Database()
+logger = logging.getLogger('BOLT.api')
+# Defaults to LinearSVC Classifier on start-up
+try:
+    clf = train_classification_pipeline()
+    logger.info('Created default LinearSVC classifier on startup')
+except Exception as e:
+    logger.exception(e)
+    logger.warning("All API endpoints requiring the trained clf will fail.")
+try:
+    db = NLP_Database()
+except Exception as e:
+    logger.exception(e)
+    logger.warning("All API endpoints requiring a db connection will fail.")
 
 class Classify(Resource):
     def post(self):
@@ -208,7 +216,7 @@ class Health(Resource):
         """
         Gets the current intents stored in the NLP database
         """
-        resp = Response(status_code=200)
+        resp = Response()
         return resp
         
         

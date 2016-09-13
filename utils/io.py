@@ -4,7 +4,10 @@ Created on Jul 4, 2016
 @author: carl
 '''
 import json
+import logging
 from database.database import NLP_Database
+
+logger = logging.getLogger('BOLT.io')
 
 def create_data_for_pipeline_from_file(file_address):
     '''
@@ -36,17 +39,23 @@ def create_data_for_pipeline_from_database():
     Function that returns an array of array of training data stored in Bolt's postgreSQL database.
 
     Returns:
-        :tuple<String[],String[]>: paired lists of training documents and labels, in that order.
+        :tuple<String[],String[]>: Paired lists of training documents and labels, in that order. 
+                                   Returns empty arrays if exception occurs.
     '''
-    
-    db = NLP_Database()
     labels = []
     docs = []
-    data = db.get_intents_and_expressions()
-    for datum in data:
-        labels.append(datum[0])
-        docs.append(datum[1])
-    return [docs, labels]
+    try:
+        db = NLP_Database()
+        data = db.get_intents_and_expressions()
+        for datum in data:
+            labels.append(datum[0])
+            docs.append(datum[1])
+        return [docs, labels]
+    except Exception as e:
+        logger.error("Exception occurred importing database data.")
+        logger.exception(e)
+        logger.debug("returning empty arrays")
+        return [docs, labels]
     
 def get_intents_from_JSON_data(fileAddress):
     file = open(fileAddress)

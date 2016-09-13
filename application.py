@@ -12,6 +12,6 @@ from app import application
 if os.environ.get('ENVIRONMENT')=='dev':
     application.run(host=os.environ.get('DEV_HOST'),port=int(os.environ.get('DEV_PORT')), debug=True, use_reloader=True)
 elif os.environ.get('ENVIRONMENT')=='test':
-    application.run(debug=True, use_reloader=False)
+    application.run(debug=False, use_reloader=False)
 elif os.environ.get('ENVIRONMENT')=='prod':
     application.run()

@@ -6,18 +6,24 @@ Created on Jul 21, 2016
 import psycopg2
 import logging
 import os
+from utils.exceptions import DatabaseError, DatabaseInputError
 
 logger = logging.getLogger('BOLT.db')
 
 class NLP_Database:
     def __init__(self):
         if 'RDS_HOSTNAME' in os.environ:
-            self.conn = psycopg2.connect(database=os.environ.get('RDS_DB_NAME'), user=os.environ.get('RDS_USERNAME'), password=os.environ.get('RDS_PASSWORD'), host=os.environ.get('RDS_HOSTNAME'), port=os.environ.get('RDS_PORT'))
+            try:
+                self.conn = psycopg2.connect(database=os.environ.get('RDS_DB_NAME'), user=os.environ.get('RDS_USERNAME'), password=os.environ.get('RDS_PASSWORD'), host=os.environ.get('RDS_HOSTNAME'), port=os.environ.get('RDS_PORT'))
+            except psycopg2.Error as e:
+                raise e
         else:
-            self.conn = psycopg2.connect(database=os.environ.get('PGSQL_DB_NAME'), user=os.environ.get('PGSQL_DB_USER'), password=os.environ.get('PGSQL_DB_PASSWORD'), host=os.environ.get('PGSQL_DB_HOST'), port=os.environ.get('PGSQL_DB_PORT'))
+            try:
+                self.conn = psycopg2.connect(database=os.environ.get('PGSQL_DB_NAME'), user=os.environ.get('PGSQL_DB_USER'), password=os.environ.get('PGSQL_DB_PASSWORD'), host=os.environ.get('PGSQL_DB_HOST'), port=os.environ.get('PGSQL_DB_PORT'))
+            except psycopg2.Error as e:
+                raise e
         self.cur = self.conn.cursor()
         
-
 
     def get_intents(self):
         try:
@@ -27,7 +33,7 @@ class NLP_Database:
         except psycopg2.Error as e:
             self.conn.rollback()
             logger.exception(e.pgerror)
-            raise Exception.DatabaseError(e.pgerror)
+            raise DatabaseError(e.pgerror)
 
     def get_intent_expressions(self,intent):
         if intent:
@@ -38,11 +44,11 @@ class NLP_Database:
             except psycopg2.Error as e:
                 self.conn.rollback()
                 logger.exception(e.pgerror)
-                raise Exception.DatabaseError(e.pgerror)
+                raise DatabaseError(e.pgerror)
         else:
             msg = "Method expects valid intent string as argument"
             logger.exception(msg)
-            raise Exception.DatabaseInputError(msg)
+            raise DatabaseInputError(msg)
                 
     
     def get_intents_and_expressions(self):
@@ -53,7 +59,7 @@ class NLP_Database:
         except psycopg2.Error as e:
             self.conn.rollback()
             logger.exception(e.pgerror)
-            raise Exception.DatabaseError(e.pgerror)
+            raise DatabaseError(e.pgerror)
     
     def add_intent(self, intent):
         try:
@@ -64,7 +70,7 @@ class NLP_Database:
         except psycopg2.Error as e:
             self.conn.rollback()
             logger.exception(e.pgerror)
-            raise Exception.DatabaseError(e.pgerror)
+            raise DatabaseError(e.pgerror)
     
     def add_expressions_to_intent(self, intent, expressions):
         if intent:
@@ -80,15 +86,15 @@ class NLP_Database:
                 else:
                     msg = "Method expects a non-empty list of expressions"
                     logger.exception(msg)
-                    raise Exception.DatabaseInputError(msg)
+                    raise DatabaseInputError(msg)
             except psycopg2.Error as e:
                 self.conn.rollback()
                 logger.exception(e.pgerror)
-                raise Exception.DatabaseError(e.pgerror)
+                raise DatabaseError(e.pgerror)
         else:
             msg = "Method expects valid intent string as argument"
             logger.exception(msg)
-            raise e.DatabaseInputError(msg)
+            raise DatabaseInputError(msg)
             
     def delete_intent(self, intent):
         try:
@@ -100,7 +106,7 @@ class NLP_Database:
         except psycopg2.Error as e:
             self.conn.rollback()
             logger.exception(e.pgerror)
-            raise Exception.DatabaseError(e.pgerror)
+            raise DatabaseError(e.pgerror)
     
     def delete_all_intent_expressions(self, intent):
         try:
@@ -111,7 +117,7 @@ class NLP_Database:
         except psycopg2.Error as e:
             self.conn.rollback()
             logger.exception(e.pgerror)
-            raise Exception.DatabaseError(e.pgerror)
+            raise DatabaseError(e.pgerror)
     
     def delete_expressions_from_intent(self, intent, expressions):
         try:
@@ -123,7 +129,7 @@ class NLP_Database:
         except psycopg2.Error as e:
             self.conn.rollback()
             logger.exception(e.pgerror)
-            raise Exception.DatabaseError(e.pgerror)
+            raise DatabaseError(e.pgerror)
 
         
     def close_database_connection(self):
