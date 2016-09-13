@@ -54,6 +54,7 @@ Additional dependencies may be required for individual packages required by Bolt
 	- freetype-devel.x86_64
 	- lapack-devel.x86_64
 	- blas-devel.x86_64
+	- libsqlite3-dev
 	
 #### Development TODO's
 

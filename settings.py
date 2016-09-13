@@ -16,6 +16,10 @@ load_dotenv(dotenv_path)
 LOGGING
 """
 logger = logging.getLogger('BOLT')
+logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
+fileHandler = logging.FileHandler("{0}/{1}.log".format('./logs', 'stdout.log'))
+fileHandler.setFormatter(logFormatter)
+logger.addHandler(fileHandler)
 
 if os.environ.get('ENVIRONMENT')=='dev':
     logger.setLevel(logging.DEBUG)
