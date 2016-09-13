@@ -6,6 +6,7 @@ Created on May 28, 2016
 '''
 
 import string
+import logging
 
 from nltk.corpus import stopwords
 from sklearn import svm
@@ -21,7 +22,7 @@ from sklearn import naive_bayes
 
 # load Spacy pipeline from cached model    
 nlp = load_spacy('en')
-
+logger = logging.getLogger('BOLT.clf')
 # A custom stoplist
 STOPLIST = set(stopwords.words('english') + ["n't", "'s", "'m", "ca"] + list(ENGLISH_STOP_WORDS))
 # List of symbols we don't care about
@@ -70,8 +71,10 @@ def build_classification_pipeline(skl_classifier=None):
         skl_classifier = 'svm'
     vectorizer = CountVectorizer(tokenizer=tokenize_text, ngram_range=(1,2))
     if(skl_classifier == 'svm'):
+        logger.info("Creating LinearSVC classifier")
         clf = svm.LinearSVC()
     elif (skl_classifier == 'nb'):
+        logger.info("Creating Multinomial Naive Bayes classifier")
         clf = naive_bayes.MultinomialNB()
     return Pipeline([('cleanText', CleanTextTransformer()), ('vectorizer', vectorizer), ('clf', clf)])
 
@@ -91,9 +94,11 @@ def train_classification_pipeline(pipeline=None, training_data=None, skl_classif
         pipeline = build_classification_pipeline(skl_classifier)
     if training_data is None:
         training_set, training_labels = io.create_data_for_pipeline_from_database()
+        logger.info("Using data from DB for training")
     else:
         training_set = training_data[0]
         training_labels = training_data[1]
+    logger.info("Fitting sklearn pipeline to data")
     return pipeline.fit(training_set, training_labels)
 
 def classify_document(pipeline, document):

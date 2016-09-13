@@ -9,9 +9,9 @@ __all__ = ['application']
 logger = logging.getLogger('bolt')
 logger.setLevel(logging.INFO)
 
-application = Flask(__name__)
+application = app = Flask(__name__)
 
-api = Api(application)
+api = Api(app)
 
 api.add_resource(resources.Expressions, '/database/expressions/<string:intent>')
 api.add_resource(resources.Intents, '/database/intents')

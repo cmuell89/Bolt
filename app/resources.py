@@ -3,6 +3,7 @@ Created on Jul 27, 2016
 
 @author: carl
 '''
+import logging
 from flask import jsonify
 from flask import request
 from flask import Response
@@ -15,9 +16,12 @@ Module accessible objects:
     clf: the NLP classification pipeline built using sk-learn (defaults to Naive Bayes 'nb' but can be retrained using Linear SVM 'svm')
     db: the NLP_Database() object used to make calls to the associated Bolt postrgres database
 """
+
+logger = logging.getLogger('BOLT-api')
 # Defaults to Naive Bayes Classifier
-# clf = train_classification_pipeline()
-# db = NLP_Database()
+clf = train_classification_pipeline()
+logger.info('Created default NB classifier on startup')
+db = NLP_Database()
 
 class Classify(Resource):
     def post(self):

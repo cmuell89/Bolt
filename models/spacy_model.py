@@ -15,7 +15,7 @@ from cachetools import cached, Cache, hashkey
 import spacy
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('BOLT.spacy')
 
 
 @cached(Cache(1), key=partial(hashkey, 'spacy'))
@@ -43,5 +43,5 @@ def load_spacy(name, **kwargs):
     Raises:
         RuntimeError: if package can't be loaded
     """
-    logger.info('Loading "%s" language spaCy pipeline', name)
+    logger.info('Caching "%s" language spaCy', name)
     return spacy.load(name, **kwargs)
