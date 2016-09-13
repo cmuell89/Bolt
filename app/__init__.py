@@ -4,14 +4,14 @@ from flask_restful import Api
 from app import resources
 import logging
 
-__all__ = ['app']
+__all__ = ['application']
 
 logger = logging.getLogger('bolt')
 logger.setLevel(logging.INFO)
 
-app = Flask(__name__)
+application = Flask(__name__)
 
-api = Api(app)
+api = Api(application)
 
 api.add_resource(resources.Expressions, '/database/expressions/<string:intent>')
 api.add_resource(resources.Intents, '/database/intents')
