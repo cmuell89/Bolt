@@ -16,8 +16,8 @@ Module accessible objects:
     db: the NLP_Database() object used to make calls to the associated Bolt postrgres database
 """
 # Defaults to Naive Bayes Classifier
-clf = train_classification_pipeline()
-db = NLP_Database()
+# clf = train_classification_pipeline()
+# db = NLP_Database()
 
 class Classify(Resource):
     def post(self):
