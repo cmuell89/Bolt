@@ -3,14 +3,15 @@ from dotenv import load_dotenv
 import logging
 import sys
 import os
+import nltk
 
 """
 ENVIRONMENT 
 .env settings for local environments
 """
-dotenv_path = join(dirname(__file__), '.env')
-load_dotenv(dotenv_path)
-
+if os.path.isfile('./env')==True:
+    dotenv_path = join(dirname(__file__), '.env')
+    load_dotenv(dotenv_path)
 """
 LOGGING
 """
