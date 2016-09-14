@@ -8,9 +8,9 @@ Created on May 28, 2016
 import string
 import logging
 
-from nltk.corpus import stopwords
+# from nltk.corpus import stopwords
 from sklearn import svm
-from sklearn.feature_extraction.stop_words import ENGLISH_STOP_WORDS
+# from sklearn.feature_extraction.stop_words import ENGLISH_STOP_WORDS
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.pipeline import Pipeline
 from textacy.preprocess import normalize_whitespace
@@ -26,7 +26,7 @@ from sklearn import naive_bayes
 nlp = spacy.load('en')
 logger = logging.getLogger('BOLT.clf')
 # A custom stoplist
-STOPLIST = set(stopwords.words('english') + ["n't", "'s", "'m", "ca"] + list(ENGLISH_STOP_WORDS))
+# STOPLIST = set(stopwords.words('english') + ["n't", "'s", "'m", "ca"] + list(ENGLISH_STOP_WORDS))
 # List of symbols we don't care about
 SYMBOLS = " ".join(string.punctuation).split(" ") + ["-----", "---", "...", "“", "”", "'ve"]
 
