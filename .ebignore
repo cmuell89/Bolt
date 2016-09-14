@@ -49,7 +49,6 @@ coverage.xml
 
 # IDE stuff:
 .pydevproject
-.settings/
 
 # Heroku stuff:
 .slugignore
