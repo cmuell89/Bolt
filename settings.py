@@ -3,7 +3,6 @@ from dotenv import load_dotenv
 import logging
 import sys
 import os
-import nltk
 
 """
 ENVIRONMENT 
