@@ -8,6 +8,7 @@ __all__ = ['application']
 
 application = app = Flask(__name__)
 
+application.debug=True
 # # run the app.
 # if __name__ == "__main__":
 #     # Setting debug to True enables debug output. This line should be
