@@ -1,7 +1,0 @@
-2016-09-13 14:44:02,012 [MainThread  ] [INFO ]  Running in test mode. Logging with level INFO
-2016-09-13 14:44:03,784 [MainThread  ] [INFO ]  Caching "en" language spaCy
-2016-09-13 14:44:09,856 [MainThread  ] [INFO ]  Creating LinearSVC classifier
-2016-09-13 14:44:09,863 [MainThread  ] [INFO ]  Retrieving all intents and expressions.
-2016-09-13 14:44:09,865 [MainThread  ] [INFO ]  Using data from DB for training
-2016-09-13 14:44:09,865 [MainThread  ] [INFO ]  Fitting sklearn pipeline to data
-2016-09-13 14:44:10,445 [MainThread  ] [INFO ]  Created default LinearSVC classifier on startup

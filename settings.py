@@ -16,32 +16,23 @@ load_dotenv(dotenv_path)
 LOGGING
 """
 logger = logging.getLogger('BOLT')
-logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
-fileHandler = logging.FileHandler("{0}/{1}.log".format('./logs', 'stdout.log'))
-fileHandler.setFormatter(logFormatter)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+stdoutHandler = logging.StreamHandler(sys.stdout)
+stdoutHandler.setFormatter(formatter)
+
+fileHandler = logging.FileHandler("{0}/{1}.log".format('./logs', 'stdout'))
+fileHandler.setFormatter(formatter)
+
 logger.addHandler(fileHandler)
+logger.addHandler(stdoutHandler)
 
 if os.environ.get('ENVIRONMENT')=='dev':
     logger.setLevel(logging.DEBUG)
-    stdouth = logging.StreamHandler(sys.stdout)
-    stdouth.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    stdouth.setFormatter(formatter)
-    logger.addHandler(stdouth)
     logger.info("Running in development mode. Logging with level DEBUG")
 elif os.environ.get('ENVIRONMENT')=='test':
-    logger.setLevel(logging.INFO)
-    stdouth = logging.StreamHandler(sys.stdout)
-    stdouth.setLevel(logging.INFO)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    stdouth.setFormatter(formatter)
-    logger.addHandler(stdouth)
-    logger.info("Running in test mode. Logging with level INFO")
+    logger.setLevel(logging.DEBUG)
+    logger.info("Running in test mode. Logging with level DEBUG")
 elif os.environ.get('ENVIRONMENT')=='prod':
     logger.setLevel(logging.INFO)
-    stdouth = logging.StreamHandler(sys.stdout)
-    stdouth.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    stdouth.setFormatter(formatter)
-    logger.addHandler(stdouth)
     logger.info("Running in production mode. Logging with level INFO")

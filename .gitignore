@@ -53,6 +53,10 @@ docs/_build/
 # virtualenv
 /bolt
 /bolt3.4
+/bolt-aws
+
+# logging
+logs/
 
 # Elastic Beanstalk Files
 .elasticbeanstalk/*
