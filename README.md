@@ -59,13 +59,8 @@ Additional dependencies may be required for individual packages required by Bolt
 #### Development TODO's
 
 ##### Not Started:
-
-- [ ] Authentication:
-	- [ ] Identify a MongoDB driver to use for authetication purposes
-	- [ ] Connect to existing MongoDB instance that API connect to.
 - [ ] Improve classification response to show scoring metrics if possible for LinearSVM
-- [ ] Implement different classify responses based on Naive Bayes or LinearSV<
-- [ ] Build out logging capabilities
+- [ ] Implement different classify responses based on Naive Bayes or LinearSVC
 - [ ] COMMENT/DOCUMENTATION OVERHAUL => START STRONG, FINISH STRONG
 - [ ] Start prototyping 'Trait' parsing
 - [ ] Prototype 'Entity' parsing
@@ -73,17 +68,21 @@ Additional dependencies may be required for individual packages required by Bolt
 	- [ ] SpaCy NER
 
 ##### In-Progress:
-- [ ] Host Server on Heroku
-- [ ] Implement config/environment files for use in configuring app.
+- [ ] Setup External Postgres Database to handle Expressions
+- [ ] Authentication:
+	- [ ] Identify a MongoDB driver to use for authetication purposes and connect to LIAB MondoDB
+	- [ ] Connect to existing MongoDB instance that API connect to.
 - [ ] Implement request parsing and parameter validation middleware or library
 	- Currently writing too much if/elif/else paramter checking
-- [ ] Allow choice between Naive Bayes and LinearSVM during construction of sk-learn pipeline
 - [ ] Create route to rebuild classifier with new options
 	- [ ] code
 	- [ ] test
 
-
 ##### Completed:
+- [x] Allow choice between Naive Bayes and LinearSVM during construction of sk-learn pipeline
+- [x] Implement config/environment files for use in configuring app.
+- [x] Host Server on AWS Elastic Beanstalk
+- [x] Build out logging capabilities BASIC
 - [x] Create route to delete intent and make sure all expressions are deleted too
 	- [x] code
 	- [x] test
