@@ -49,12 +49,12 @@ Additional dependencies may be required for individual packages required by Bolt
 - yum package dependencies required on Amazon Linux EC2 instance: 
 	- postgresql94-devel.x86_64
   	- libffi-devel.x86_64 
-  	- gcc-c++
+  	- gcc-c++.x86_64
   	- libpng-devel.x86_64  
 	- freetype-devel.x86_64
 	- lapack-devel.x86_64
 	- blas-devel.x86_64
-	- libsqlite3-dev
+	- libsqlite3-dev.x84_64
 	
 #### Development TODO's
 
