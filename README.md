@@ -55,6 +55,7 @@ Additional dependencies may be required for individual packages required by Bolt
 	- lapack-devel.x86_64
 	- blas-devel.x86_64
 	- libsqlite3-dev.x84_64
+- Not caching Spacy Model. Uncertain if necessary at the moment
 	
 #### Development TODO's
 
@@ -64,10 +65,12 @@ Additional dependencies may be required for individual packages required by Bolt
 - [ ] COMMENT/DOCUMENTATION OVERHAUL => START STRONG, FINISH STRONG
 - [ ] Start prototyping 'Trait' parsing
 - [ ] Prototype 'Entity' parsing
-	- [ ] Gazetteer
+	- [ ] Gazetteer (Look into Matcher
 	- [ ] SpaCy NER
+- [ ] Start prototyping datetime parsing
 
 ##### In-Progress:
+- [ ] Test caching of Spacy Model to see if it works in production
 - [ ] Setup External Postgres Database to handle Expressions
 - [ ] Authentication:
 	- [ ] Identify a MongoDB driver to use for authetication purposes and connect to LIAB MondoDB
