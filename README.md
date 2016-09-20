@@ -13,7 +13,7 @@ Additional dependencies may be required for individual packages required by Bolt
 - Scikit learn based classfication
 	- Scikit learn pipeline
 	- training data pulled from postgres db
-- Caching of SpaCy model
+- Caching of SpaCy model ** See deployment notes
 - Routes
 	- /classification/classify => returns intent classification of a given expression
 	- /classification/train => trains the classifier again (hopefully after new expressions were added
@@ -45,7 +45,7 @@ Additional dependencies may be required for individual packages required by Bolt
 - Logging
 	- Start of implementation of python's native logging module to make print() go the way of the dodo bird
 
-#### Development Notes
+##### Development Notes
 - yum package dependencies required on Amazon Linux EC2 instance: 
 	- postgresql94-devel.x86_64
   	- libffi-devel.x86_64 
@@ -72,16 +72,15 @@ Additional dependencies may be required for individual packages required by Bolt
 ##### In-Progress:
 - [ ] Test caching of Spacy Model to see if it works in production
 - [ ] Setup External Postgres Database to handle Expressions
-- [ ] Authentication:
-	- [ ] Identify a MongoDB driver to use for authetication purposes and connect to LIAB MondoDB
-	- [ ] Connect to existing MongoDB instance that API connect to.
-- [ ] Implement request parsing and parameter validation middleware or library
+- [ ] Implement request parsing and parameter validation middleware or library-
 	- Currently writing too much if/elif/else paramter checking
 - [ ] Create route to rebuild classifier with new options
 	- [ ] code
 	- [ ] test
 
 ##### Completed:
+- [x] Authentication Using simple Token based WWW-Authenticate authorization
+	- Requires added 'WSGIAuthenticationpass On' to wsgi.conf file on Elastic Bek 
 - [x] Allow choice between Naive Bayes and LinearSVM during construction of sk-learn pipeline
 - [x] Implement config/environment files for use in configuring app.
 - [x] Host Server on AWS Elastic Beanstalk
