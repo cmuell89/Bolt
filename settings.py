@@ -8,7 +8,7 @@ import os
 ENVIRONMENT 
 .env settings for local environments
 """
-if os.path.isfile('./env')==True:
+if os.path.isfile('./.env')==True:
     dotenv_path = join(dirname(__file__), '.env')
     load_dotenv(dotenv_path)
 """
