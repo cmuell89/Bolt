@@ -4,9 +4,11 @@ Created on Jul 27, 2016
 @author: carl
 '''
 import logging
+import os
 from flask import jsonify
 from flask import request
 from flask import Response
+from app.authorization import auth
 from database.database import NLP_Database
 from flask_restful import Resource
 from classification.classification import train_classification_pipeline, classify_document
@@ -32,6 +34,9 @@ except Exception as e:
     logger.warning("All API endpoints requiring a db connection will fail.")
 
 class Classify(Resource):
+    
+    decorators = [auth.login_required]
+    
     def post(self):
         """
         Returns the intent classification of the query.
@@ -47,6 +52,9 @@ class Classify(Resource):
             return resp
         
 class Train(Resource):
+    
+    decorators = [auth.login_required]
+    
     def get(self, classifier):
         """
         Trains the existing classifier object accessed by all '/classification/*' routes.
@@ -60,6 +68,9 @@ class Train(Resource):
         return resp
     
 class Expressions(Resource):
+    
+    decorators = [auth.login_required]
+    
     def post(self, intent):
         """
         Adds expression/s to an intent
@@ -107,6 +118,9 @@ class Expressions(Resource):
         
     
     def delete(self, intent):
+        
+        decorators = [auth.login_required]
+        
         """
         Deletes an expression/s from an intent
         """
@@ -150,6 +164,9 @@ class Expressions(Resource):
             return resp   
             
 class Intents(Resource):
+    
+    decorators = [auth.login_required]
+    
     def post(self):
         """
         Posts an intent to NLP postgres database.
