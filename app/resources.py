@@ -18,7 +18,7 @@ Module accessible objects:
 """
 
 logger = logging.getLogger('BOLT.api')
-# Defaults to LinearSVC Classifier on start-up
+
 try:
     clf = train_classification_pipeline()
     logger.info('Created default LinearSVC classifier on startup')
