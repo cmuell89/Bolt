@@ -46,15 +46,19 @@ Additional dependencies may be required for individual packages required by Bolt
 	- Start of implementation of python's native logging module to make print() go the way of the dodo bird
 
 ##### Development Notes
-- yum package dependencies required on Amazon Linux EC2 instance: 
-	- postgresql94-devel.x86_64
-  	- libffi-devel.x86_64 
-  	- gcc-c++.x86_64
-  	- libpng-devel.x86_64  
-	- freetype-devel.x86_64
-	- lapack-devel.x86_64
-	- blas-devel.x86_64
-	- libsqlite3-dev.x84_64
+- latest yum package dependencies required on Amazon Linux EC2 instance (will receive deploy errors if packages cannot download): 
+    postgresql94-devel.x86_64: []
+    libffi-devel.x86_64: [] 
+    gcc48.x86_64: []
+    gcc48-gfortran.x86_64: []
+    libpng-devel.x86_64: [] 
+    freetype-devel.x86_64: []
+    lapack-devel.x86_64: []
+    blas-devel.x86_64: []
+    libpng-devel.x86_64: []
+    zlib-devel.x86_64: []
+    atlas-devel.x86_64: []
+    
 - Not caching Spacy Model. Uncertain if necessary at the moment
 	
 #### Development TODO's
