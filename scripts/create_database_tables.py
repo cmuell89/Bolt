@@ -1,21 +1,29 @@
-from database.schemas import Base, Expressions, Intents
+from database.schemas import Base
 from sqlalchemy import create_engine
 from sqlalchemy.engine.url import URL
+from os.path import join, dirname
+from dotenv import load_dotenv
+import os
 
-if os.path.isfile('../env')==True:
-    dotenv_path = join(dirname(__file__), '.env')
-    load_dotenv(dotenv_path)
+"""
+Database schemas are defined in database.schemas.py
+"""
+
     
 if __name__ == '__main__':
     
-    database = os.environ.get('PGSQL_DB_NAME') 
-    user = os.environ.get('PGSQL_DB_USER')
-    password = os.environ.get('PGSQL_DB_PASSWORD')
-    host = os.environ.get('PGSQL_DB_HOST')
-    port = os.environ.get('PGSQL_DB_PORT')
+    if os.path.isfile('../.env')==True:
+        dotenv_path = join(dirname(__file__), '../.env')
+        load_dotenv(dotenv_path)
     
-    connectionURL = URL('psycopg2', user, password, host, port, database)
+    database = os.environ.get('RDS_DB_NAME') 
+    user = os.environ.get('RDS_USERNAME')
+    password = os.environ.get('RDS_PASSWORD')
+    host = os.environ.get('RDS_HOSTNAME')
+    port = os.environ.get('RDS_PORT')
     
-    engine = create_engine(connectionURL)
+    connectionURL = URL('postgres', user, password, host, port, database)
     
+    engine = create_engine(connectionURL, echo=True)
+
     Base.metadata.create_all(engine)
