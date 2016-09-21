@@ -1,0 +1,10 @@
+branch-defaults:
+  default:
+    environment: bolt
+global:
+  application_name: Bolt
+  default_ec2_keyname: aws-eb
+  default_platform: 64bit Amazon Linux 2016.03 v2.1.6 running Python 3.4
+  default_region: us-west-2
+  profile: eb-cli
+  sc: null
