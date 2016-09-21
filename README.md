@@ -16,7 +16,7 @@ When deploying from the CLI locally to production create a test environment on E
 
 Run eb init to configure the current Bolt version to deploy to the test environment.
 
-Additionally, make sure to create the following file (ensure proper .yml format):
+Additionally, make sure to create the following file (ensure proper .yml format 2 space indents!):
 
 	Directory location: .elasticbeanstalk
 	
@@ -25,12 +25,27 @@ Additionally, make sure to create the following file (ensure proper .yml format)
 	Contents:
 	
 	option_settings:
-	  - namespace: aws:elasticbeanstalk:application:environment
-	    option_name: ENVIRONMENT
-	    value: prod
-	  - namespace: aws:elasticbeanstalk:application:environment
-	    option_name: ACCESS_TOKEN
-	    value: your_access_token
+  	  - namespace: aws:elasticbeanstalk:application:environment
+        option_name: ENVIRONMENT
+        value: prod
+      - namespace: aws:elasticbeanstalk:application:environment
+        option_name: ACCESS_TOKEN
+        value: your_access_token
+      - namespace: aws:elasticbeanstalk:application:environment
+        option_name: RDS_DB_NAME
+        value: dbname
+      - namespace: aws:elasticbeanstalk:application:environment
+        option_name: RDS_HOSTNAME
+        value: dbHostEndpoint
+      - namespace: aws:elasticbeanstalk:application:environment
+        option_name: RDS_PORT
+        value: port
+      - namespace: aws:elasticbeanstalk:application:environment
+        option_name: RDS_USERNAME
+        value: username
+      - namespace: aws:elasticbeanstalk:application:environment
+        option_name: RDS_PASSWORD
+        value: password
   
 
 #### Current Release Features
