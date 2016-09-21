@@ -10,21 +10,27 @@ Be sure to install in your virtual environment via $ pip install -r requirements
 Additional dependencies may be required for individual packages required by Bolt.
 
 ### Deploy Requirements
-When deploying from the CLI locally to production, be sure to create the following file (ensure proper .yml format):
+Deploying onto Elastic Beanstalk requires the CLI tool eb (you can also use the more general aws CLI tool)
 
-Directory location: .elasticbeanstalk
+When deploying from the CLI locally to production create a test environment on Elastic Beanstalk first! 
 
-Filename: 01_environment.config
+Run eb init to configure the current Bolt version to deploy to the test environment.
 
-Contents:
+Additionally, make sure to create the following file (ensure proper .yml format):
 
-option_settings:
-  - namespace: aws:elasticbeanstalk:application:environment
-    option_name: ENVIRONMENT
-    value: prod
-  - namespace: aws:elasticbeanstalk:application:environment
-    option_name: ACCESS_TOKEN
-    value: your_access_token
+	Directory location: .elasticbeanstalk
+	
+	Filename: 01_environment.config
+	
+	Contents:
+	
+	option_settings:
+	  - namespace: aws:elasticbeanstalk:application:environment
+	    option_name: ENVIRONMENT
+	    value: prod
+	  - namespace: aws:elasticbeanstalk:application:environment
+	    option_name: ACCESS_TOKEN
+	    value: your_access_token
   
 
 #### Current Release Features
