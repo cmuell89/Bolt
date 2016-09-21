@@ -2,12 +2,30 @@
 Web Server hosting Lightning in a Bot's NLP prototype system.
 
 ### Python Environment
-The interpreter environment is Anaconda3 with Python version 3.5.
+The interpreter environment is a virtual environment running Python version 3.5.
 
 ### Build Requirements
-See requirements.txt for dependency requirements.
-Packages can be installed via the conda package manager or pip.
-Additional dependencies may be required for individual packages required by Bolt
+See requirements.txt for dependency requirements. 
+Be sure to install in your virtual environment via $ pip install -r requirements.txt.
+Additional dependencies may be required for individual packages required by Bolt.
+
+### Deploy Requirements
+When deploying from the CLI locally to production, be sure to create the following file (ensure proper .yml format):
+
+Directory location: .elasticbeanstalk
+
+Filename: 01_environment.config
+
+Contents:
+
+option_settings:
+  - namespace: aws:elasticbeanstalk:application:environment
+    option_name: ENVIRONMENT
+    value: prod
+  - namespace: aws:elasticbeanstalk:application:environment
+    option_name: ACCESS_TOKEN
+    value: your_access_token
+  
 
 #### Current Release Features
 - Scikit learn based classfication
@@ -46,7 +64,7 @@ Additional dependencies may be required for individual packages required by Bolt
 	- Start of implementation of python's native logging module to make print() go the way of the dodo bird
 
 ##### Development Notes
-- latest yum package dependencies required on Amazon Linux EC2 instance (will receive deploy errors if packages cannot download): 
+- latest yum package dependencies required on Amazon Linux EC2 instance. These are preinstalled on an Amazon AMI and used for deploys: 
     postgresql94-devel.x86_64: []
     libffi-devel.x86_64: [] 
     gcc48.x86_64: []
