@@ -16,11 +16,11 @@ if __name__ == '__main__':
         dotenv_path = join(dirname(__file__), '../.env')
         load_dotenv(dotenv_path)
     
-    database = os.environ.get('RDS_DB_NAME') 
-    user = os.environ.get('RDS_USERNAME')
-    password = os.environ.get('RDS_PASSWORD')
-    host = os.environ.get('RDS_HOSTNAME')
-    port = os.environ.get('RDS_PORT')
+    database = os.environ.get('LOCAL_DB_NAME') 
+    user = os.environ.get('LOCAL_DB_USERNAME')
+    password = os.environ.get('LOCAL_DB_PASSWORD')
+    host = os.environ.get('LOCAL_DB_HOSTNAME')
+    port = os.environ.get('LOCAL_DB_PORT')
     
     connectionURL = URL('postgres', user, password, host, port, database)
     

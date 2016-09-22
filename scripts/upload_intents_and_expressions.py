@@ -15,11 +15,11 @@ if __name__ == '__main__':
             dotenv_path = join(dirname(__file__), '../.env')
             load_dotenv(dotenv_path)
         
-    database = os.environ.get('RDS_DB_NAME') 
-    user = os.environ.get('RDS_USERNAME')
-    password = os.environ.get('RDS_PASSWORD')
-    host = os.environ.get('RDS_HOSTNAME')
-    port = os.environ.get('RDS_PORT')
+    database = os.environ.get('LOCAL_DB_NAME') 
+    user = os.environ.get('LOCAL_DB_USERNAME')
+    password = os.environ.get('LOCAL_DB_PASSWORD')
+    host = os.environ.get('LOCAL_DB_HOSTNAME')
+    port = os.environ.get('LOCAL_DB_PORT')
     # Use environment variables and move such usage into production database module
     conn = psycopg2.connect(database=database, user=user, password=password, host=host, port=port)
     cur = conn.cursor()
