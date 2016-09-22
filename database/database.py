@@ -20,9 +20,8 @@ class NLP_Database:
     Constructing an NLP_Databse depends on two sets of environment variables LOCAL vs RDS. 
     '''
     def __init__(self):
-        logger.info("Database environment: ", os.environ.get('ENVIRONMENT'))
         try:
-            if os.environ.get('ENVIRONMENT') is 'prod':
+            if os.environ.get('ENVIRONMENT')=='prod':
                 self.conn = psycopg2.connect(database=os.environ.get('RDS_DB_NAME'), user=os.environ.get('RDS_USERNAME'), password=os.environ.get('RDS_PASSWORD'), host=os.environ.get('RDS_HOSTNAME'), port=os.environ.get('RDS_PORT')) 
             else:
                 self.conn = psycopg2.connect(database=os.environ.get('LOCAL_DB_NAME'), user=os.environ.get('LOCAL_DB_USER'), password=os.environ.get('LOCAL_DB_PASSWORD'), host=os.environ.get('LOCAL_DB_HOST'), port=os.environ.get('LOCAL_DB_PORT'))
