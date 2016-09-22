@@ -1,23 +1,21 @@
 '''
 Created on Jul 27, 2016
 
-@author: carl
+@author: Carl Mueller
+
+clf: the NLP classification pipeline built using sk-learn (defaults to Naive Bayes 'svm' but can be retrained using Linear SVM 'svm')
+db: the NLP_Database() object used to make calls to the associated Bolt postgreSQL database
+
 '''
 import logging
-import os
 from flask import jsonify
 from flask import request
 from flask import Response
-from app.authorization import auth
+from .authorization import auth
 from database.database import NLP_Database
 from flask_restful import Resource
 from classification.classification import train_classification_pipeline, classify_document
 
-"""
-Module accessible objects:
-    clf: the NLP classification pipeline built using sk-learn (defaults to Naive Bayes 'nb' but can be retrained using Linear SVM 'svm')
-    db: the NLP_Database() object used to make calls to the associated Bolt postrgres database
-"""
 
 logger = logging.getLogger('BOLT.api')
 
@@ -59,10 +57,10 @@ class Train(Resource):
         """
         Trains the existing classifier object accessed by all '/classification/*' routes.
         """
-        if not classifier == 'svm' or classifier == 'nb':
+        if classifier not in ('svm','nb'):
             classifier = 'svm'
-        clf = train_classification_pipeline(classifier)
-        response_message = "Classifier successfully trained!"
+        clf = train_classification_pipeline(None,None,classifier)
+        response_message = "Classifier successfully trained: " + classifier
         resp = jsonify(message=response_message)
         resp.status_code = 200
         return resp
@@ -118,8 +116,6 @@ class Expressions(Resource):
         
     
     def delete(self, intent):
-        
-        decorators = [auth.login_required]
         
         """
         Deletes an expression/s from an intent

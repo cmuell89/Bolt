@@ -1,7 +1,7 @@
 from flask import Flask
 from flask import jsonify
 from flask_restful import Api
-from app import resources
+from . import resources
 import logging
 
 __all__ = ['application']
