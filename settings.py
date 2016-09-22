@@ -30,7 +30,7 @@ if os.environ.get('ENVIRONMENT')=='dev':
     logger.setLevel(logging.DEBUG)
     logger.info("Running in development mode. Logging with level DEBUG")
 elif os.environ.get('ENVIRONMENT')=='test':
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
     logger.info("Running in test mode. Logging with level DEBUG")
 elif os.environ.get('ENVIRONMENT')=='prod':
     logger.setLevel(logging.INFO)
