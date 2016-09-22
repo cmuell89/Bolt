@@ -1,9 +1,11 @@
-'''
+"""
 Created on May 28, 2016
 
 @author: Carl L. Mueller
 @copyright: Lightning in a Bot, Inc
-'''
+
+Functions managing the prototype classifier.
+"""
 
 import string
 import logging
@@ -15,15 +17,15 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.pipeline import Pipeline
 from textacy.preprocess import normalize_whitespace
 
-# from models.spacy_model import load_spacy
-import spacy
+from models.spacy_model import load_spacy
+# import spacy
 from transformers.CleanTextTransformer import CleanTextTransformer
 from utils import io
 from sklearn import naive_bayes
 
 # load Spacy pipeline from cached model    
-# nlp = load_spacy('en')
-nlp = spacy.load('en')
+nlp = load_spacy('en')
+# nlp = spacy.load('en')
 logger = logging.getLogger('BOLT.clf')
 # A custom stoplist
 # STOPLIST = set(stopwords.words('english') + ["n't", "'s", "'m", "ca"] + list(ENGLISH_STOP_WORDS))
@@ -33,7 +35,7 @@ SYMBOLS = " ".join(string.punctuation).split(" ") + ["-----", "---", "...", "“
 
 def tokenize_text(sample):
     """
-    Function that tokenizes, lemmatizes, removes potential stopwords/stopsymbols, and cleans whitespace.
+    Function that tokenizes, lemmatizes, removes potential stopwords/stop-symbols, and cleans whitespace.
     Lemmas may be useful only for intent classification but not other types of functionality (traits like plurality etc,.)
     """
     sample = normalize_whitespace(sample)
@@ -73,10 +75,10 @@ def build_classification_pipeline(skl_classifier=None):
         skl_classifier = 'svm'
     vectorizer = CountVectorizer(tokenizer=tokenize_text, ngram_range=(1,2))
     if(skl_classifier == 'svm'):
-        logger.info("Creating LinearSVC classifier")
+        logger.debug("Creating LinearSVC classifier")
         clf = svm.LinearSVC()
     elif (skl_classifier == 'nb'):
-        logger.info("Creating Multinomial Naive Bayes classifier")
+        logger.debug("Creating Multinomial Naive Bayes classifier")
         clf = naive_bayes.MultinomialNB()
     return Pipeline([('cleanText', CleanTextTransformer()), ('vectorizer', vectorizer), ('clf', clf)])
 
@@ -90,17 +92,18 @@ def train_classification_pipeline(pipeline=None, training_data=None, skl_classif
     Raises:
         RuntimeError: if package can't be loaded
     """
-    if(skl_classifier==None):
+
+    if skl_classifier is None:
         skl_classifier = 'svm'
     if pipeline is None:
         pipeline = build_classification_pipeline(skl_classifier)
     if training_data is None:
         training_set, training_labels = io.create_data_for_pipeline_from_database()
-        logger.info("Using data from DB for training")
+        logger.debug("Using data from DB for training")
     else:
         training_set = training_data[0]
         training_labels = training_data[1]
-    logger.info("Fitting sklearn pipeline to data")
+    logger.debug("Fitting sklearn pipeline to data")
     return pipeline.fit(training_set, training_labels)
 
 def classify_document(pipeline, document):
