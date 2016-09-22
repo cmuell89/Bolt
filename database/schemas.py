@@ -2,6 +2,8 @@
 Created on Sep 19, 2016
 
 @author: carl
+
+SQLAlchemy-ORM class-based table definitions for the NLP_Database postgreSQL layer.
 '''
 
 from sqlalchemy.ext.declarative import declarative_base

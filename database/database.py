@@ -1,7 +1,11 @@
 '''
 Created on Jul 21, 2016
 
-@author: carl
+@author: Carl Mueller
+
+Class: NLP_Database
+Database layer communicating with postgreSQL via psycopg2 that manages expressions and intents for the classifier.
+
 '''
 import psycopg2
 import logging
@@ -11,24 +15,24 @@ from utils.exceptions import DatabaseError, DatabaseInputError
 logger = logging.getLogger('BOLT.db')
 
 class NLP_Database:
+    '''
+    Core database communication layer to interact with postgreSQL. 
+    Constructing an NLP_Databse depends on two sets of environment variables LOCAL vs RDS. 
+    '''
     def __init__(self):
-        if 'RDS_HOSTNAME' in os.environ:
-            try:
-                self.conn = psycopg2.connect(database=os.environ.get('RDS_DB_NAME'), user=os.environ.get('RDS_USERNAME'), password=os.environ.get('RDS_PASSWORD'), host=os.environ.get('RDS_HOSTNAME'), port=os.environ.get('RDS_PORT'))
-            except psycopg2.Error as e:
-                raise e
-        else:
-            try:
-                self.conn = psycopg2.connect(database=os.environ.get('PGSQL_DB_NAME'), user=os.environ.get('PGSQL_DB_USER'), password=os.environ.get('PGSQL_DB_PASSWORD'), host=os.environ.get('PGSQL_DB_HOST'), port=os.environ.get('PGSQL_DB_PORT'))
-            except psycopg2.Error as e:
-                raise e
-        self.cur = self.conn.cursor()
-        
+        try:
+            if os.environ.get('ENVIRONMENT') is 'prod':
+                self.conn = psycopg2.connect(database=os.environ.get('RDS_DB_NAME'), user=os.environ.get('RDS_USERNAME'), password=os.environ.get('RDS_PASSWORD'), host=os.environ.get('RDS_HOSTNAME'), port=os.environ.get('RDS_PORT')) 
+            else:
+                self.conn = psycopg2.connect(database=os.environ.get('LOCAL_DB_NAME'), user=os.environ.get('LOCAL_DB_USER'), password=os.environ.get('LOCAL_DB_PASSWORD'), host=os.environ.get('LOCAL_DB_HOST'), port=os.environ.get('LOCAL_DB_PORT'))
+            self.cur = self.conn.cursor()
+        except psycopg2.Error as e:
+            raise e
 
     def get_intents(self):
         try:
             self.cur.execute("SELECT public.intents.intents FROM public.intents;")
-            logger.info("Retrieving all intents")
+            logger.debug("Retrieving all intents")
             return self.cur.fetchall()
         except psycopg2.Error as e:
             self.conn.rollback()
@@ -39,7 +43,7 @@ class NLP_Database:
         if intent:
             try:
                 self.cur.execute("SELECT public.expressions.expressions FROM public.intents INNER JOIN public.expressions ON public.intents.id = public.expressions.intent_id WHERE public.intents.intents = %s;", (intent,))
-                logger.info("Retrieving all expressions for the intent: %s", intent)
+                logger.debug("Retrieving all expressions for the intent: %s", intent)
                 return self.cur.fetchall()
             except psycopg2.Error as e:
                 self.conn.rollback()
@@ -54,7 +58,7 @@ class NLP_Database:
     def get_intents_and_expressions(self):
         try:
             self.cur.execute("SELECT public.intents.intents, public.expressions.expressions FROM public.intents INNER JOIN public.expressions ON public.intents.id = public.expressions.intent_id;")
-            logger.info("Retrieving all intents and expressions.")
+            logger.debug("Retrieving all intents and expressions.")
             return self.cur.fetchall()
         except psycopg2.Error as e:
             self.conn.rollback()
@@ -65,7 +69,7 @@ class NLP_Database:
         try:
             self.cur.execute("INSERT INTO public.intents (intents) VALUES (%s);", (intent,))
             self.conn.commit()
-            logger.info("Adding intent: %s", intent)
+            logger.debug("Adding intent: %s", intent)
             return self.get_intents()
         except psycopg2.Error as e:
             self.conn.rollback()
@@ -81,7 +85,7 @@ class NLP_Database:
                     for expression in expressions:
                         self.cur.execute("INSERT INTO public.expressions (expressions, intent_id) VALUES (%s, %s)", (expression, intentID))
                         self.conn.commit()
-                    logger.info("Adding expressions to intent: %s", intent)
+                    logger.debug("Adding expressions to intent: %s", intent)
                     return self.get_intent_expressions(intent)
                 else:
                     msg = "Method expects a non-empty list of expressions"
@@ -101,7 +105,7 @@ class NLP_Database:
             self.delete_all_intent_expressions(intent)
             self.cur.execute("DELETE FROM public.intents WHERE public.intents.intents = %s;", (intent,))
             self.conn.commit()
-            logger.info("Deleting intent: %s", intent)
+            logger.debug("Deleting intent: %s", intent)
             return self.get_intents()
         except psycopg2.Error as e:
             self.conn.rollback()
@@ -110,9 +114,10 @@ class NLP_Database:
     
     def delete_all_intent_expressions(self, intent):
         try:
+            print(intent)
             self.cur.execute("DELETE FROM public.expressions WHERE public.expressions.intent_id = (SELECT id FROM public.intents WHERE public.intents.intents = %s);", (intent,))
             self.conn.commit()
-            logger.info("Deleting all expressions from intent: %s", intent)
+            logger.debug("Deleting all expressions from intent: %s", intent)
             return self.get_intent_expressions(intent)
         except psycopg2.Error as e:
             self.conn.rollback()
@@ -123,7 +128,7 @@ class NLP_Database:
         try:
             for expression in expressions:
                 self.cur.execute("DELETE FROM public.expressions WHERE public.expressions.intent_id = (SELECT id FROM public.intents WHERE public.intents.intents = %s) AND public.expressions.expressions = %s;", (intent, expression))
-                logger.info("Deleting the expression: '%s' from intent: %s", expression, intent)
+                logger.debug("Deleting the expression: '%s' from intent: %s", expression, intent)
                 self.conn.commit()
             return self.get_intent_expressions(intent)
         except psycopg2.Error as e:
