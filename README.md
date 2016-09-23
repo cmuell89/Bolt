@@ -2,7 +2,7 @@
 Web Server hosting Lightning in a Bot's NLP prototype system.
 
 ### Python Environment
-The interpreter environment is a virtual environment running Python version 3.5.
+The interpreter environment is a virtual environment running Python version 3.5 (3.4 on Amazon Linux EC2 isntance).
 
 ### Build Requirements
 See requirements.txt for dependency requirements. 
@@ -52,7 +52,7 @@ Additionally, make sure to create the following file (ensure proper .yml format 
 - Scikit learn based classfication
 	- Scikit learn pipeline
 	- training data pulled from postgres db
-- Caching of SpaCy model ** See deployment notes
+- Caching of SpaCy model
 - Routes
 	- /classification/classify => returns intent classification of a given expression
 	- /classification/train => trains the classifier again (hopefully after new expressions were added
@@ -67,6 +67,8 @@ Additionally, make sure to create the following file (ensure proper .yml format 
 		- post => Add intent passed in request payload to database
 		- get => Gets all the existing intents stored in the database
 		- delete => Deletes intent and all associated expressions
+	- /aws-eb-health
+		- health test for Elastic Beanstalk
 - Database
 	- Intent table
 	- Expression table (join on intent_id)
@@ -82,7 +84,6 @@ Additionally, make sure to create the following file (ensure proper .yml format 
 - Error Handling
 	- Custom errors that raise exceptions to the route level to respond with appropriate error messages and status codes
 - Logging
-	- Start of implementation of python's native logging module to make print() go the way of the dodo bird
 
 ##### Development Notes
 - latest yum package dependencies required on Amazon Linux EC2 instance. These are preinstalled on an Amazon AMI and used for deploys: 
@@ -104,6 +105,7 @@ Additionally, make sure to create the following file (ensure proper .yml format 
 
 ##### Not Started:
 - [ ] Improve classification response to show scoring metrics if possible for LinearSVM
+- [ ] Look into using Flask's g object for persistent db connection to assist with thread safety
 - [ ] Implement different classify responses based on Naive Bayes or LinearSVC
 - [ ] COMMENT/DOCUMENTATION OVERHAUL => START STRONG, FINISH STRONG
 - [ ] Start prototyping 'Trait' parsing
@@ -111,17 +113,21 @@ Additionally, make sure to create the following file (ensure proper .yml format 
 	- [ ] Gazetteer (Look into Matcher
 	- [ ] SpaCy NER
 - [ ] Start prototyping datetime parsing
+	- Hit up SpaCy's gitter to see if we can make this into a 
 
 ##### In-Progress:
-- [ ] Test caching of Spacy Model to see if it works in production
-- [ ] Setup External Postgres Database to handle Expressions
+
 - [ ] Implement request parsing and parameter validation middleware or library-
 	- Currently writing too much if/elif/else paramter checking
+	- Flask-Restful currently uses reqparse although it will be deprecated upon next realse
+	- Perhaps look into using Marshmallow to prepare for transtion
 - [ ] Create route to rebuild classifier with new options
 	- [ ] code
 	- [ ] test
 
 ##### Completed:
+- [x] Setup External Postgres Database to handle Expressions
+- [x] Test caching of Spacy Model to see if it works in production
 - [x] Authentication Using simple Token based WWW-Authenticate authorization
 	- Requires added 'WSGIAuthenticationpass On' to wsgi.conf file on Elastic Bek 
 - [x] Allow choice between Naive Bayes and LinearSVM during construction of sk-learn pipeline
