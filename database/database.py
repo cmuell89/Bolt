@@ -114,7 +114,6 @@ class NLP_Database:
     
     def delete_all_intent_expressions(self, intent):
         try:
-            print(intent)
             self.cur.execute("DELETE FROM public.expressions WHERE public.expressions.intent_id = (SELECT id FROM public.intents WHERE public.intents.intents = %s);", (intent,))
             self.conn.commit()
             logger.debug("Deleting all expressions from intent: %s", intent)
