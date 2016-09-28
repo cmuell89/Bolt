@@ -200,7 +200,6 @@ class Intents(Resource):
         Currently only supports 'application/json' mimetype.
         """
         try:
-            print(args['intent'])
             result = db.add_intent(args['intent'])
             intents = list(map(lambda tup: tup[0], result))
             resp = jsonify(intents=intents)

@@ -30,6 +30,7 @@ class Classification_Test(unittest.TestCase):
         pass
     
     def test_classify_route(self):
+        logger.info("Testing 'POST' '/classification/classify'")
         testHeaders = Headers()
         testHeaders.add('Content-Type', 'application/json')
         testHeaders.add('Authorization', 'Token ' + self.accessToken)
@@ -45,6 +46,7 @@ class Classification_Test(unittest.TestCase):
         logger.info("Testing 'POST' '/classification/classify' route a success!\n")
     
     def test_train_route(self):
+        logger.info("Testing 'GET' '/classification/train'")
         testHeaders = Headers()
         testHeaders.add('Content-Type', 'application/json')
         testHeaders.add('Authorization', 'Token ' + self.accessToken)
@@ -85,6 +87,7 @@ class Expressions_Test(unittest.TestCase):
         self.db.close_database_connection()
     
     def test_post_expressions_to_intent_route(self):
+        logger.info("Testing 'POST' '/database/expressions/<intent>'")
         expressions = ["test expression five", "test expression six", "test expression seven"]
         testHeaders = Headers()
         testHeaders.add('Content-Type', 'application/json')
@@ -100,6 +103,7 @@ class Expressions_Test(unittest.TestCase):
         logger.info("Testing 'POST' '/database/expressions/<intent>' route a success!\n")
         
     def test_get_intent_expressions_route(self):
+        logger.info("Testing 'GET' '/database/expressions/<intent>'")
         testHeaders = Headers()
         testHeaders.add('Content-Type', 'application/json')
         testHeaders.add('Authorization', 'Token ' + self.accessToken)
@@ -110,6 +114,7 @@ class Expressions_Test(unittest.TestCase):
         logger.info("Testing 'GET' '/database/expressions/<intent>' route a success!\n")
         
     def test_delete_intent_expressions_route(self):
+        logger.info("Testing 'DELETE' '/database/expressions/*'")
         testHeaders = Headers()
         testHeaders.add('Content-Type', 'application/json')
         testHeaders.add('Authorization', 'Token ' + self.accessToken)
@@ -122,8 +127,7 @@ class Expressions_Test(unittest.TestCase):
         secondTestHeaders.add('Authorization', 'Token ' + self.accessToken)
         secondResponse = self.app.delete('/database/expressions/delete-intent', data=json.dumps(dict(all=True)), headers=secondTestHeaders)
         secondResult = json.loads(secondResponse.get_data(as_text=True))
-        self.assertEqual(secondResponse.status_code, 200)
-        self.assertTrue(len(secondResult['expressions']) == 0, secondResult['expressions'])
+        self.assertEqual(secondResponse.status_code, 422)
         thirdTestHeaders = Headers()
         thirdTestHeaders.add('Authorization', 'Token ' + self.accessToken)
         thirdResponse = self.app.delete('/database/expressions/delete-intent', data=json.dumps(dict(all=True)), headers=thirdTestHeaders)
@@ -149,6 +153,7 @@ class Intents_Test(unittest.TestCase):
         self.db.close_database_connection()
     
     def test_post_intent_route(self):
+        logger.info("Testing 'POST' '/database/intents/")
         intent = "some-new-intent"
         testHeaders = Headers()
         testHeaders.add('Content-Type', 'application/json')
@@ -165,6 +170,7 @@ class Intents_Test(unittest.TestCase):
         logger.info("Testing 'POST' '/database/intents/ route a success!\n")
         
     def test_get_intents_route(self):
+        logger.info("Testing 'GET' '/database/intents/")
         testHeaders = Headers()
         testHeaders.add('Content-Type', 'application/json')
         testHeaders.add('Authorization', 'Token ' + self.accessToken)
@@ -175,6 +181,7 @@ class Intents_Test(unittest.TestCase):
         logger.info("Testing 'GET' '/database/intents/ route a success!\n")
         
     def test_delete_intent_route(self):
+        logger.info("Testing 'DELETE' '/database/intents/")
         testHeaders = Headers()
         testHeaders.add('Content-Type', 'application/json')
         testHeaders.add('Authorization', 'Token ' + self.accessToken)
