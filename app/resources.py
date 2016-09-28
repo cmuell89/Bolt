@@ -144,7 +144,7 @@ class Expressions(Resource):
     expressions_delete_args = {
         'content_type': fields.Str(required=True, load_from='Content-Type', location='headers', validate=validate_application_json),
         'expressions': fields.List(fields.Str(), required=True, validate=list_of_strings),
-        'all': fields.Bool(required=False, default=False, validate=lambda val: isinstance(val, bool))
+        'all': fields.Bool(missing=False, validate=lambda val: isinstance(val, bool))
     }
     
     @use_args(expressions_delete_args)
