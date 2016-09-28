@@ -98,34 +98,31 @@ Additionally, make sure to create the following file (ensure proper .yml format 
     libpng-devel.x86_64: []
     zlib-devel.x86_64: []
     atlas-devel.x86_64: []
-    
-- Not caching Spacy Model. Uncertain if necessary at the moment
 	
 #### Development TODO's
 
 ##### Not Started:
-- [ ] Improve classification response to show scoring metrics if possible for LinearSVM
+
 - [ ] Look into using Flask's g object for persistent db connection to assist with thread safety
-- [ ] Implement different classify responses based on Naive Bayes or LinearSVC
 - [ ] COMMENT/DOCUMENTATION OVERHAUL => START STRONG, FINISH STRONG
 - [ ] Start prototyping 'Trait' parsing
-- [ ] Prototype 'Entity' parsing
-	- [ ] Gazetteer (Look into Matcher
-	- [ ] SpaCy NER
 - [ ] Start prototyping datetime parsing
 	- Hit up SpaCy's gitter to see if we can make this into a 
 
 ##### In-Progress:
-
-- [ ] Implement request parsing and parameter validation middleware or library-
-	- Currently writing too much if/elif/else paramter checking
-	- Flask-Restful currently uses reqparse although it will be deprecated upon next realse
-	- Perhaps look into using Marshmallow to prepare for transtion
+- [ ] Improve classification response to show scoring metrics if possible for LinearSVM
+- [ ] Implement different classify responses based on Naive Bayes or LinearSVC
+- [ ] Prototype 'Entity' parsing
+	- [ ] Gazetteer (Look into Matcher
+		- Indexing techniques??
+	- [ ] SpaCy NER
 - [ ] Create route to rebuild classifier with new options
 	- [ ] code
 	- [ ] test
 
 ##### Completed:
+- [x] Implement request parsing and parameter validation middleware or library-
+	- Using webargs library (utilizes Marshmallow)
 - [x] Setup External Postgres Database to handle Expressions
 - [x] Test caching of Spacy Model to see if it works in production
 - [x] Authentication Using simple Token based WWW-Authenticate authorization
