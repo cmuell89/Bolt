@@ -9,19 +9,17 @@ Functions managing the prototype classifier.
 
 import string
 import logging
-
-# from nltk.corpus import stopwords
-from sklearn import svm
-# from sklearn.feature_extraction.stop_words import ENGLISH_STOP_WORDS
+from sklearn import svm, naive_bayes
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.pipeline import Pipeline
+from sklearn.calibration import CalibratedClassifierCV
 from textacy.preprocess import normalize_whitespace
-
 from models.spacy_model import load_spacy
-# import spacy
 from transformers.CleanTextTransformer import CleanTextTransformer
 from utils import io
-from sklearn import naive_bayes
+import json
+
+
 
 # load Spacy pipeline from cached model    
 nlp = load_spacy('en')
@@ -78,7 +76,8 @@ def build_classification_pipeline(skl_classifier=None):
     elif (skl_classifier == 'nb'):
         logger.debug("Creating Multinomial Naive Bayes classifier")
         clf = naive_bayes.MultinomialNB()
-    return Pipeline([('cleanText', CleanTextTransformer()), ('vectorizer', vectorizer), ('clf', clf)])
+    calibrated_clf = CalibratedClassifierCV(clf)
+    return Pipeline([('cleanText', CleanTextTransformer()), ('vectorizer', vectorizer), ('clf', calibrated_clf)])
 
 def train_classification_pipeline(pipeline=None, training_data=None, skl_classifier=None):
     """
@@ -105,7 +104,15 @@ def train_classification_pipeline(pipeline=None, training_data=None, skl_classif
     return pipeline.fit(training_set, training_labels)
 
 def classify_document(pipeline, document):
-    return pipeline.predict([document])[0]
+    classes = pipeline.classes_.tolist()
+    class_probabilities = pipeline.predict_proba([document]).tolist()
+    confidence_metrics = list(zip(classes, class_probabilities[0]))
+    results = sorted(confidence_metrics, key=lambda tup: tup[1], reverse=True)
+    top_five = []
+    for i in range(5):
+        tup = results[i]
+        top_five.append({"intent":tup[0],"confidence":tup[1]})
+    return top_five
     
     
 
