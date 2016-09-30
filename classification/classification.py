@@ -25,10 +25,8 @@ from sklearn import naive_bayes
 
 # load Spacy pipeline from cached model    
 nlp = load_spacy('en')
-# nlp = spacy.load('en')
 logger = logging.getLogger('BOLT.clf')
-# A custom stoplist
-# STOPLIST = set(stopwords.words('english') + ["n't", "'s", "'m", "ca"] + list(ENGLISH_STOP_WORDS))
+
 # List of symbols we don't care about
 SYMBOLS = " ".join(string.punctuation).split(" ") + ["-----", "---", "...", "“", "”", "'ve"]
 
