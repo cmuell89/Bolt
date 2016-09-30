@@ -135,7 +135,7 @@ class Classifier_Test(unittest.TestCase):
         logger.info("Testing for 'classify_document'")
         pipeline = train_classification_pipeline()
         result = classify_document(pipeline, "What is the best selling item of all time?")
-        self.assertIsInstance(result, str)
+        self.assertIsInstance(result, list)
         logger.info("Testing for 'classify_document' a success!\n")
         
 
