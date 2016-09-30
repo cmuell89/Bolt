@@ -54,8 +54,8 @@ class Classify(Resource):
         """
         Returns the intent classification of the query.
         """
-        result = str(classify_document(clf, args['query']))
-        resp = jsonify(intent=result)
+        result = classify_document(clf, args['query'])
+        resp = jsonify(intents=result)
         resp.status_code = 200
         return resp
         
