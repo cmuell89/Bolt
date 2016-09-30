@@ -191,14 +191,14 @@ testPipe = Pipeline([('cleanText', CleanTextTransformer()), ('vectorizer', test_
 vectorizer = CountVectorizer(tokenizer=tokenizeText,ngram_range=(1,2))
 tfidf = TfidfTransformer(norm='l2',use_idf=True)
 
-clf = CalibratedClassifierCV(voting_clf)
+clf = CalibratedClassifierCV(lsvc_clf)
 pipe = Pipeline([('cleanText', CleanTextTransformer()),('vectorizer', vectorizer), ('clf', clf)])
 
 
 ################################################################################################################
 # train
 pipe.fit(trainingData, labeledData)
-classes = pipe.classes_
+classes = pipe.classes_.tolist()
 print(pipe.score(test, labelsTest))
 
 # test
@@ -206,14 +206,13 @@ string = 'some string'
 while(string):
     query = input('Enter query: ')
     query = cleanText(query)
-    print(pipe.predict([query]))
-    prob = pipe.predict_proba([query]).tolist()
-    maximum = max(prob[0])
-    average = sum(prob[0])/len(prob[0])
-    results = [x for x in prob[0]]
+    classification_result = pipe.predict([query])
+    class_probabilities = pipe.predict_proba([query]).tolist()
+    confidence_metrics = list(zip(classes, class_probabilities[0]))
+    results = sorted(confidence_metrics, key=lambda tup: tup[1], reverse=True)
     print()
-    for i in range(len(results)):
-        print(classes[i], '\nConfidence:', results[i],'\n')
+    for i in range(0,5):
+        print(results[i])
     print()
     
 preds = pipe.predict(test)
