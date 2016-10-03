@@ -30,7 +30,7 @@ import codecs
 
 import plac
 
-from preshed.maps import PreshMap
+from preshed.maps import PreshedMaps
 from preshed.counter import PreshCounter
 from spacy.strings import hash_string
 from spacy.en import English
