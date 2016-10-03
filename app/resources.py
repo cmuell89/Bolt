@@ -102,8 +102,7 @@ class Expressions(Resource):
         Currently only supports 'application/json' mimetype.
         """
         try:
-            result = db.add_expressions_to_intent(intent, args['expressions'])
-            expressions = list(map(lambda tup: tup[0], result)) 
+            expressions = db.add_expressions_to_intent(intent, args['expressions'])
             resp = jsonify(intent=intent,expressions=expressions)
             resp.status_code = 200
             return resp
@@ -126,8 +125,7 @@ class Expressions(Resource):
         Returns the expressions for an intent
         """ 
         try:
-            result = db.get_intent_expressions(intent)
-            expressions = list(map(lambda tup: tup[0], result))
+            expressions = db.get_intent_expressions(intent)
             resp = jsonify(intent=intent,expressions=expressions)
             resp.status_code = 200
             return resp
@@ -155,8 +153,7 @@ class Expressions(Resource):
         """
         if args['all'] == True:
             try:
-                result = db.delete_all_intent_expressions(intent)
-                expressions = list(map(lambda tup: tup[0], result))
+                expressions = db.delete_all_intent_expressions(intent)
                 resp = jsonify(intent=intent,expressions=expressions)
                 return resp
             except DatabaseError as error:
@@ -169,8 +166,7 @@ class Expressions(Resource):
                 return resp   
         elif args['expressions']:
             try:
-                result = db.delete_expressions_from_intent(intent, args['expressions'])
-                expressions = list(map(lambda tup: tup[0], result))
+                expressions = db.delete_expressions_from_intent(intent, args['expressions'])
                 resp = jsonify(intent=intent,expressions=expressions, deleted_expressions=args['expressions'])
                 return resp
             except DatabaseError as error:
@@ -200,8 +196,7 @@ class Intents(Resource):
         Currently only supports 'application/json' mimetype.
         """
         try:
-            result = db.add_intent(args['intent'])
-            intents = list(map(lambda tup: tup[0], result))
+            intents = db.add_intent(args['intent'])
             resp = jsonify(intents=intents)
             resp.status_code = 200
             return resp
@@ -223,8 +218,7 @@ class Intents(Resource):
         """
         Gets the current intents stored in the NLP database
         """
-        result = db.get_intents()
-        intents = list(map(lambda tup: tup[0], result))
+        intents = db.get_intents()
         resp = jsonify(intents=intents)
         resp.status_code = 200
         return resp
@@ -241,8 +235,7 @@ class Intents(Resource):
         Deletes an intent including all its associated expressions
         """
         try:
-            result = db.delete_intent(args['intent'])
-            intents = list(map(lambda tup: tup[0], result))
+            intents = db.delete_intent(args['intent'])
             resp = jsonify(intents=intents)
             resp.status_code = 200
             return resp
