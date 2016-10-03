@@ -23,12 +23,11 @@ class Classification_Test(unittest.TestCase):
         self.app = app.test_client()
         self.app.testing = True
         self.accessToken = os.environ.get('ACCESS_TOKEN')
-        logger.info('')
         logger.info("Route testing for '/classification/*' endpoints:")
   
     @classmethod
     def tearDownClass(self):
-        pass
+        logger.info('')
     
     def test_classify_route(self):
         logger.debug("Testing 'POST' '/classification/classify'")
@@ -79,7 +78,6 @@ class Expressions_Test(unittest.TestCase):
         self.db.add_expressions_to_intent('test-intent', ["test expression one", "test expression two", "test expression three", "test expression four"])
         self.db.add_intent('delete-intent')
         self.db.add_expressions_to_intent('delete-intent', ["one", "two", "three", "four"])
-        logger.info('')
         logger.info("Route testing for 'database/expressions/<string:intent>' endpoints:")
         
     @classmethod
@@ -87,6 +85,7 @@ class Expressions_Test(unittest.TestCase):
         self.db.delete_intent('delete-intent')
         self.db.delete_intent('test-intent')
         self.db.close_database_connection()
+        logger.info('')
     
     def test_post_expressions_to_intent_route(self):
         logger.debug("Testing 'POST' '/database/expressions/<intent>'")
@@ -148,13 +147,13 @@ class Intents_Test(unittest.TestCase):
         self.accessToken = os.environ.get('ACCESS_TOKEN')
         self.db = NLP_Database()
         self.db.add_intent('to-be-deleted')
-        logger.info('')
         logger.info("Route testing for '/database/intents/' endpoints:")
 
         
     @classmethod
     def tearDownClass(self):
         self.db.close_database_connection()
+        logger.info('')
     
     def test_post_intent_route(self):
         logger.debug("Testing 'POST' '/database/intents/")

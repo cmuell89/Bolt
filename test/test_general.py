@@ -24,12 +24,10 @@ class NLP_Database_Test(unittest.TestCase, CustomAssertions):
     """
     @classmethod
     def setUpClass(self):
-        logger.info('')
         logger.info("Testing for NLP_Database methods:")
     @classmethod
     def tearDownClass(self):
-        pass
-    
+        logger.info('')
     
     def test_get_intents_and_expressions(self):
         logger.debug("Testing for 'get_intents_and_expressions'")
@@ -94,7 +92,6 @@ class NLP_Database_Test(unittest.TestCase, CustomAssertions):
         db.close_database_connection()
         logger.info("Testing for 'add_unlabeled_expression' a success!")
         
-        
     def test_delete_intent(self):
         logger.debug("\nTesting for 'delete_intent'")
         db = NLP_Database()
@@ -140,13 +137,11 @@ class Classifier_Test(unittest.TestCase):
     
     @classmethod
     def setUpClass(self):
-        logger.info('')
         logger.info("Testing for Classification methods:")
         
     @classmethod
     def tearDownClass(self):
-        pass
-    
+        logger.info('')
     
     def test_tokenize_text(self):
         logger.debug("Testing for 'tokenize_text'")
