@@ -23,14 +23,15 @@ class Classification_Test(unittest.TestCase):
         self.app = app.test_client()
         self.app.testing = True
         self.accessToken = os.environ.get('ACCESS_TOKEN')
-        logger.info("Route testing for '/classification/*' endpoints:\n")
-        
+        logger.info('')
+        logger.info("Route testing for '/classification/*' endpoints:")
+  
     @classmethod
     def tearDownClass(self):
         pass
     
     def test_classify_route(self):
-        logger.info("Testing 'POST' '/classification/classify'")
+        logger.debug("Testing 'POST' '/classification/classify'")
         testHeaders = Headers()
         testHeaders.add('Content-Type', 'application/json')
         testHeaders.add('Authorization', 'Token ' + self.accessToken)
@@ -38,20 +39,15 @@ class Classification_Test(unittest.TestCase):
                        headers=testHeaders)
         self.assertEqual(response.status_code, 200) 
         result = json.loads(response.get_data(as_text=True))
-        print()
-        print(result)
-        print(result['intents'])
-        print(type(result['intents']))
-        print()
         self.assertEqual(result['intents'][0]['intent'], u"get-order")
         secondTestHeaders = Headers()
         secondTestHeaders.add('Authorization', 'Token ' + self.accessToken)
         secondResponse = self.app.post('/classification/classify', data=json.dumps(dict(query='What is order 2313?')), headers=secondTestHeaders)
         self.assertEqual(secondResponse.status_code, 415) 
-        logger.info("Testing 'POST' '/classification/classify' route a success!\n")
+        logger.info("Testing 'POST' '/classification/classify' route a success!")
     
     def test_train_route(self):
-        logger.info("Testing 'GET' '/classification/train'")
+        logger.debug("Testing 'GET' '/classification/train'")
         testHeaders = Headers()
         testHeaders.add('Content-Type', 'application/json')
         testHeaders.add('Authorization', 'Token ' + self.accessToken)
@@ -67,7 +63,7 @@ class Classification_Test(unittest.TestCase):
         secondResult = json.loads(secondResponse.get_data(as_text=True))
         self.assertEqual(secondResult['message'], "Classifier successfully trained: svm")
         logger.info("Testing 'GET' '/classification/train' route a success!")
-        logger.info("Note: Still needs functional test\n")
+        logger.info("Note: Still needs functional test")
         
 class Expressions_Test(unittest.TestCase):
     """
@@ -83,7 +79,8 @@ class Expressions_Test(unittest.TestCase):
         self.db.add_expressions_to_intent('test-intent', ["test expression one", "test expression two", "test expression three", "test expression four"])
         self.db.add_intent('delete-intent')
         self.db.add_expressions_to_intent('delete-intent', ["one", "two", "three", "four"])
-        logger.info("Route testing for 'database/expressions/<string:intent>' endpoints:\n")
+        logger.info('')
+        logger.info("Route testing for 'database/expressions/<string:intent>' endpoints:")
         
     @classmethod
     def tearDownClass(self):
@@ -92,7 +89,7 @@ class Expressions_Test(unittest.TestCase):
         self.db.close_database_connection()
     
     def test_post_expressions_to_intent_route(self):
-        logger.info("Testing 'POST' '/database/expressions/<intent>'")
+        logger.debug("Testing 'POST' '/database/expressions/<intent>'")
         expressions = ["test expression five", "test expression six", "test expression seven"]
         testHeaders = Headers()
         testHeaders.add('Content-Type', 'application/json')
@@ -105,10 +102,10 @@ class Expressions_Test(unittest.TestCase):
         secondTestHeaders.add('Authorization', 'Token ' + self.accessToken)
         secondResponse = self.app.post('/database/expressions/test-intent', data=json.dumps(dict(expressions=expressions)), headers=secondTestHeaders)
         self.assertEqual(secondResponse.status_code, 415) 
-        logger.info("Testing 'POST' '/database/expressions/<intent>' route a success!\n")
+        logger.info("Testing 'POST' '/database/expressions/<intent>' route a success!")
         
     def test_get_intent_expressions_route(self):
-        logger.info("Testing 'GET' '/database/expressions/<intent>'")
+        logger.debug("Testing 'GET' '/database/expressions/<intent>'")
         testHeaders = Headers()
         testHeaders.add('Content-Type', 'application/json')
         testHeaders.add('Authorization', 'Token ' + self.accessToken)
@@ -116,10 +113,10 @@ class Expressions_Test(unittest.TestCase):
         result = json.loads(response.get_data(as_text=True))
         self.assertEqual(response.status_code, 200)
         self.assertIn("test expression two", result['expressions']) 
-        logger.info("Testing 'GET' '/database/expressions/<intent>' route a success!\n")
+        logger.info("Testing 'GET' '/database/expressions/<intent>' route a success!")
         
     def test_delete_intent_expressions_route(self):
-        logger.info("Testing 'DELETE' '/database/expressions/*'")
+        logger.debug("Testing 'DELETE' '/database/expressions/*'")
         testHeaders = Headers()
         testHeaders.add('Content-Type', 'application/json')
         testHeaders.add('Authorization', 'Token ' + self.accessToken)
@@ -137,7 +134,7 @@ class Expressions_Test(unittest.TestCase):
         thirdTestHeaders.add('Authorization', 'Token ' + self.accessToken)
         thirdResponse = self.app.delete('/database/expressions/delete-intent', data=json.dumps(dict(all=True)), headers=thirdTestHeaders)
         self.assertEqual(thirdResponse.status_code, 415) 
-        logger.info("Testing 'DELETE' '/database/expressions/*' route a success!\n")
+        logger.info("Testing 'DELETE' '/database/expressions/*' route a success!")
                
                  
 class Intents_Test(unittest.TestCase):
@@ -151,14 +148,16 @@ class Intents_Test(unittest.TestCase):
         self.accessToken = os.environ.get('ACCESS_TOKEN')
         self.db = NLP_Database()
         self.db.add_intent('to-be-deleted')
-        logger.info("Route testing for '/database/intents/' endpoints:\n")
+        logger.info('')
+        logger.info("Route testing for '/database/intents/' endpoints:")
+
         
     @classmethod
     def tearDownClass(self):
         self.db.close_database_connection()
     
     def test_post_intent_route(self):
-        logger.info("Testing 'POST' '/database/intents/")
+        logger.debug("Testing 'POST' '/database/intents/")
         intent = "some-new-intent"
         testHeaders = Headers()
         testHeaders.add('Content-Type', 'application/json')
@@ -172,10 +171,10 @@ class Intents_Test(unittest.TestCase):
         secondTestHeaders.add('Authorization', 'Token ' + self.accessToken)
         secondResponse = self.app.post('/database/intents', data=json.dumps(dict(intent=intent)), headers=secondTestHeaders)
         self.assertEqual(secondResponse.status_code, 415)
-        logger.info("Testing 'POST' '/database/intents/ route a success!\n")
+        logger.info("Testing 'POST' '/database/intents/ route a success!")
         
     def test_get_intents_route(self):
-        logger.info("Testing 'GET' '/database/intents/")
+        logger.debug("Testing 'GET' '/database/intents/")
         testHeaders = Headers()
         testHeaders.add('Content-Type', 'application/json')
         testHeaders.add('Authorization', 'Token ' + self.accessToken)
@@ -183,15 +182,15 @@ class Intents_Test(unittest.TestCase):
         result = json.loads(response.get_data(as_text=True))
         self.assertEqual(response.status_code, 200)
         self.assertIn("get-order", result['intents'])
-        logger.info("Testing 'GET' '/database/intents/ route a success!\n")
+        logger.info("Testing 'GET' '/database/intents/ route a success!")
         
     def test_delete_intent_route(self):
-        logger.info("Testing 'DELETE' '/database/intents/")
+        logger.debug("Testing 'DELETE' '/database/intents/")
         testHeaders = Headers()
         testHeaders.add('Content-Type', 'application/json')
         testHeaders.add('Authorization', 'Token ' + self.accessToken)
         response = self.app.delete('/database/intents', data=json.dumps(dict(intent='to-be-deleted')), headers=testHeaders)
         result = json.loads(response.get_data(as_text=True))
         self.assertNotIn('to-be-deleted', result['intents'])
-        logger.info("Testing 'DELETE' '/database/intents/ route a success!\n")
+        logger.info("Testing 'DELETE' '/database/intents/ route a success!")
     
