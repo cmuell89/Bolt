@@ -14,9 +14,9 @@ from flask_restful import Resource
 from webargs import fields, validate
 from webargs.flaskparser import use_args, use_kwargs, parser
 from marshmallow import Schema, fields
+from functools import partial
 from .authorization import auth
 from .validators import valid_application_type, list_of_strings
-from functools import partial
 from database.database import NLP_Database
 from classification.classification import train_classification_pipeline, classify_document
 from utils.exceptions import DatabaseError, DatabaseInputError
@@ -55,6 +55,14 @@ class Classify(Resource):
         Returns the intent classification of the query.
         """
         result = classify_document(clf, args['query'])
+        if result[0]['confidence'] > .5:
+            intent_guess = result[0]['intent']
+        else:
+            intent_guess = None
+        try:
+            db.add_unlabeled_expression(args['query'], intent_guess)
+        except DatabaseError as e:
+            logger.exception(e.value)
         resp = jsonify(intents=result)
         resp.status_code = 200
         return resp

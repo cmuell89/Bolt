@@ -182,6 +182,7 @@ class NLP_Database:
         try:
             self.cur.execute("DELETE FROM unlabeled_expressions WHERE public.unlabeled_expressions.id = %s", (id,))
             self.conn.commit()
+            logger.debug("Deleting unlabeled expression.")
             return self.get_unlabeled_expressions()
         except psycopg2.Error as e:
             self.conn.rollback()
