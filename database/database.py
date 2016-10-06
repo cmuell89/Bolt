@@ -3,7 +3,7 @@ Created on Jul 21, 2016
 
 @author: Carl Mueller
 
-Class: NLP_Database
+Class: NLPDatabase
 Database layer communicating with postgreSQL via psycopg2 that manages expressions and intents for the classifier.
 
 '''
@@ -98,6 +98,17 @@ class NLPDatabase:
             logger.exception(e.pgerror)
             raise DatabaseError(e.pgerror)
     
+    def get_archived_expressions(self):
+        try:
+            self.cur.execute("SELECT id, expressions, estimated_intent, estimated_confidence FROM public.archived_expressions")
+            logger.debug("Retrieving all archived expressions.")
+            unlabeled_expressions = list(map(lambda x: (x[0], x[1], x[2], x[3]), self.cur.fetchall()))
+            return unlabeled_expressions
+        except psycopg2.Error as e:
+            self.conn.rollback()
+            logger.exception(e.pgerror)
+            raise DatabaseError(e.pgerror)
+    
     '''
     Addition operations
     '''
@@ -163,9 +174,7 @@ class NLPDatabase:
             msg = "Method expects valid expression string as argument"
             logger.exception(msg)
             raise DatabaseInputError(msg)
-    '''
-    Untested
-    '''
+
     def add_archived_expression(self, expression, estimatedIntent=None, estimatedConfidence=None):
         if expression:
             try:
@@ -173,7 +182,7 @@ class NLPDatabase:
                     logger.debug("Adding archived expression to database.")
                     self.cur.execute("INSERT INTO public.archived_expressions (expressions, estimated_intent, estimated_confidence) VALUES (%s, %s, %s)", (expression, estimatedIntent, estimatedConfidence))
                     self.conn.commit()
-                    return self.get_unlabeled_expressions()
+                    return self.get_archived_expressions()
                 else:
                     msg = "Method expects an archived expression of length > 0."
                     logger.exception(msg)
@@ -235,6 +244,17 @@ class NLPDatabase:
             logger.exception(e.pgerror)
             raise DatabaseError(e.pgerror)
     
+    def delete_archived_expression(self, id):
+        try:
+            self.cur.execute("DELETE FROM archived_expressions WHERE public.archived_expressions.id = %s", (id,))
+            self.conn.commit()
+            logger.debug("Deleting archived expression.")
+            return self.get_archived_expressions()
+        except psycopg2.Error as e:
+            self.conn.rollback()
+            logger.exception(e.pgerror)
+            raise DatabaseError(e.pgerror)
+    
     '''
     Confirmation operations
     '''
@@ -242,6 +262,34 @@ class NLPDatabase:
         try:
             self.cur.execute("SELECT intents FROM public.intents WHERE intents = (%s)", (intent,))
             logger.debug("Confirming intent exists") 
+            result = self.cur.fetchone()
+            if result is None:
+                return False
+            else:
+                return True          
+        except psycopg2.Error as e:
+            self.conn.rollback()
+            logger.exception(e.pgerror)
+            raise DatabaseError(e.pgerror)
+    
+    def confirm_archived_expression_exists(self, id):
+        try:
+            self.cur.execute("SELECT id FROM public.archived_expressions WHERE id = (%s)", (id,))
+            logger.debug("Confirming archived expression exists") 
+            result = self.cur.fetchone()
+            if result is None:
+                return False
+            else:
+                return True          
+        except psycopg2.Error as e:
+            self.conn.rollback()
+            logger.exception(e.pgerror)
+            raise DatabaseError(e.pgerror)
+    
+    def confirm_unlabeled_expression_exists(self, id):
+        try:
+            self.cur.execute("SELECT id FROM public.unlabeled_expressions WHERE id = (%s)", (id,))
+            logger.debug("Confirming unlabeled expression exists") 
             result = self.cur.fetchone()
             if result is None:
                 return False
