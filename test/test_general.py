@@ -111,6 +111,12 @@ class NLPDatabaseTest(unittest.TestCase, CustomAssertions):
         db.delete_unlabeled_expression(expression_ID[0])
         db.close_database_connection()
         logger.info("Testing for 'add_unlabeled_expression' a success!")
+       
+    def test_add_archived_expressions(self):
+        raise self.failureException
+    '''
+    Deletion operations.
+    '''
         
     def test_delete_intent(self):
         logger.debug("\nTesting for 'delete_intent'")
@@ -120,9 +126,6 @@ class NLPDatabaseTest(unittest.TestCase, CustomAssertions):
         self.assertNotIn(('soon-to-be-deleted',), results)
         logger.info("Testing for 'delete_intent' a success!")
     
-    '''
-    Deletion operations.
-    '''
     def test_delete_expressions_from_intent(self):
         logger.debug("Testing for 'delete_expressions_from_intent'")
         db = NLPDatabase()
@@ -158,6 +161,8 @@ class NLPDatabaseTest(unittest.TestCase, CustomAssertions):
         self.assertEqual(False, intent_exists)
         logger.info("Testing for 'confirm_intent_exists' a success!")
     
+    def test_delete_archived_expression(self):
+        raise self.failureException
     
 class ClassifierTest(unittest.TestCase):
     """
