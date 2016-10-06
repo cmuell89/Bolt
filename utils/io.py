@@ -5,7 +5,7 @@ Created on Jul 4, 2016
 '''
 import json
 import logging
-from database.database import NLP_Database
+from database.database import NLPDatabase
 
 logger = logging.getLogger('BOLT.io')
 
@@ -45,7 +45,7 @@ def create_data_for_pipeline_from_database():
     labels = []
     docs = []
     try:
-        db = NLP_Database()
+        db = NLPDatabase()
         data = db.get_intents_and_expressions()
         for datum in data:
             labels.append(datum[0])

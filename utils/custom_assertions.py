@@ -2,6 +2,8 @@
 Created on Jul 27, 2016
 
 @author: carl
+
+Note: Methods left as camelCase to be consistent with assertion library. 
 '''
 
 class CustomAssertions():

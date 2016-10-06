@@ -15,7 +15,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.calibration import CalibratedClassifierCV
 from textacy.preprocess import normalize_whitespace
 from models.spacy_model import load_spacy
-from transformers.CleanTextTransformer import CleanTextTransformer
+from transformers.clean_text_transformer import CleanTextTransformer
 from utils import io
 import json
 
