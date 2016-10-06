@@ -215,18 +215,154 @@ class UnlabeledExpressions(Resource):
     validate_application_json = partial(valid_application_type, 'application/json')
 
     unlabeled_get_args = {
-        'content_type': fields.Str(required=True, load_from='Content-Type', location='headers', validate=validate_application_json),
+        'content_type': fields.Str(required=True, load_from='Content-Type', location='headers', validate=validate_application_json)
     }
 
     @use_args(unlabeled_get_args)
     def get(self, args):
         """
-        Gets as list of tuples of unlabeled expressions.
+        Gets a list of tuples of unlabeled expressions.
         """
         try:
             db = get_db()
-            unlabeled_expressions = db.get_unlabeled_expressions()
+            unlabeled_expressions = list(map(lambda x: {"id": x[0], "expression": x[1], "estimated_intent": x[2], "estimated_confidence":x[3]}, db.get_unlabeled_expressions()))
             resp = jsonify(unlabeled_expressions = unlabeled_expressions)
+            resp.status_code = 200
+            return resp
+        except DatabaseError as errror:
+            resp = jsonify(error=error.value)
+            resp.status_code = 500
+            return resp
+        except DatabaseInputError as error:
+            resp = jsonify(error=error.value)
+            resp.status_code = 400
+            return resp
+    
+    unlabeled_post_args = {
+        'content_type': fields.Str(required=True, load_from='Content-Type', location='headers', validate=validate_application_json),
+        'expression': fields.Str(required=True),
+        'estimated_intent': fields.Str(required=False),
+        'estimated_confidence': fields.Int(required=False)
+    }
+    
+    @use_args(unlabeled_post_args)
+    def post(self, args):
+        """
+        Adds an unlabeled expression to database.
+        """
+        try:
+            db = get_db()
+            db_results = db.add_unlabeled_expression(args['expression'], args['estimated_intent'], args['estimated_confidence'])
+            unlabeled_expressions = list(map(lambda x: {"id": x[0], "expression": x[1], "estimated_intent": x[2], "estimated_confidence":x[3]}, db_results))
+            resp = jsonify(unlabeled_expressions=unlabeled_expressions)
+            resp.status_code = 200
+            return resp
+        except DatabaseError as error:
+            resp = jsonify(error=error.value)
+            resp.status_code = 500
+            return resp
+        except DatabaseInputError as error:
+            resp = jsonify(error=error.value)
+            resp.status_code = 400
+            return resp
+    
+    unlabeled_delete_args = {
+        'content_type': fields.Str(required=True, load_from='Content-Type', location='headers', validate=validate_application_json),
+        'id': fields.Int(required=True)
+    }
+    @use_args(unlabeled_delete_args)
+    def delete(self, args):
+        """
+        Deleted an unlabeled expression from the database by ID.
+        """
+        try:
+            db = get_db()
+            db_results = db.delete_unlabeled_expression(args['id'])
+            unlabeled_expressions = list(map(lambda x: {"id": x[0], "expression": x[1], "estimated_intent": x[2], "estimated_confidence":x[3]}, db_results))
+            resp = jsonify(unlabeled_expressions = unlabeled_expressions)
+            resp.status_code = 200
+            return resp
+        except DatabaseError as errror:
+            resp = jsonify(error=error.value)
+            resp.status_code = 500
+            return resp
+        except DatabaseInputError as error:
+            resp = jsonify(error=error.value)
+            resp.status_code = 400
+            return resp
+    
+class ArchivedExpressions(Resource):
+    
+    decorators = [tokenAuth.login_required]
+    validate_application_json = partial(valid_application_type, 'application/json')
+
+    archived_get_args = {
+        'content_type': fields.Str(required=True, load_from='Content-Type', location='headers', validate=validate_application_json)
+    }
+
+    @use_args(archived_get_args)
+    def get(self, args):
+        """
+        Gets as list of tuples of archived expressions.
+        """
+        try:
+            db = get_db()
+            archived_expressions = list(map(lambda x: {"id": x[0], "expression": x[1], "estimated_intent": x[2], "estimated_confidence":x[3]}, db.get_archived_expressions()))
+            resp = jsonify(archived_expressions = archived_expressions)
+            resp.status_code = 200
+            return resp
+        except DatabaseError as errror:
+            resp = jsonify(error=error.value)
+            resp.status_code = 500
+            return resp
+        except DatabaseInputError as error:
+            resp = jsonify(error=error.value)
+            resp.status_code = 400
+            return resp
+    
+    archived_post_args = {
+        'content_type': fields.Str(required=True, load_from='Content-Type', location='headers', validate=validate_application_json),
+        'expression': fields.Str(required=True),
+        'estimated_intent': fields.Str(required=True),
+        'estimated_confidence': fields.Float(required=True)
+    }
+    
+    @use_args(archived_post_args)
+    def post(self, args):
+        """
+        Adds archived expression to database.
+        """
+        try:
+            db = get_db()
+            db_results = db.add_archived_expression(args['expression'], args['estimated_intent'], args['estimated_confidence'])
+            archived_expressions = list(map(lambda x: {"id": x[0], "expression": x[1], "estimated_intent": x[2], "estimated_confidence":x[3]}, db_results))
+            resp = jsonify(archived_expressions=archived_expressions)
+            resp.status_code = 200
+            return resp
+        except DatabaseError as error:
+            resp = jsonify(error=error.value)
+            resp.status_code = 500
+            return resp
+        except DatabaseInputError as error:
+            resp = jsonify(error=error.value)
+            resp.status_code = 400
+            return resp
+    
+    archived_delete_args = {
+        'content_type': fields.Str(required=True, load_from='Content-Type', location='headers', validate=validate_application_json),
+        'id': fields.Int(required=True)
+    }
+    
+    @use_args(archived_delete_args)
+    def delete(self, args):
+        """
+        Deletes an archived expressions from database based on ID.
+        """
+        try:
+            db = get_db()
+            db_results = db.delete_archived_expression(args['id'])
+            archived_expressions = list(map(lambda x: {"id": x[0], "expression": x[1], "estimated_intent": x[2], "estimated_confidence":x[3]}, db_results))
+            resp = jsonify(archived_expressions = archived_expressions)
             resp.status_code = 200
             return resp
         except DatabaseError as errror:

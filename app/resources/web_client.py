@@ -18,7 +18,6 @@ from marshmallow import fields
 from app.authorization import basicAuth
 from app.validators import valid_application_type
 from database.database import NLPDatabase
-from classification.classification import train_classification_pipeline, classify_document
 from utils.exceptions import DatabaseError, DatabaseInputError
 from flask.templating import render_template
 
@@ -55,6 +54,9 @@ class ValidateExpression(MethodView):
         "gridRadios": fields.Str(required=True)
     }
     
+    '''
+    Try Catch statements needed.
+    '''
     @use_args(validation_args)
     def post(self, args):
         db = get_db()
