@@ -1,9 +1,9 @@
 from unittest import TestSuite
-from test.test_app import ClassificationTest, ExpressionsTest, IntentsTest
+from test.test_app import ClassificationTest, ExpressionsTest, IntentsTest, UnlabeledExpressionsTest, ArchivedExpressionsTest
 from test.test_general import ClassifierTest, NLPDatabaseTest
 import settings
 
-test_cases = (ClassificationTest, NLPDatabaseTest, ExpressionsTest, IntentsTest, ClassifierTest)
+test_cases = (ClassificationTest, NLPDatabaseTest, ExpressionsTest, IntentsTest, ClassifierTest, UnlabeledExpressionsTest, ArchivedExpressionsTest)
 
 def load_tests(loader, tests, pattern):
     suite = TestSuite()

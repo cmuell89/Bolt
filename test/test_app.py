@@ -1,7 +1,7 @@
 '''
 Created on Jul 27, 2016
 
-@author: carl
+@author: Carl Mueller
 '''
 import os
 import unittest
@@ -16,7 +16,7 @@ logger = logging.getLogger('BOLT.test')
     
 class ClassificationTest(unittest.TestCase):
     """
-    Class for unit testing 'Classification' routes in app.resources
+    Class for unit testing 'Classification' routes in restful_api.py.
     """ 
     @classmethod
     def setUpClass(self):
@@ -66,7 +66,7 @@ class ClassificationTest(unittest.TestCase):
         
 class ExpressionsTest(unittest.TestCase):
     """
-    Class for unit testing 'Expressions' routes in app.resources
+    Class for unit testing 'Expressions' routes in restful_api.py.
     """       
     @classmethod
     def setUpClass(self):
@@ -133,11 +133,143 @@ class ExpressionsTest(unittest.TestCase):
         third_response = self.app.delete('/database/expressions/delete-intent', data=json.dumps(dict(all=True)), headers=third_test_headers)
         self.assertEqual(third_response.status_code, 415) 
         logger.info("Testing 'DELETE' '/database/expressions/*' route a success!")
-               
-                 
+   
+class UnlabeledExpressionsTest(unittest.TestCase):
+    """
+    Class for unit testing 'UnlabeledExpressions" routes in restful_api.py.
+    """
+    @classmethod
+    def setUpClass(self):
+        self.app = app.test_client()
+        self.app.testing = True
+        self.access_token = os.environ.get("ACCESS_TOKEN")
+        self.db = NLPDatabase()
+        self.post_unlabeled_test_expression = "get_unlabeled_test_expression"
+        self.db_results = self.db.add_unlabeled_expression(self.post_unlabeled_test_expression, 'guess-intent', .99)
+        self.unlabeled_test_expression_ID = [tup[0] for tup in self.db_results if tup[1] == self.post_unlabeled_test_expression]
+        logger.info("Route testing for 'database/unlabeled_expressions' endpoints:") 
+    
+    @classmethod
+    def tearDownClass(self):
+        self.db.delete_unlabeled_expression(self.unlabeled_test_expression_ID[0])
+        self.db.close_database_connection()
+        logger.info('')   
+    
+    def test_post_unlabeled_expression(self):
+        logger.debug("Testing 'POST' '/database/unlabeled_expressions'")
+        expression = self.post_unlabeled_test_expression
+        test_headers = Headers()
+        test_headers.add('Content-Type', 'application/json')
+        test_headers.add('Authorization', 'Token ' + self.access_token)
+        response = self.app.post('/database/unlabeled_expressions', data=json.dumps(dict(expression=expression, estimated_intent="guess-intent", estimated_confidence=.99)), headers=test_headers)
+        result = json.loads(response.get_data(as_text=True))
+        self.assertEqual(response.status_code, 200)
+        list_of_expressions = [exp['expression'] for exp in result['unlabeled_expressions']]
+        self.assertIn(expression, list_of_expressions) 
+        second_test_headers = Headers()
+        second_test_headers.add('Authorization', 'Token ' + self.access_token)
+        second_response = self.app.post('/database/unlabeled_expressions', data=json.dumps(dict(expression=expression, estimated_intent="guess-intent", estimated_confidence=.99)), headers=second_test_headers)
+        self.assertEqual(second_response.status_code, 415) 
+        logger.info("Testing 'POST' '/database/unlabeled_expressions' route a success!")
+    
+    def test_get_unlabeled_expressions(self):
+        logger.debug("Testing 'GET' '/database/unlabeled_expressions'")
+        test_headers = Headers()
+        test_headers.add('Content-Type', 'application/json')
+        test_headers.add('Authorization', 'Token ' + self.access_token)
+        db_results = self.db.add_unlabeled_expression("add unlabeled expression test", "guess-intent", .99)
+        expression_ID = [tup[0] for tup in db_results if tup[1] == "add unlabeled expression test"]
+        response = self.app.get('/database/unlabeled_expressions', data=json.dumps(dict(id=expression_ID[0])), headers=test_headers)  
+        result = json.loads(response.get_data(as_text=True))
+        list_of_expressions = [exp['expression'] for exp in result['unlabeled_expressions']]
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("add unlabeled expression test", list_of_expressions) 
+        self.db.delete_unlabeled_expression(expression_ID[0])
+        logger.info("Testing 'GET' '/database/unlabeled_expressions' route a success!")
+        
+    def test_delete_unlabeled_expression(self):
+        logger.debug("Testing 'DELETE' '/database/unlabeled_expressions")
+        test_headers = Headers()
+        test_headers.add('Content-Type', 'application/json')
+        test_headers.add('Authorization', 'Token ' + self.access_token)
+        ## Add an expression, get the id, delete it, db.confirm exists
+        db_results = self.db.add_unlabeled_expression("add unlabeled expression test", "guess-intent", .99)
+        expression_ID = [tup[0] for tup in db_results if tup[1] == "add unlabeled expression test"]
+        response = self.app.delete('/database/unlabeled_expressions', data=json.dumps(dict(id=expression_ID[0])), headers=test_headers)
+        self.assertEqual(response.status_code, 200)
+        exists = self.db.confirm_unlabeled_expression_exists(expression_ID[0])
+        self.assertNotEqual(True, exists)
+        logger.info("Testing 'DELETE' '/database/expressions/*' route a success!")
+
+class ArchivedExpressionsTest(unittest.TestCase):
+    """
+    Class for unit testing 'UnlabeledExpressions" routes in restful_api.py.
+    """
+    @classmethod
+    def setUpClass(self):
+        self.app = app.test_client()
+        self.app.testing = True
+        self.access_token = os.environ.get("ACCESS_TOKEN")
+        self.db = NLPDatabase()
+        self.post_archived_test_expression = "post_archived_test_expression"
+        self.db_results = self.db.add_archived_expression(self.post_archived_test_expression, 'guess-intent', .99)
+        self.archived_test_expression_ID = [tup[0] for tup in self.db_results if tup[1] == self.post_archived_test_expression]
+        logger.info("Route testing for 'database/unlabeled_expressions' endpoints:") 
+    
+    @classmethod
+    def tearDownClass(self):
+        self.db.close_database_connection()
+        logger.info('')   
+    
+    def test_post_archived_expression(self):
+        logger.debug("Testing 'POST' '/database/archived_expressions'")
+        expression = self.post_archived_test_expression
+        test_headers = Headers()
+        test_headers.add('Content-Type', 'application/json')
+        test_headers.add('Authorization', 'Token ' + self.access_token)
+        response = self.app.post('/database/archived_expressions', data=json.dumps(dict(expression=expression, estimated_intent="guess-intent", estimated_confidence=.99)), headers=test_headers)
+        result = json.loads(response.get_data(as_text=True))
+        self.assertEqual(response.status_code, 200)
+        list_of_expressions = [exp['expression'] for exp in result['archived_expressions']]
+        self.assertIn(expression, list_of_expressions) 
+        second_test_headers = Headers()
+        second_test_headers.add('Authorization', 'Token ' + self.access_token)
+        second_response = self.app.post('/database/archived_expressions', data=json.dumps(dict(expression=expression, estimated_intent="guess-intent", estimated_confidence=.99)), headers=second_test_headers)
+        self.assertEqual(second_response.status_code, 415) 
+        logger.info("Testing 'POST' '/database/archived_expressions' route a success!")
+    
+    def test_get_archived_expressions(self):
+        logger.debug("Testing 'GET' '/database/archived_expressions'")
+        test_headers = Headers()
+        test_headers.add('Content-Type', 'application/json')
+        test_headers.add('Authorization', 'Token ' + self.access_token)
+        db_results = self.db.add_archived_expression("add archived expression test", "guess-intent", .99)
+        expression_ID = [tup[0] for tup in db_results if tup[1] == "add archived expression test"]
+        response = self.app.get('/database/archived_expressions', data=json.dumps(dict(id=expression_ID[0])), headers=test_headers)  
+        result = json.loads(response.get_data(as_text=True))
+        list_of_expressions = [exp['expression'] for exp in result['archived_expressions']]
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("add archived expression test", list_of_expressions) 
+        self.db.delete_unlabeled_expression(expression_ID[0])
+        logger.info("Testing 'GET' '/database/archived_expressions' route a success!")
+        
+    def test_delete_archived_expression(self):
+        logger.debug("Testing 'DELETE' '/database/archived_expressions")
+        test_headers = Headers()
+        test_headers.add('Content-Type', 'application/json')
+        test_headers.add('Authorization', 'Token ' + self.access_token)
+        db_results = self.db.add_archived_expression("delete archived expression test", "guess-intent", .99)
+        expression_ID = [tup[0] for tup in db_results if tup[1] == "delete archived expression test"]
+        response = self.app.delete('/database/archived_expressions', data=json.dumps(dict(id=expression_ID[0])), headers=test_headers)
+        self.assertEqual(response.status_code, 200)
+        exists = self.db.confirm_archived_expression_exists(expression_ID[0])
+        self.assertNotEqual(True, exists)
+        logger.info("Testing 'DELETE' '/database/archived_expressions' route a success!")
+    
+         
 class IntentsTest(unittest.TestCase):
     """
-    Class for unit testing 'Expressions' routes in app.resources
+    Class for unit testing 'Expressions' routes in restful_api.py.
     """       
     @classmethod
     def setUpClass(self):

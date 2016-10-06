@@ -73,6 +73,14 @@ class NLPDatabaseTest(unittest.TestCase, CustomAssertions):
         self.assertEqual(actual_unlabeled_expression, test_unlabeled_expression)
         db.close_database_connection()
         logger.info("Testing for 'get_unlabled_expressions' a success!")
+    
+    def test_get_archived_expressions(self):    
+        logger.debug("Testing for 'get_archived_expressions")
+        db = NLPDatabase()
+        unlabeled_expressions = db.get_archived_expressions()
+        self.assertListOfTuples(unlabeled_expressions, [int, str, str, float])
+        db.close_database_connection()
+        logger.info("Testing for 'get_unlabled_expressions' a success!")
         
     '''
     Addition operations
@@ -113,7 +121,15 @@ class NLPDatabaseTest(unittest.TestCase, CustomAssertions):
         logger.info("Testing for 'add_unlabeled_expression' a success!")
        
     def test_add_archived_expressions(self):
-        raise self.failureException
+        logger.debug("Testing for 'add_archived_expression'")
+        db = NLPDatabase()
+        results = db.add_archived_expression('This is an archived expression', 'guess-intent', .9900)
+        self.assertListOfTuples(results, [int, str, str, float])
+        expression_ID = [tup[0] for tup in results if tup[1] == 'This is an archived expression']
+        db.delete_archived_expression(expression_ID[0])
+        db.close_database_connection()
+        logger.info("Testing for 'add_unlabeled_expression' a success!")
+    
     '''
     Deletion operations.
     '''
@@ -144,12 +160,28 @@ class NLPDatabaseTest(unittest.TestCase, CustomAssertions):
         results = db.add_unlabeled_expression(test_expression, 'guess-intent', .9900)
         before_expression = [tup[1] for tup in results]
         self.assertIn(test_expression, before_expression)
-        expressionID = [tup[0] for tup in results if tup[1] == test_expression]
-        after = db.delete_unlabeled_expression(expressionID[0])
+        expression_ID = [tup[0] for tup in results if tup[1] == test_expression]
+        after = db.delete_unlabeled_expression(expression_ID[0])
         after_expression = [tup[1] for tup in results]
         self.assertNotIn((test_expression,), after_expression)
         logger.info("Testing for 'delete_unlabeled_expression' a success!")
     
+    def test_delete_archived_expression(self):
+        logger.debug("\nTesting for 'delete_archived_expression'")
+        test_expression = 'This is another archived expression'
+        db = NLPDatabase()
+        results = db.add_archived_expression(test_expression, 'guess-intent', .9900)
+        before_expression = [tup[1] for tup in results]
+        self.assertIn(test_expression, before_expression)
+        expression_ID = [tup[0] for tup in results if tup[1] == test_expression]
+        after = db.delete_archived_expression(expression_ID[0])
+        after_expression = [tup[1] for tup in results]
+        self.assertNotIn((test_expression,), after_expression)
+        logger.info("Testing for 'delete_unlabeled_expression' a success!")
+        
+    '''
+    Confirmation operations
+    '''
     def test_confirm_intent_exists(self):
         logger.debug("\nTesting for 'confirm_intent_exists'")
         db = NLPDatabase()
@@ -161,8 +193,32 @@ class NLPDatabaseTest(unittest.TestCase, CustomAssertions):
         self.assertEqual(False, intent_exists)
         logger.info("Testing for 'confirm_intent_exists' a success!")
     
-    def test_delete_archived_expression(self):
-        raise self.failureException
+    def test_confirm_unlabeled_expression_exists(self):
+        logger.debug("\nTesting for 'confirm_unlabeled_expression_exists'")
+        test_expression = 'This is another unlabeled expression'
+        db = NLPDatabase()
+        results = db.add_unlabeled_expression(test_expression, 'guess-intent', .9900)
+        expression_ID = [tup[0] for tup in results if tup[1] == test_expression]
+        expression_exists = db.confirm_unlabeled_expression_exists(expression_ID[0])
+        self.assertEqual(True, expression_exists)
+        db.delete_unlabeled_expression(expression_ID[0])
+        expression_exists = db.confirm_unlabeled_expression_exists(expression_ID[0])
+        self.assertEqual(False, expression_exists)
+        logger.info("Testing for 'confirm_unlabeled_expression_exists' a success!")
+    
+    def test_confirm_archived_expression_exists(self):
+        logger.debug("\nTesting for 'confirm_archived_expression_exists'")
+        test_expression = 'This is another archived expression'
+        db = NLPDatabase()
+        results = db.add_archived_expression(test_expression, 'guess-intent', .9900)
+        expression_ID = [tup[0] for tup in results if tup[1] == test_expression]
+        expression_exists = db.confirm_archived_expression_exists(expression_ID[0])
+        self.assertEqual(True, expression_exists)
+        db.delete_archived_expression(expression_ID[0])
+        expression_exists = db.confirm_archived_expression_exists(expression_ID[0])
+        self.assertEqual(False, expression_exists)
+        logger.info("Testing for 'confirm_archived_expression_exists' a success!")
+    
     
 class ClassifierTest(unittest.TestCase):
     """
