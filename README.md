@@ -91,41 +91,36 @@ Additionally, make sure to create the following file (ensure proper .yml format 
 
 ##### Development Notes
 - latest yum package dependencies required on Amazon Linux EC2 instance. These are preinstalled on an Amazon AMI and used for deploys: 
-    postgresql94-devel.x86_64: []
-    libffi-devel.x86_64: [] 
-    gcc48.x86_64: []
-    gcc48-gfortran.x86_64: []
-    libpng-devel.x86_64: [] 
-    freetype-devel.x86_64: []
-    lapack-devel.x86_64: []
-    blas-devel.x86_64: []
-    libpng-devel.x86_64: []
-    zlib-devel.x86_64: []
-    atlas-devel.x86_64: []
+    - postgresql94-devel.x86_64: []
+    - libffi-devel.x86_64: [] 
+    - gcc48.x86_64: []
+    - gcc48-gfortran.x86_64: []
+    - libpng-devel.x86_64: [] 
+    - freetype-devel.x86_64: []
+    - lapack-devel.x86_64: []
+    - blas-devel.x86_64: []
+    - libpng-devel.x86_64: []
+    - zlib-devel.x86_64: []
+    - atlas-devel.x86_64: []
 	
 #### Development TODO's
 
 ##### Not Started:
 
-- [ ]
-- [ ] COMMENT/DOCUMENTATION OVERHAUL => START STRONG, FINISH STRONG
+
 - [ ] Start prototyping 'Trait' parsing
 - [ ] Start prototyping datetime parsing
-	- Hit up SpaCy's gitter to see if we can make this into a 
+	- In talks with maintained of SpaCy
 - [ ] Implement different classify responses based on Naive Bayes or LinearSVC
 - [ ] Create route to rebuild classifier with new options
 	- [ ] code
 	- [ ] test
 
 ##### In-Progress:
-- [ ] Look into using Flask's g object for persistent db connection to assist with thread safety
-	- no g, no db 
-	- perhaps switch to sql-alchemy which manages db connections internally
-	- http://kronosapiens.github.io/blog/2014/08/14/understanding-contexts-in-flask.html
+- [ ] COMMENT/DOCUMENTATION OVERHAUL => START STRONG, FINISH STRONG
 - [ ] Create basic validation webpage for unlabeled expressions.
-	- [ ] code
+	- [x] code
 	- [ ] test
-- [ ] 
 - [ ] Prototype 'Entity' parsing
 	- [ ] Gazetteer (Look into Matcher
 		- Indexing techniques??
@@ -133,6 +128,8 @@ Additionally, make sure to create the following file (ensure proper .yml format 
 
 
 ##### Completed:
+- [x] Build out archive table and unlabeled expression table
+- [x] Look into using Flask's g object for persistent db connection
 - [x] Implement unlabeled expressions table and routes to add un-validated expressions
 	- [x] code
 	- [x] test
