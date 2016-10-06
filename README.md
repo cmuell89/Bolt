@@ -52,6 +52,7 @@ Additionally, make sure to create the following file (ensure proper .yml format 
 - Scikit learn based classfication
 	- Scikit learn pipeline
 	- training data pulled from postgres db
+	- confidence metrics for classification results
 - Caching of SpaCy model
 - Routes
 	- /classification/classify => returns intent classification of a given expression
@@ -72,15 +73,18 @@ Additionally, make sure to create the following file (ensure proper .yml format 
 - Database
 	- Intent table
 	- Expression table (join on intent_id)
+	- Unalabeled Expressions
 - Database functionality:
 	- Add intent
 	- Add expressions to intent
-	- delete intent
+	- Add unlabeled expressions
+	- Get all unlabeled expressions
 	- Get all intents
 	- Get all intent expressions
 	- Get all intents and expressions
-	- Delete all expressions from an intent
-	- Delete intent
+	- Delete [all] expressions from an intent
+	- Delete intent via name
+	- Delete unlabeled expression via ID
 - Error Handling
 	- Custom errors that raise exceptions to the route level to respond with appropriate error messages and status codes
 - Logging
@@ -103,24 +107,36 @@ Additionally, make sure to create the following file (ensure proper .yml format 
 
 ##### Not Started:
 
-- [ ] Look into using Flask's g object for persistent db connection to assist with thread safety
+- [ ]
 - [ ] COMMENT/DOCUMENTATION OVERHAUL => START STRONG, FINISH STRONG
 - [ ] Start prototyping 'Trait' parsing
 - [ ] Start prototyping datetime parsing
 	- Hit up SpaCy's gitter to see if we can make this into a 
-
-##### In-Progress:
-- [ ] Improve classification response to show scoring metrics if possible for LinearSVM
 - [ ] Implement different classify responses based on Naive Bayes or LinearSVC
-- [ ] Prototype 'Entity' parsing
-	- [ ] Gazetteer (Look into Matcher
-		- Indexing techniques??
-	- [ ] SpaCy NER
 - [ ] Create route to rebuild classifier with new options
 	- [ ] code
 	- [ ] test
 
+##### In-Progress:
+- [ ] Look into using Flask's g object for persistent db connection to assist with thread safety
+	- no g, no db 
+	- perhaps switch to sql-alchemy which manages db connections internally
+	- http://kronosapiens.github.io/blog/2014/08/14/understanding-contexts-in-flask.html
+- [ ] Create basic validation webpage for unlabeled expressions.
+	- [ ] code
+	- [ ] test
+- [ ] 
+- [ ] Prototype 'Entity' parsing
+	- [ ] Gazetteer (Look into Matcher
+		- Indexing techniques??
+	- [ ] SpaCy NER
+
+
 ##### Completed:
+- [x] Implement unlabeled expressions table and routes to add un-validated expressions
+	- [x] code
+	- [x] test
+- [x] Improve classification response to show scoring metrics if possible for LinearSVM
 - [x] Implement request parsing and parameter validation middleware or library-
 	- Using webargs library (utilizes Marshmallow)
 - [x] Setup External Postgres Database to handle Expressions
