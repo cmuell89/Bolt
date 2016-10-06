@@ -1,17 +1,31 @@
-from flask import Flask
-from flask import jsonify
+from flask import Flask, jsonify, g
 from flask_restful import Api
-from . import resources
+from .resources import restful_api, web_client
 import logging
 
 __all__ = ['application']
 
 application = app = Flask(__name__)
 
-api = Api(app)
+@app.teardown_appcontext
+def close_connection(exception):
+    db = getattr(g, '_database', None)
+    if db is not None:
+        db.close_database_connection()
+"""
+Web client routes.
+"""
+app.add_url_rule('/', view_func=web_client.Home.as_view('default'))
+app.add_url_rule('/home', view_func=web_client.Home.as_view('home'))
+app.add_url_rule('/validation', view_func=web_client.ValidateExpression.as_view('validation'))
 
-api.add_resource(resources.Expressions, '/database/expressions/<string:intent>')
-api.add_resource(resources.Intents, '/database/intents')
-api.add_resource(resources.Classify, '/classification/classify')
-api.add_resource(resources.Train, '/classification/train/<string:classifier>')
-api.add_resource(resources.Health, '/aws-eb-health')
+"""
+API routes.
+"""
+api = Api(app)
+api.add_resource(restful_api.Expressions, '/database/expressions/<string:intent>')
+api.add_resource(restful_api.Intents, '/database/intents')
+api.add_resource(restful_api.Classify, '/classification/classify')
+api.add_resource(restful_api.Train, '/classification/train/<string:classifier>')
+api.add_resource(restful_api.UnlabeledExpressions, '/database/unlabeled_expressions')
+api.add_resource(restful_api.Health, '/aws-eb-health')

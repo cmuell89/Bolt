@@ -1,23 +1,39 @@
 '''
 Created on Jul 27, 2016
 
-@author: Carl Mueller
+@tokenAuthor: Carl Mueller
 
 clf: the NLP classification pipeline built using sk-learn (defaults to Naive Bayes 'svm' but can be retrained using Linear SVM 'svm')
 db: the NLP_Database() object used to make calls to the associated Bolt postgreSQL database
 
+Classes:
+    Classify:
+        post - Returns the intent classification of the query.
+    Train:
+        get - Trains the existing classifier object accessed by all '/classification/*' routes.
+    Expressions:
+        get - Returns the expressions for an intent
+        post - Adds expression/s to an intent. Returns the update list of expressions for the intent.
+        delete - Deletes expression/s from intent. Returns the update list of expressions for the intent.
+    UnlabeledExpressions:
+        get - Returns as list of tuples of unlabeled expressions.
+    Intents:
+        get - Returns the current intents stored in the NLP database
+        post - Posts an intent to NLP postgres database. Returns current list of intents.
+        delete- Deletes intent and all expressions associated with that intent (SHOULD MIGRATE EXPRESSIONS INTO UNLABELED EXPRESSION.  Returns current list of intents.
+    Health:
+        get - Used by AWS Elastic Beanstalk service to monitor health. Returns 200.
 '''
 import logging
-import re
-from flask import jsonify, request, Response, abort
+from flask import jsonify, Response, abort, g
 from flask_restful import Resource
-from webargs import fields, validate
-from webargs.flaskparser import use_args, use_kwargs, parser
-from marshmallow import Schema, fields
+from webargs import validate
+from webargs.flaskparser import use_args, parser
+from marshmallow import fields
 from functools import partial
-from .authorization import auth
-from .validators import valid_application_type, list_of_strings
-from database.database import NLP_Database
+from app.authorization import tokenAuth
+from app.validators import valid_application_type, list_of_strings
+from database.database import NLPDatabase
 from classification.classification import train_classification_pipeline, classify_document
 from utils.exceptions import DatabaseError, DatabaseInputError
 
@@ -29,19 +45,23 @@ try:
 except Exception as e:
     logger.exception(e)
     logger.warning("All API endpoints requiring the trained clf will fail.")
-    
-try:
-    db = NLP_Database()
-except Exception as e:
-    logger.exception(e)
-    logger.warning("All API endpoints requiring a db connection will fail.")
+
+"""
+Store database object and its connections in the local context object g.
+"""    
+
+def get_db():
+    db = getattr(g, '_database', None)
+    if db is None:
+        db = g._database = db = NLPDatabase()
+    return db
 
 """
 Resources Classes
 """
 class Classify(Resource):
     
-    decorators = [auth.login_required]
+    decorators = [tokenAuth.login_required]
     validate_application_json = partial(valid_application_type, 'application/json')
     
     classify_args = {
@@ -55,12 +75,11 @@ class Classify(Resource):
         Returns the intent classification of the query.
         """
         result = classify_document(clf, args['query'])
-        if result[0]['confidence'] > .5:
-            intent_guess = result[0]['intent']
-        else:
-            intent_guess = None
+        intent_guess = result[0]['intent']
+        estimated_confidence = result[0]['confidence']
         try:
-            db.add_unlabeled_expression(args['query'], intent_guess)
+            db = get_db()
+            db.add_unlabeled_expression(args['query'], intent_guess, estimated_confidence)
         except DatabaseError as e:
             logger.exception(e.value)
         resp = jsonify(intents=result)
@@ -70,7 +89,7 @@ class Classify(Resource):
         
 class Train(Resource):
     
-    decorators = [auth.login_required]
+    decorators = [tokenAuth.login_required]
     validate_application_json = partial(valid_application_type, 'application/json')
     
     train_args = {
@@ -95,7 +114,7 @@ class Train(Resource):
 
 class Expressions(Resource):
     
-    decorators = [auth.login_required]
+    decorators = [tokenAuth.login_required]
     validate_application_json = partial(valid_application_type, 'application/json')
     
     expressions_post_args = {
@@ -110,6 +129,7 @@ class Expressions(Resource):
         Currently only supports 'application/json' mimetype.
         """
         try:
+            db = get_db()
             expressions = db.add_expressions_to_intent(intent, args['expressions'])
             resp = jsonify(intent=intent,expressions=expressions)
             resp.status_code = 200
@@ -133,6 +153,7 @@ class Expressions(Resource):
         Returns the expressions for an intent
         """ 
         try:
+            db = get_db()
             expressions = db.get_intent_expressions(intent)
             resp = jsonify(intent=intent,expressions=expressions)
             resp.status_code = 200
@@ -161,6 +182,7 @@ class Expressions(Resource):
         """
         if args['all'] == True:
             try:
+                db = get_db()
                 expressions = db.delete_all_intent_expressions(intent)
                 resp = jsonify(intent=intent,expressions=expressions)
                 return resp
@@ -174,6 +196,7 @@ class Expressions(Resource):
                 return resp   
         elif args['expressions']:
             try:
+                db = get_db()
                 expressions = db.delete_expressions_from_intent(intent, args['expressions'])
                 resp = jsonify(intent=intent,expressions=expressions, deleted_expressions=args['expressions'])
                 return resp
@@ -186,10 +209,38 @@ class Expressions(Resource):
                 resp.status_code = 400
                 return resp 
 
-     
+class UnlabeledExpressions(Resource):
+    
+    decorators = [tokenAuth.login_required]
+    validate_application_json = partial(valid_application_type, 'application/json')
+
+    unlabeled_get_args = {
+        'content_type': fields.Str(required=True, load_from='Content-Type', location='headers', validate=validate_application_json),
+    }
+
+    @use_args(unlabeled_get_args)
+    def get(self, args):
+        """
+        Gets as list of tuples of unlabeled expressions.
+        """
+        try:
+            db = get_db()
+            unlabeled_expressions = db.get_unlabeled_expressions()
+            resp = jsonify(unlabeled_expressions = unlabeled_expressions)
+            resp.status_code = 200
+            return resp
+        except DatabaseError as errror:
+            resp = jsonify(error=error.value)
+            resp.status_code = 500
+            return resp
+        except DatabaseInputError as error:
+            resp = jsonify(error=error.value)
+            resp.status_code = 400
+            return resp
+    
 class Intents(Resource):
     
-    decorators = [auth.login_required]
+    decorators = [tokenAuth.login_required]
     validate_application_json = partial(valid_application_type, 'application/json')
     
     intents_post_args = {
@@ -204,6 +255,7 @@ class Intents(Resource):
         Currently only supports 'application/json' mimetype.
         """
         try:
+            db = get_db()
             intents = db.add_intent(args['intent'])
             resp = jsonify(intents=intents)
             resp.status_code = 200
@@ -226,6 +278,7 @@ class Intents(Resource):
         """
         Gets the current intents stored in the NLP database
         """
+        db = get_db()
         intents = db.get_intents()
         resp = jsonify(intents=intents)
         resp.status_code = 200
@@ -243,6 +296,7 @@ class Intents(Resource):
         Deletes an intent including all its associated expressions
         """
         try:
+            db = get_db()
             intents = db.delete_intent(args['intent'])
             resp = jsonify(intents=intents)
             resp.status_code = 200
@@ -257,6 +311,7 @@ class Intents(Resource):
             return resp
 
 
+
 class Health(Resource):
     def get(self):
         """
@@ -264,6 +319,8 @@ class Health(Resource):
         """
         resp = Response()
         return resp
+    
+
 
 @parser.error_handler
 def handle_request_parsing_error(err):
