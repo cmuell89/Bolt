@@ -63,3 +63,6 @@ logs/
 !.elasticbeanstalk/*.cfg.yml
 !.elasticbeanstalk/*.global.yml
 
+# Prototyping stuff
+productEntities.json
+productList.txt
