@@ -3,7 +3,7 @@ Created on Jul 27, 2016
 
 @tokenAuthor: Carl Mueller
 
-clf: the NLP classification pipeline built using sk-learn (defaults to Naive Bayes 'svm' but can be retrained using Linear SVM 'svm')
+__CLF__: the NLP classification pipeline built using sk-learn (defaults to Naive Bayes 'svm' but can be retrained using Linear SVM 'svm')
 db: the NLP_Database() object used to make calls to the associated Bolt postgreSQL database
 
 Classes:
@@ -38,9 +38,8 @@ from classification.classification import train_classification_pipeline, classif
 from utils.exceptions import DatabaseError, DatabaseInputError
 
 logger = logging.getLogger('BOLT.api')
-
 try:
-    clf = train_classification_pipeline()
+    __CLF__ = train_classification_pipeline()
     logger.info('Created default LinearSVC classifier on startup')
 except Exception as e:
     logger.exception(e)
@@ -74,7 +73,7 @@ class Classify(Resource):
         """
         Returns the intent classification of the query.
         """
-        result = classify_document(clf, args['query'])
+        result = classify_document(__CLF__, args['query'])
         intent_guess = result[0]['intent']
         estimated_confidence = result[0]['confidence']
         try:
@@ -101,12 +100,14 @@ class Train(Resource):
         """
         Trains the existing classifier object accessed by all '/classification/*' routes.
         """
+        #Declare the global instance of __CLF__
+        global __CLF__
         if classifier not in ('svm','nb'):
             classifier = 'svm'
             response_message = "Classifier defaulting to " + classifier + " due to malformed variable URL."
         else:
             response_message = "Classifier successfully trained: " + classifier
-        clf = train_classification_pipeline(None,None, classifier)
+        __CLF__ = train_classification_pipeline(None,None, classifier)
         resp = jsonify(message=response_message)
         resp.status_code = 200
         return resp
