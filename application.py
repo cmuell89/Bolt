@@ -7,6 +7,7 @@ import settings
 import os
 from app import application
 
+application.secret_key=os.environ.get('SECRET_KEY')
 # run the app.
 if __name__ == "__main__": 
     if os.environ.get('ENVIRONMENT')=='dev':
