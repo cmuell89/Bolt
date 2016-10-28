@@ -6,12 +6,18 @@ Created on Oct 17, 2016
 import json
 import re
 import timeit
+import sys
+import zlib
 from nltk import ngrams
 from nltk.util import skipgrams
 
-PRODUCT_FILE = "../../resources/product_lists/productList6k.json";
+PRODUCT_FILE = "../../resources/product_lists/productListSingles.json";
 MAX_COST = 1
 PRODUCTS = json.load(open(PRODUCT_FILE))
+
+print("Size of product list:")
+print(sys.getsizeof(PRODUCTS['products'])/1000000)
+print()
 
 SIZE = 0;
 
@@ -115,6 +121,7 @@ product_names = []
 cleaned_product_names = []
 vocab = []
 
+start_time = timeit.default_timer()   
 """ Create vocab and product name lists"""
 for product in PRODUCTS['products']:
     product_names.append(product)
@@ -144,7 +151,7 @@ for product in cleaned_product_names:
     skip_grams = skip_gram_generator(product, 2, 3)
     product_skip_grams.extend(skip_grams)
 
-start_time = timeit.default_timer()    
+ 
 trie = TrieNode()
 
 """ Read the words and n-grams into a tree """
@@ -161,28 +168,50 @@ for skip_gram in product_skip_grams:
 trie_build_time = timeit.default_timer() - start_time
 
 print("Search for 'distressed bel air' after normal build:")
-
 start_search = timeit.default_timer()
 print(search(trie, 'distressed bel air', 1))
+print()
+
 search_time_normal = timeit.default_timer() - start_search    
 print("Search time:")
 print(search_time_normal)
+print()
 
-json_str = json.dumps(trie, sort_keys=True, indent=2)
+print("Normal build time (includes all string processing):")
+print(trie_build_time)
+print()
 
-start_time = timeit.default_timer()   
-rebuilt_trie = TrieNode.from_dict(json.loads(json_str))
+start_save_time = timeit.default_timer()
+json_str = json.dumps(trie, sort_keys=True)
+compressed_json_str = zlib.compress(json_str.encode('utf-8'))
+print("Save time:")
+print(timeit.default_timer() - start_save_time)
+print()
+
+print("Size of uncompressed serialized json:")
+print(sys.getsizeof(json_str)/1000000)
+print()
+
+print("Size of compressed serialized json:")
+print(sys.getsizeof(compressed_json_str)/1000000)
+print()
+
+start_time = timeit.default_timer()
+decompressed_json_str = zlib.decompress(compressed_json_str)
+rebuilt_trie = TrieNode.from_dict(json.loads(decompressed_json_str.decode('utf-8')))
 trie_reconstruction_time = timeit.default_timer() - start_time
+
 
 print("Search for ''distressed bel air' after reconstruction from json string:")
 start_search = timeit.default_timer()
 print(search(rebuilt_trie, 'distressed bel air', 1))   
 search_time_reconstructed = timeit.default_timer() - start_search 
+
+print()
 print("Search time:")
 print(search_time_reconstructed)
     
-print("Normal build time:")
-print(trie_build_time)
+print()
 print("Reconstruction build time:")
 print(trie_reconstruction_time)
 

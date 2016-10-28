@@ -11,7 +11,7 @@ from nltk.util import skipgrams
 # STOPWORDS = stopwords.words('english')
 """ Collect most frequent words based on intent expressions """ 
 STOPWORDS = ['inventory','best','selling','items','many','how','what','in','are','the','stock','is','most',]
-PRODUCTS = "../../resources/product_lists/productListSingles.json";
+PRODUCTS = "../../resources/product_lists/productList1k.json";
 MAX_COST = 1
 product_file = open(PRODUCTS)
 cleaned_product_file = open('../../resources/cleanedProducts.txt', "w")
@@ -27,13 +27,15 @@ class TrieNode:
     def __init__(self):
         self.word = None
         self.children = {}
+        self.word_lengths = set()
 
     def insert(self, word):
         node = self
+        word_length = len(word)
         for letter in word:
             if letter not in node.children: 
                 node.children[letter] = TrieNode()
-
+                node.children[letter].word_lengths.add(word_length)
             node = node.children[letter]
 
         node.word = word
