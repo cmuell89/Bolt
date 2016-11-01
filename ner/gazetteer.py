@@ -5,10 +5,11 @@ Created on October 26, 2016
 @copyright: Lightning in a Bot, Inc
 """
 from nltk import ngrams
+from nltk.corpus import stopwords
 from nltk.util import skipgrams
 from utils import string_cleaners
 
-class TrieBuilder():
+class TrieBuilder:
     """
     Returns the root TrieNode of a trie containing all n-grams
     """
@@ -18,7 +19,7 @@ class TrieBuilder():
        
     def build_trie_from_dictionary(self, dictionary):
         trie = TrieNode()
-        dict_builder = TrieDictionaryBuilder()
+        dict_builder = DictionaryBuilder()
         cleaned_dictionary = dict_builder.clean_dictionary(dictionary)
         word_list = dict_builder.ngram_generator(cleaned_dictionary)
         word_list.extend(dict_builder.skipgram_generator(cleaned_dictionary))
@@ -34,7 +35,7 @@ class TrieBuilder():
        
 
 
-class TrieDictionaryBuilder:
+class DictionaryBuilder:
     
     def clean_dictionary(self, dictionary):
         dictionary = [string_cleaners.normalize_whitespace(word) for word in dictionary]
@@ -74,23 +75,23 @@ class TrieDictionaryBuilder:
         return skip_grams
 
 class TrieNode(dict):
-    def __init__(self, word=None, children=None):
+    
+    def __init__(self, word=None, children=None, word_lengths=None):
         super().__init__()
         self.__dict__ = self
         self.word = None if not word else word
         self.children = {} if not children else children
-    
 
     def insert(self, word):
         node = self
+        word_length = len(word)
         for letter in word:
             if letter not in node.children: 
                 node.children[letter] = TrieNode()
-
             node = node.children[letter]
 
         node.word = word
-    
+        
     @staticmethod
     def from_dict(dict_):
         """ Recursively (re)construct TreeNode-based tree from dictionary. """
@@ -102,8 +103,8 @@ class TrieNode(dict):
     @staticmethod
     def search(trie, word, maxCost):
         """
-        The search function returns a list of all words that are less than the given
-        maximum distance from the target  using the provided TrieTrie
+        The search function returns a list tuples containing word and edit distance.
+        No edit distance will be more than maximum distance from the target using the provided TrieNode
         """
         # build first row
         currentRow = range(len(word) + 1)
@@ -127,8 +128,10 @@ class TrieNode(dict):
         columns = len(word) + 1
         currentRow = [previousRow[0] + 1]
     
-        # Build one row for the letter, with a column for each letter in the target
-        # word, plus one for the empty string at column 0
+        """ 
+        Build one row for the letter, with a column for each letter in 
+        the target word, plus one for the empty string at column 0
+        """
         for column in range( 1, columns ):
     
             insertCost = currentRow[column - 1] + 1
@@ -152,4 +155,70 @@ class TrieNode(dict):
             for letter in node.children:
                 search_recursive(node.children[letter], letter, word, currentRow, 
                     results, maxCost)
+
+class TagSearcher():
+    
+    def __init__(self):
+        self.dict_builder = DictionaryBuilder()
+        self.nltk_stopwords = stopwords.words()
+    
+    def get_tag(self, trie, query, intent_stopwords):
+        
+        """ Create a list of the query ngrams to be searched in the Trie """
+        query = [w for w in query.split(' ') if w.lower() not in intent_stopwords]
+        query_grams = dict_builder.ngrammer(query, 2, len(query)+1)
+        query_grams = sorted(query_grams, key=lambda word: len(word), reverse=True)
+
+         
+        """ Generate potential tags based on query grams searched against trie """
+        tags = []
+        for idx, target in enumerate(query_grams):
+            """ 
+            Do not add search nor add to tags if the test query gram has less tokens than any tag existing in the tags lis.
+            This is to ensure that the large matched tag is used and to reduce search times significantly
+            """
+            if len(tags) == 0 or not any(len(tag[0].split(' ')) > len(target.split(' ')) for tag in tags):
+                target_length = len(target.split(' '))
+                results = search(word_trie, target, MAX_COST)
+                if len(results)>0:
+                    """ Sort results by edit distance """
+                    results = sorted(results, key=lambda result: result[1])
+                    """ Append first result with best edit distance to tags list but not if length is shorter than target"""
+                    if len(results[0][0].split(' ')) >= target_length :
+                        tags.append((results[0][0], results[0][1]))
+        """ sort and filter tags based on max ngram length """  
+        tags = sorted(tags, key=lambda tag: len(tag[0].split()), reverse=True)
+        
+        
+        if len(tags==0):
+            """ Generate tags based on single word matches against trie """
+            potential_single_words = set()
+            
+            query = [x for x in query if x.lower() not in nltk_stopwords]
+            
+            for word in query:
+                stemmed_word = stemmer.stem(word)
+                results = search(word_trie, stemmed_word, 1)
+                if(len(results)>0):
+                    for result in results:
+                        potential_single_words.add(result)
+            potential_tags = sorted(list(potential_single_words), key=lambda word: word[1])
+            return potential_tags[0]
+        else:
+            return tags[0]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                 

@@ -10,6 +10,7 @@ import sys
 import zlib
 from nltk import ngrams
 from nltk.util import skipgrams
+from 
 
 PRODUCT_FILE = "../../resources/product_lists/productListSingles.json";
 MAX_COST = 1
@@ -27,26 +28,32 @@ each letter. Each node has a branch for each letter that may follow it in the
 set of words.
 """
 class TrieNode(dict):
-    def __init__(self, word=None, children=None):
+    def __init__(self, word=None, children=None, word_lengths=None):
         super().__init__()
         self.__dict__ = self
         self.word = None if not word else word
         self.children = {} if not children else children
+        self.word_lengths = [] if not word_lengths else word_lengths
         
     def insert(self, word):
         node = self
+        word_length = len(word)
+        if(word_length not in self.word_lengths):
+            self.word_lengths.append(word_length)
         for letter in word:
             if letter not in node.children: 
                 node.children[letter] = TrieNode()
-
+                if(word_length not in node.children[letter].word_lengths):
+                    node.children[letter].word_lengths.append(word_length)
             node = node.children[letter]
+            
 
         node.word = word
     
     @staticmethod
     def from_dict(dict_):
         """ Recursively (re)construct TreeNode-based tree from dictionary. """
-        root = TrieNode(dict_['word'], dict_['children'])
+        root = TrieNode(dict_['word'], dict_['children'], dict_['word_lengths'])
         for letter in dict_['children']:
             root.children[letter] = TrieNode.from_dict(root.children[letter])
         return root
@@ -216,6 +223,13 @@ print("Reconstruction build time:")
 print(trie_reconstruction_time)
 
     
-
-    
-    
+test_trie = TrieNode()
+test_words = ["aaa", "ab", "aaab"]
+test_trie.insert(test_words[0])
+test_trie.insert(test_words[1])
+test_trie.insert(test_words[2])
+test_str = json.dumps(test_trie, sort_keys=True, indent=2)
+print(test_str)
+rebuilt_test_trie = TrieNode.from_dict(json.loads(test_str))
+result_str =  json.dumps(rebuilt_test_trie, sort_keys=True, indent=2)  
+print(result_str)
