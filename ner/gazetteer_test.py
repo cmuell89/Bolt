@@ -5,7 +5,7 @@ file_name = "../resources/product_lists/productList.json";
 product_file = open(file_name)
 product_json = json.load(product_file)
 products = product_json['products']
-STOPWORDS = ['inventory','best','selling','items','many','how','what','in','are','the','stock','is','most', 'warehouse', 'sell', 'this']
+STOPWORDS = ['inventory','best','selling','items','many','how','what','in','are','the','stock','is','most', 'warehouse', 'sell', 'this', 'total', 'sales']
 
 builder = TrieBuilder()
 tagger = TagSearcher()

@@ -10,7 +10,7 @@ from nltk.util import skipgrams
 from nltk.stem.porter import PorterStemmer
 # STOPWORDS = stopwords.words('english')
 """ Collect most frequent words based on intent expressions """ 
-STOPWORDS = ['inventory','best','selling','items','many','how','what','in','are','the','stock','is','most', 'warehouse', 'sell', 'this']
+STOPWORDS = ['inventory','best','selling','items','many','how','what','in','are','the','stock','is','most', 'warehouse', 'sell', 'this', 'sold']
 NLTK_STOPWORDS = stopwords
 PRODUCTS = "../../resources/product_lists/productList6k.json";
 MAX_COST = 2
