@@ -7,24 +7,25 @@ Created on October 26, 2016
 from nltk import ngrams
 from nltk.corpus import stopwords
 from nltk.util import skipgrams
+from nltk.stem.porter import PorterStemmer
 from utils import string_cleaners
 
 class TrieBuilder:
     """
-    Returns the root TrieNode of a trie containing all n-grams
+    Returns the root TrieNode of a trie containing all product names, n-grams and skipgrams
     """
-    def __init__(self, dictionary):
-        self.dictionary = dictionary
-        
-       
     def build_trie_from_dictionary(self, dictionary):
         trie = TrieNode()
         dict_builder = DictionaryBuilder()
+        
         cleaned_dictionary = dict_builder.clean_dictionary(dictionary)
-        word_list = dict_builder.ngram_generator(cleaned_dictionary)
+        word_list = dict_builder.extract_vocab_from_dictionary(cleaned_dictionary)
+        word_list.extend(dict_builder.ngram_generator(cleaned_dictionary))
         word_list.extend(dict_builder.skipgram_generator(cleaned_dictionary))
+        
         for word in word_list:
-            trie.insert(self, word)
+            word = word.lower()
+            trie.insert(word)
         return trie
         
     def build_trie_from_serialized_json(self, json_string):
@@ -32,44 +33,57 @@ class TrieBuilder:
     
     def serialize_trie_to_json(self, trie):
         pass
-       
-
 
 class DictionaryBuilder:
     
     def clean_dictionary(self, dictionary):
-        dictionary = [string_cleaners.normalize_whitespace(word) for word in dictionary]
-        dictioanry = [string_cleaners.dash_to_single_space(word) for word in dictionary]
-        dictionary = [string_cleaners.remove_apostrophe(word) for word in dictionary]
+        """ Cleans each entry in the dictionary and returns the altered dictionary """
+        dictionary = [string_cleaners.normalize_whitespace(entry) for entry in dictionary]
+        dictionary = [string_cleaners.dash_to_single_space(entry) for entry in dictionary]
+        dictionary = [string_cleaners.remove_apostrophe(entry) for entry in dictionary]
         return dictionary
         
     def ngram_generator(self, dictionary):
+        """ Generates ngrams from size 2 to size of the number of tokens in the dictionary entry and returns the combined list """
         n_grams = []
-        n_grams.extend([ngrammer(word, 2, len(word)) for word in dictionary])
+        results = [self.ngrammer(entry.split(' '), 2, len(entry.split(' '))) for entry in dictionary if len(entry.split(' '))>1]
+        for result in results:
+            n_grams.extend(result)
         return n_grams
     
     def skipgram_generator(self, dictionary):
+        """ Generates various size and skip distance skipgrams and returns the combined list """
         skip_grams = []
-        skip_grams.extent([skipgrammer(word, 2, 2) for word in dictionary])
-        skip_grams.extent([skipgrammer(word, 3, 3) for word in dictionary])
-        skip_grams.extent([skipgrammer(word, 3, 2) for word in dictionary])
-        skip_grams.extent([skipgrammer(word, 2, 3) for word in dictionary])
+        results = [self.skipgrammer(entry.split(' '), 2, 2) for entry in dictionary]
+        results.extend([self.skipgrammer(entry.split(' '), 3, 3) for entry in dictionary])
+        results.extend([self.skipgrammer(entry.split(' '), 3, 2) for entry in dictionary])
+        results.extend([self.skipgrammer(entry.split(' '), 2, 3) for entry in dictionary])
+        for result in results:
+            skip_grams.extend(result)
         return skip_grams
+    
+    def extract_vocab_from_dictionary(self, dictionary):
+        """ Returns list of single vocab words generated from the dictionary """
+        vocab = []
+        for entry in dictionary:
+            words = entry.split(' ')
+            vocab.extend(words)
+        return vocab
+            
         
-    def ngrammer(self, word, minimum, maximum):
-        """ Splits the provide word on ' ' and generates token n-grams of length 'minimum' to length 'maximum' """
+    def ngrammer(self, span, minimum, maximum):
+        """ Returns list of token n-grams of length 'minimum' to length 'maximum' on the provided span of tokens"""
         n_grams = []
-        words = word.split(' ')
         for n in range(minimum, maximum):
-            for ngram in ngrams(words, n):
-                print(ngram)
+            for ngram in ngrams(span, n):
                 n_grams.append(' '.join(str(i) for i in ngram))
 
         return n_grams
     
-    def skipgrammer(self, word, n, k):
+    def skipgrammer(self, span, n, k):
+        """ Returns list of token skip-grams of size n with skip distance k on the provided span of tokens"""
         skip_grams = []
-        grams = list(skipgrams(word, n, k))
+        grams = list(skipgrams(span, n, k))
         for g in grams:
             skip_grams.append(' '.join(str(i) for i in g))
         return skip_grams
@@ -84,7 +98,6 @@ class TrieNode(dict):
 
     def insert(self, word):
         node = self
-        word_length = len(word)
         for letter in word:
             if letter not in node.children: 
                 node.children[letter] = TrieNode()
@@ -113,7 +126,7 @@ class TrieNode(dict):
     
         # recursively search each branch of the trie
         for letter in trie.children:
-            search_recursive(trie.children[letter], letter, word, currentRow, 
+            TrieNode.search_recursive(trie.children[letter], letter, word, currentRow, 
                 results, maxCost)
     
         return results
@@ -153,7 +166,7 @@ class TrieNode(dict):
         # recursively search each branch of the trie
         if min( currentRow ) <= maxCost:
             for letter in node.children:
-                search_recursive(node.children[letter], letter, word, currentRow, 
+                TrieNode.search_recursive(node.children[letter], letter, word, currentRow, 
                     results, maxCost)
 
 class TagSearcher():
@@ -161,14 +174,15 @@ class TagSearcher():
     def __init__(self):
         self.dict_builder = DictionaryBuilder()
         self.nltk_stopwords = stopwords.words()
+        self.stemmer = PorterStemmer()
     
-    def get_tag(self, trie, query, intent_stopwords):
+    def get_tag(self, trie, query, intent_stopwords, edit_cost):
         
         """ Create a list of the query ngrams to be searched in the Trie """
+        query = self.clean_query(query).lower()
         query = [w for w in query.split(' ') if w.lower() not in intent_stopwords]
-        query_grams = dict_builder.ngrammer(query, 2, len(query)+1)
+        query_grams = self.dict_builder.ngrammer(query, 2, len(query)+1)
         query_grams = sorted(query_grams, key=lambda word: len(word), reverse=True)
-
          
         """ Generate potential tags based on query grams searched against trie """
         tags = []
@@ -179,7 +193,7 @@ class TagSearcher():
             """
             if len(tags) == 0 or not any(len(tag[0].split(' ')) > len(target.split(' ')) for tag in tags):
                 target_length = len(target.split(' '))
-                results = search(word_trie, target, MAX_COST)
+                results = TrieNode.search(trie, target, edit_cost)
                 if len(results)>0:
                     """ Sort results by edit distance """
                     results = sorted(results, key=lambda result: result[1])
@@ -189,26 +203,30 @@ class TagSearcher():
         """ sort and filter tags based on max ngram length """  
         tags = sorted(tags, key=lambda tag: len(tag[0].split()), reverse=True)
         
-        
-        if len(tags==0):
-            """ Generate tags based on single word matches against trie """
+        """ Generate tags based on single word matches against trie """
+        if len(tags)==0:
             potential_single_words = set()
-            
-            query = [x for x in query if x.lower() not in nltk_stopwords]
-            
+            query = [x for x in query if x.lower() not in self.nltk_stopwords]
             for word in query:
-                stemmed_word = stemmer.stem(word)
-                results = search(word_trie, stemmed_word, 1)
+                stemmed_word = self.stemmer.stem(word)
+                results = TrieNode.search(trie, stemmed_word, 1)
                 if(len(results)>0):
                     for result in results:
                         potential_single_words.add(result)
             potential_tags = sorted(list(potential_single_words), key=lambda word: word[1])
-            return potential_tags[0]
+            if len(potential_tags) != 0:
+                return potential_tags[0]
+            else:
+                return None
         else:
             return tags[0]
 
-
-
+    def clean_query(self, query):
+        query = string_cleaners.remove_question_mark(query)
+        query = string_cleaners.normalize_whitespace(query)
+        query = string_cleaners.dash_to_single_space(query)
+        query = string_cleaners.remove_apostrophe(query)
+        return query
 
 
 

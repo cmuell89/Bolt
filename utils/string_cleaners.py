@@ -6,13 +6,18 @@ Created on October 26, 2016
 """
 import re
 
-def normalize_whitespace(str):
-  str = re.sub(r'\s+', ' ', str)
-  str = re.sub(r'\n+', ' ', str)
-  return str
-  
-def dash_to_single_space(str):
-    return str.replace(" - ")
+def remove_question_mark(string):
+    return string.replace("?", "")
 
-def remove_apostrophe(str):
-    return str.replace("\'", "")
+def normalize_whitespace(string):
+    string = re.sub(r'\s+', ' ', string)
+    string = re.sub(r'\n+', ' ', string)
+    return string
+  
+def dash_to_single_space(string):
+    string = string.replace(" - "," ")
+    return string
+
+def remove_apostrophe(string):
+    string = string.replace("\'", "")
+    return string
