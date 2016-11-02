@@ -19,7 +19,7 @@ class TrieBuilder:
         dict_builder = DictionaryBuilder()
         
         cleaned_dictionary = dict_builder.clean_dictionary(dictionary)
-        word_list = dict_builder.extract_vocab_from_dictionary(cleaned_dictionary)
+        word_list = dict_builder.extract_vocab_from_dictionary(cleaned_dictionary, stemmed=True)
         word_list.extend(dict_builder.ngram_generator(cleaned_dictionary))
         word_list.extend(dict_builder.skipgram_generator(cleaned_dictionary))
         
@@ -41,6 +41,7 @@ class DictionaryBuilder:
         dictionary = [string_cleaners.normalize_whitespace(entry) for entry in dictionary]
         dictionary = [string_cleaners.dash_to_single_space(entry) for entry in dictionary]
         dictionary = [string_cleaners.remove_apostrophe(entry) for entry in dictionary]
+        dictionary = [string_cleaners.remove_foward_slash(entry) for entry in dictionary]
         return dictionary
         
     def ngram_generator(self, dictionary):
@@ -62,11 +63,14 @@ class DictionaryBuilder:
             skip_grams.extend(result)
         return skip_grams
     
-    def extract_vocab_from_dictionary(self, dictionary):
+    def extract_vocab_from_dictionary(self, dictionary, stemmed=False):
         """ Returns list of single vocab words generated from the dictionary """
         vocab = []
         for entry in dictionary:
             words = entry.split(' ')
+            if stemmed == True:
+                stemmer = PorterStemmer()
+                words = [stemmer.stem(word) for word in words]
             vocab.extend(words)
         return vocab
             
@@ -177,6 +181,10 @@ class TagSearcher():
         self.stemmer = PorterStemmer()
     
     def get_tag(self, trie, query, intent_stopwords, edit_cost):
+        
+        """ If a very small string, empty string, or null is passed as teh query, return None """ 
+        if len(query)<3 or query==None or query == "":
+            return None
         
         """ Create a list of the query ngrams to be searched in the Trie """
         query = self.clean_query(query).lower()

@@ -6,8 +6,13 @@ Created on October 26, 2016
 """
 import re
 
+def remove_foward_slash(string):
+    string = string.replace("/", "")
+    return string
+    
 def remove_question_mark(string):
-    return string.replace("?", "")
+    string = string.replace("?", "")
+    return string
 
 def normalize_whitespace(string):
     string = re.sub(r'\s+', ' ', string)
