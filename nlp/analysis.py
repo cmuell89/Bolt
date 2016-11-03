@@ -1,5 +1,11 @@
+'''
+Created on Nov 3, 2016
+
+@author: Carl Mueller
+@company: Lightning in a Bot, Inc
+'''
 from .clf.classification import build_classification_pipeline, train_classification_pipeline
-from .annotation import ClassificationAnnotator, GazetteerAnnotator
+from .annotation import ClassificationAnnotator, GazetteerAnnotator, Annotation
 from .ner import gazetteer
 
 __CLF__ = build_classification_pipeline()
@@ -21,8 +27,11 @@ class Analyzer:
     
 
 class AnalysisPipeline:
-    def __init__(self, annotator_sequence):
-        self.sequence = annotator_sequence
+    def __init__(self, *args):
+        self.sequence = list()
+        if args is not None:
+            for arg in args:
+                self.sequence.append(arg)
     
     def analyze(self, annotation):
         for annotator in self.sequence:

@@ -4,7 +4,7 @@ Created on Nov 2, 2016
 @author: Carl Mueller
 '''
 from abc import abstractmethod
-from .ner.gazetteer import TagSearcher
+from nlp import TagSearcher
 
 class Annotation:
     """ Annotation object that is passed along a sequence of annotators """
@@ -23,7 +23,7 @@ class Annotation:
     
     
 class AbstractAnnotator:
-    """ Mixin class for annotators used in analysis pipeline """
+    """ Mixin class for annotators used in nlp pipeline """
     
     def __init__(self, name):
         self.name = name

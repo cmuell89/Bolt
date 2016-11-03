@@ -19,14 +19,25 @@ from transformers.clean_text_transformer import CleanTextTransformer
 from utils import io
 import json
 
-
-
 # load Spacy pipeline from cached model    
 nlp = load_spacy('en')
 logger = logging.getLogger('BOLT.clf')
 
 # List of symbols we don't care about
 SYMBOLS = " ".join(string.punctuation).split(" ") + ["-----", "---", "...", "“", "”", "'ve"]
+
+
+class ClassificationBuilder():
+    """ 
+    TODO: Build a class object that generates sckikit-learn pipeline classifiers
+    Could be a pool or factory design
+    """
+    pass
+
+class Classifier():
+    """
+    Class instances returned from ClassificationBuilder to be used the the analysis and update modules to manage NLP
+    """
 
 
 def tokenize_text(sample):
