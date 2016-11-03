@@ -10,6 +10,14 @@ from nltk.util import skipgrams
 from nltk.stem.porter import PorterStemmer
 from utils import string_cleaners
 
+class GazetteerModelBuilder:
+    """
+    TODO: Create methods to obtain entities and construct tries for each bot using the bot id as the hash/dict key.
+    """
+    pass
+
+
+
 class TrieBuilder:
     """
     Returns the root TrieNode of a trie containing all product names, n-grams and skipgrams
@@ -180,7 +188,7 @@ class TagSearcher():
         self.nltk_stopwords = stopwords.words()
         self.stemmer = PorterStemmer()
     
-    def get_tag(self, trie, query, intent_stopwords, edit_cost):
+    def get_tag(self, trie, query, custom_stopwords, max_edit_distance):
         
         """ If a very small string, empty string, or null is passed as teh query, return None """ 
         if len(query)<3 or query==None or query == "":
@@ -188,7 +196,7 @@ class TagSearcher():
         
         """ Create a list of the query ngrams to be searched in the Trie """
         query = self.clean_query(query).lower()
-        query = [w for w in query.split(' ') if w.lower() not in intent_stopwords]
+        query = [w for w in query.split(' ') if w.lower() not in custom_stopwords]
         query_grams = self.dict_builder.ngrammer(query, 2, len(query)+1)
         query_grams = sorted(query_grams, key=lambda word: len(word), reverse=True)
          
@@ -201,7 +209,7 @@ class TagSearcher():
             """
             if len(tags) == 0 or not any(len(tag[0].split(' ')) > len(target.split(' ')) for tag in tags):
                 target_length = len(target.split(' '))
-                results = TrieNode.search(trie, target, edit_cost)
+                results = TrieNode.search(trie, target, max_edit_distance)
                 if len(results)>0:
                     """ Sort results by edit distance """
                     results = sorted(results, key=lambda result: result[1])
@@ -223,11 +231,11 @@ class TagSearcher():
                         potential_single_words.add(result)
             potential_tags = sorted(list(potential_single_words), key=lambda word: word[1])
             if len(potential_tags) != 0:
-                return potential_tags[0]
+                return potential_tags[0][0]
             else:
                 return None
         else:
-            return tags[0]
+            return tags[0][0]
 
     def clean_query(self, query):
         query = string_cleaners.remove_question_mark(query)
@@ -236,7 +244,7 @@ class TagSearcher():
         query = string_cleaners.remove_apostrophe(query)
         return query
 
-
+        
 
 
 

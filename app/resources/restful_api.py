@@ -34,7 +34,7 @@ from functools import partial
 from app.authorization import tokenAuth
 from app.validators import valid_application_type, list_of_strings
 from database.database import NLPDatabase
-from classification.classification import train_classification_pipeline, classify_document
+from analysis.clf.classification import train_classification_pipeline, classify_document
 from utils.exceptions import DatabaseError, DatabaseInputError
 
 logger = logging.getLogger('BOLT.api')
@@ -230,7 +230,7 @@ class UnlabeledExpressions(Resource):
             resp = jsonify(unlabeled_expressions = unlabeled_expressions)
             resp.status_code = 200
             return resp
-        except DatabaseError as errror:
+        except DatabaseError as error:
             resp = jsonify(error=error.value)
             resp.status_code = 500
             return resp
@@ -283,7 +283,7 @@ class UnlabeledExpressions(Resource):
             resp = jsonify(unlabeled_expressions = unlabeled_expressions)
             resp.status_code = 200
             return resp
-        except DatabaseError as errror:
+        except DatabaseError as error:
             resp = jsonify(error=error.value)
             resp.status_code = 500
             return resp
@@ -312,7 +312,7 @@ class ArchivedExpressions(Resource):
             resp = jsonify(archived_expressions = archived_expressions)
             resp.status_code = 200
             return resp
-        except DatabaseError as errror:
+        except DatabaseError as error:
             resp = jsonify(error=error.value)
             resp.status_code = 500
             return resp
@@ -366,7 +366,7 @@ class ArchivedExpressions(Resource):
             resp = jsonify(archived_expressions = archived_expressions)
             resp.status_code = 200
             return resp
-        except DatabaseError as errror:
+        except DatabaseError as error:
             resp = jsonify(error=error.value)
             resp.status_code = 500
             return resp

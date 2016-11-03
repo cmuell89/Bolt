@@ -8,7 +8,7 @@ Created on May 28, 2016
 
 import json
 import string
-
+import sys
 from nltk.corpus import stopwords
 from sklearn import naive_bayes
 from sklearn import svm
@@ -22,8 +22,9 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import accuracy_score
 from sklearn.pipeline import Pipeline
 from spacy.en import English
-
+import pickle
 import numpy as np
+import timeit
 
 # A custom stoplist
 STOPLIST = set(stopwords.words('english') + ["n't", "'s", "'m", "ca"] + list(ENGLISH_STOP_WORDS))
@@ -200,6 +201,15 @@ pipe = Pipeline([('cleanText', CleanTextTransformer()),('vectorizer', vectorizer
 pipe.fit(trainingData, labeledData)
 classes = pipe.classes_.tolist()
 print(pipe.score(test, labelsTest))
+
+print()
+start_time = timeit.default_timer()
+s = pickle.dumps(pipe)
+print(timeit.default_timer()-start_time)
+print(sys.getsizeof(s)/100000)
+start_time = timeit.default_timer()
+pipe2 = pickle.loads(s)
+print(timeit.default_timer()-start_time)
 
 # test
 string = 'some string'
