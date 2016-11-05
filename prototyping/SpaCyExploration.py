@@ -41,7 +41,7 @@ def dependency_labels_to_root(token):
 parser = English()
 
 # Extract 
-trainingData = create_training_data_from_JSON("../intents.json");
+trainingData = create_training_data_from_JSON("../resources/intents.json");
 train = trainingData[0]
 
 # Parse
@@ -97,7 +97,7 @@ while(query != '0'):
 	print()
 	
 	for token in doc:
-		print(token.orth_, " --> ", token.pos_)
+		print(token.orth_, " --> ", token.tag_)
 		print(token.ent_type_)
 		
 	print()

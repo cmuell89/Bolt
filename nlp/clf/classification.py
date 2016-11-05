@@ -27,18 +27,21 @@ logger = logging.getLogger('BOLT.clf')
 SYMBOLS = " ".join(string.punctuation).split(" ") + ["-----", "---", "...", "“", "”", "'ve"]
 
 
-class ClassificationBuilder():
+class ClassificationBuilder:
     """ 
     TODO: Build a class object that generates sckikit-learn pipeline classifiers
     Could be a pool or factory design
     """
     pass
 
-class Classifier():
+class ClassificationModelAccessor:
+    pass
+
+class Classifier:
     """
     Class instances returned from ClassificationBuilder to be used the the analysis and update modules to manage NLP
     """
-
+    pass
 
 def tokenize_text(sample):
     """

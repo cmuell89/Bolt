@@ -24,6 +24,7 @@ class NLPDatabase:
             if os.environ.get('ENVIRONMENT')=='prod':
                 self.conn = psycopg2.connect(database=os.environ.get('RDS_DB_NAME'), user=os.environ.get('RDS_USERNAME'), password=os.environ.get('RDS_PASSWORD'), host=os.environ.get('RDS_HOSTNAME'), port=os.environ.get('RDS_PORT')) 
             else:
+                print(os.environ.get('LOCAL_DB_NAME'))
                 self.conn = psycopg2.connect(database=os.environ.get('LOCAL_DB_NAME'), user=os.environ.get('LOCAL_DB_USER'), password=os.environ.get('LOCAL_DB_PASSWORD'), host=os.environ.get('LOCAL_DB_HOST'), port=os.environ.get('LOCAL_DB_PORT'))
             self.cur = self.conn.cursor()
         except psycopg2.Error as e:

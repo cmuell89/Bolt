@@ -8,7 +8,7 @@ import os
 ENVIRONMENT 
 .env settings for local environments
 """
-if os.path.isfile('./.env')==True:
+if os.path.isfile('../.env')==True:
     dotenv_path = join(dirname(__file__), '.env')
     load_dotenv(dotenv_path)
 """
@@ -20,7 +20,7 @@ formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(messag
 stdoutHandler = logging.StreamHandler(sys.stdout)
 stdoutHandler.setFormatter(formatter)
 
-fileHandler = logging.FileHandler("{0}/{1}.log".format('./logs', 'stdout'))
+fileHandler = logging.FileHandler("{0}/{1}.log".format('../logs', 'stdout'))
 fileHandler.setFormatter(formatter)
 
 logger.addHandler(fileHandler)

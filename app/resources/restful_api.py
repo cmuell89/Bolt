@@ -34,7 +34,7 @@ from functools import partial
 from app.authorization import tokenAuth
 from app.validators import valid_application_type, list_of_strings
 from database.database import NLPDatabase
-from analysis.clf.classification import train_classification_pipeline, classify_document
+from nlp.clf.classification import train_classification_pipeline, classify_document
 from utils.exceptions import DatabaseError, DatabaseInputError
 
 logger = logging.getLogger('BOLT.api')
