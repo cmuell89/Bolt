@@ -13,6 +13,17 @@ from nlp.ner.trie import TrieBuilder, DictionaryBuilder, TrieNode
 GAZETTEERS = {}
 
 class GazetteerModelBuilder:
+    
+    def initialize_gazetteer_models(self):
+        """
+        Builds from scratch the entire GAZETTEERS dict
+        
+        Exceptions:
+        -----------
+            TODO
+            
+        """
+        pass
  
     def create_new_gazetteer_model(self, gazetteer_type, id_):
         """
@@ -36,9 +47,6 @@ class GazetteerModelBuilder:
         if gazetteer_type not in GAZETTEERS:
             GAZETTEERS[gazetteer_type] = {}
             GAZETTEERS[gazetteer_type][id_] = new_gazetteer
-
-        
-        print(GAZETTEERS)
     
     def update_single_gazetteer_model(self, gazetteer_type, id_):
         """
@@ -89,7 +97,7 @@ class GazetteerModelBuilder:
 
 class GazetteerModelAccessor:
             
-    def get_gazzeteers(self, gazetteer_types, id_):
+    def get_gazeteers(self, gazetteer_types, id_):
         """
         Get the gazetteers associated with an id
         
@@ -119,13 +127,13 @@ class Gazetteer:
     def __init__(self, trie=None):
         self.trie = trie
         self.dict_builder = DictionaryBuilder()
-        self.nltk_stopwords = stopwords.words()
+        self.nltk_stopwords = stopwords.words('english')
         self.stemmer = PorterStemmer()
         
     def search_query(self, query, custom_stopwords=None, max_edit_distance=2):
         
         """ If a very small string, empty string, or null is passed as the query, return None """ 
-        if len(query)<3 or query==None or query == "":
+        if len(query)<2 or query==None or query == "":
             return None
         
         """ Create a list of the query ngrams to be searched in the Trie """

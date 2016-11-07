@@ -8,8 +8,6 @@ from nltk import ngrams
 from nltk.util import skipgrams
 from nltk.stem.porter import PorterStemmer
 from utils import string_cleaners
-import json
-
 
 class TrieBuilder:
     """
@@ -39,11 +37,8 @@ class DictionaryBuilder:
     
     def clean_dictionary(self, dictionary):
         """ Cleans each entry in the dictionary and returns the altered dictionary """
-        dictionary = [string_cleaners.normalize_whitespace(entry) for entry in dictionary]
-        dictionary = [string_cleaners.dash_to_single_space(entry) for entry in dictionary]
-        dictionary = [string_cleaners.remove_apostrophe(entry) for entry in dictionary]
-        dictionary = [string_cleaners.remove_foward_slash(entry) for entry in dictionary]
-        return dictionary
+        cleaned_dictionary = [self._clean_dictionary_entry(entry) for entry in dictionary]
+        return cleaned_dictionary
         
     def ngram_generator(self, dictionary):
         """ Generates ngrams from size 2 to size of the number of tokens in the dictionary entry and returns the combined list """
@@ -92,7 +87,15 @@ class DictionaryBuilder:
         for g in grams:
             skip_grams.append(' '.join(str(i) for i in g))
         return skip_grams
-
+    
+    def _clean_dictionary_entry(self, entry):
+        entry = string_cleaners.normalize_whitespace(entry)
+        entry = string_cleaners.dash_to_single_space(entry)
+        entry = string_cleaners.remove_apostrophe(entry)
+        entry = string_cleaners.remove_foward_slash(entry)
+        entry = string_cleaners.remove_commas(entry)
+        return entry
+    
 class TrieNode(dict):
     
     def __init__(self, word=None, children=None, word_lengths=None):

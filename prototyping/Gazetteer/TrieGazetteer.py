@@ -10,9 +10,9 @@ from nltk.util import skipgrams
 from nltk.stem.porter import PorterStemmer
 # STOPWORDS = stopwords.words('english')
 """ Collect most frequent words based on intent expressions """ 
-STOPWORDS = ['inventory','best','selling','items','many','how','what','in','are','the','stock','is','most', 'warehouse', 'sell', 'this', 'sold']
+STOPWORDS = ['inventory','best','selling','items','many','how','what','in','are','the','stock','is','most', 'warehouse', 'sell', 'this', 'sold', 'what\'s', 'whats']
 NLTK_STOPWORDS = stopwords
-PRODUCTS = "../../resources/product_lists/productList6k.json";
+PRODUCTS = "../../resources/product_lists/productList.json";
 MAX_COST = 2
 product_file = open(PRODUCTS)
 cleaned_product_file = open('../../resources/cleanedProducts.txt', "w")
@@ -239,9 +239,10 @@ while(query != "exit"):
     
     if(len(tags) == 0):
         potential_single_words = set()
+        print(query)
         print("Searching for single word matches")
-        query = [x for x in query if x.lower() not in NLTK_STOPWORDS.words()]
-        
+        query = [x for x in query if x.lower() not in NLTK_STOPWORDS.words('english')]
+        print(NLTK_STOPWORDS.words())
         for word in query:
             stemmed_word = stemmer.stem(word)
             results = search(word_trie, stemmed_word, 1)

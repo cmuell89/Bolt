@@ -76,7 +76,7 @@ class ClassificationAnnotator(AbstractAnnotator):
 #         TODO: Implement the stopword results and entity type results from classification based on the resulting intent:
 #         annotation['stopwords'] = classification_results['stopwords']
 #         annotation['entity_types'] = classification_results['entity_types']
-        annotation.annotations['entity_types'] = ["tests"]
+        annotation.annotations['entity_types'] = ["product_names"]
         annotation.annotations['stopwords'] = ['inventory','best','selling','items','many','how','what','in','are','the','stock','is','most', 'warehouse', 'sell', 'this', 'total', 'sales']
 #         annotation.annotations['results']['classification'] = classification_results['results']
         annotation.annotations['results']['classification'] = classification_results
@@ -98,6 +98,5 @@ class GazetteerAnnotator(AbstractAnnotator):
         stopwords = annotation.annotations['stopwords']
         text = annotation.annotations['original_text']
         result = self.gazetteer.search_query(text, stopwords, self.max_edit_distance)
-        print(result)
         annotation.annotations['results'][self.name] = result
         return annotation

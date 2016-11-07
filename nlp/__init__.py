@@ -4,31 +4,45 @@ Created on Nov 3, 2016
 @author: Carl Mueller
 @company: Lightning in a Bot, Inc
 '''
-from nlp.clf.classification import build_classification_pipeline, train_classification_pipeline
+from nlp.clf.classification import ClassificationModelBuilder, ClassificationModelAccessor
 from nlp.annotation import ClassificationAnnotator, GazetteerAnnotator, Annotation
 from nlp.ner.gazetteer import GazetteerModelAccessor, GazetteerModelBuilder
 
 """ For test only """
 import settings
+import timeit
 from pprint import PrettyPrinter
 
-pipeline = build_classification_pipeline('svm')
-clf = train_classification_pipeline(pipeline)
-builder = GazetteerModelBuilder()
-builder.create_new_gazetteer_model("product_names", 1234)
 
+clf_builder = ClassificationModelBuilder()
+gaz_builder = GazetteerModelBuilder()
+
+clf_builder.update_serialized_model()
+gaz_builder.create_new_gazetteer_model("product_names", 1234)
+
+class Updater:
+    def __init__(self):
+        self.gaz_builder = GazetteerModelBuilder()
+        self.clf_builder = ClassificationModelBuilder()
+    
+    def update_classifier(self, skl_classifier): 
+        self.clf_builder.update_serialized_model(skl_classifier)
+        
+    def update_gazetteer(self, gazetteer_type=None, id_=None):
+        self.gaz_builder.update_single_gazetteer_model(gazetteer_type, id_)
 
 class Analyzer:
     def __init__(self):
         self.gaz_accessor = GazetteerModelAccessor()
+        self.clf_accessor = ClassificationModelAccessor()
 
     
     def run_analysis(self, query, bot_id):
         annotation = Annotation(query, bot_id)
         pipeline = AnalysisPipeline()
-        gazetteers = self.gaz_accessor.get_gazzeteers(["product_names"], 1234)
+        gazetteers = self.gaz_accessor.get_gazeteers(["product_names"], 1234)
+        clf = self.clf_accessor.get_classification_pipeline()
         
-        global clf
         clf_annotator = ClassificationAnnotator('clf', clf)
         pipeline.add_annotator(clf_annotator)
         for gazetteer in gazetteers:
@@ -56,11 +70,14 @@ class AnalysisPipeline:
     def __str__(self):
         return [(annotator.name, annotator) for annotator in self.sequence]
     
-analyzer = Analyzer()
+
 query = ''
 while(query != "exit"):
     query = input("Enter query:\n")
+    start = timeit.default_timer()
+    analyzer = Analyzer()
     result = analyzer.run_analysis(query, 1234)
     pp = PrettyPrinter(indent=4)
     pp.pprint(result)
+    print((timeit.default_timer() - start)/100000)
     print()

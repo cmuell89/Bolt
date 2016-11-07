@@ -6,6 +6,10 @@ Created on October 26, 2016
 """
 import re
 
+def remove_commas(string):
+    string = string.replace(",", "")
+    return string
+
 def remove_foward_slash(string):
     string = string.replace("/", "")
     return string
