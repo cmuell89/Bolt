@@ -134,7 +134,7 @@ class Classifier:
         self.pipeline = pipeline
         self.db = NLPDatabase()
         
-    def classify_document(self, document):
+    def classify(self, document):
         results = {}
         top_3 = []
         classes = self.pipeline.classes_.tolist()

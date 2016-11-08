@@ -40,7 +40,7 @@ class Analyzer:
     def run_analysis(self, query, id_):
         annotation = Annotation(query, id_)
         pipeline = AnalysisPipeline()
-        gazetteers = self.gaz_accessor.get_gazeteers(['product_names'], 1234)
+        gazetteers = self.gaz_accessor.get_gazeteers(['product_names'], id_)
         clf = self.clf_accessor.get_classification_pipeline('intent_classifier')
         
         clf_annotator = ClassificationAnnotator('clf', clf)

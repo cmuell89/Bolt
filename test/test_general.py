@@ -10,7 +10,7 @@ import sklearn
 import settings
 import logging
 from utils.custom_assertions import CustomAssertions
-from classification.classification import tokenize_text, train_classification_pipeline, build_classification_pipeline, classify_document
+from clf.classification import ClassificationModelBuilder, ClassificationModelAccessor
 from database.database import NLPDatabase
 from builtins import int, str
 
@@ -54,6 +54,9 @@ class NLPDatabaseTest(unittest.TestCase, CustomAssertions):
         self.assertListOfString(intent_expressions)
         db.close_database_connection()
         logger.info("Testing for 'get_intent_expressions' a success!")
+    
+    def test_get_intent_entities(self):
+        
     
     def test_get_unlabeled_expressions(self):
         logger.debug("Testing for 'get_unlabeled_expressions")

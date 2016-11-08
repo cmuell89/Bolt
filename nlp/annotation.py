@@ -4,7 +4,6 @@ Created on Nov 2, 2016
 @author: Carl Mueller
 '''
 from abc import abstractmethod, ABCMeta
-from nlp.clf.classification import classify_document
 
 class Annotation:
     """ Annotation object that is passed along a sequence of annotators """
@@ -72,14 +71,10 @@ class ClassificationAnnotator(AbstractAnnotator):
         pass
         
     def annotate(self, annotation):
-        classification_results = self.classifier.classify_document()(annotation.annotations['original_text'])
-#         TODO: Implement the stopword results and entity type results from classification based on the resulting intent:
-#         annotation['stopwords'] = classification_results['stopwords']
-#         annotation['entity_types'] = classification_results['entity_types']
-#         annotation.annotations['entity_types'] = ["product_names"]
-#         annotation.annotations['stopwords'] = ['inventory','best','selling','items','many','how','what','in','are','the','stock','is','most', 'warehouse', 'sell', 'this', 'total', 'sales']
-#         annotation.annotations['results']['classification'] = classification_results['results']
-        annotation.annotations['results']['classification'] = classification_results
+        classification_results = self.classifier.classify()(annotation.annotations['original_text'])
+        annotation['stopwords'] = classification_results['stopwords']
+        annotation['entity_types'] = classification_results['entity_types']
+        annotation.annotations['results']['classification'] = classification_results['results']
         return annotation
 
 class GazetteerAnnotator(AbstractAnnotator):
@@ -91,7 +86,7 @@ class GazetteerAnnotator(AbstractAnnotator):
     def validate(self, annotation):
         if self.name not in annotation.annotations['entity_types']:
             annotation.annotations['results'][self.name] = "fail"
-            """ Would raise validation error if not in """
+            """ Will raise validation error if not in entity_types """
             
     
     def annotate(self, annotation):

@@ -58,27 +58,27 @@ class Analyze(Resource):
     decorators = [tokenAuth.login_required]
     validate_application_json = partial(valid_application_type, 'application/json')
     
-    classify_args = {
+    analyze_args = {
         'content_type': fields.Str(required=True, load_from='Content-Type', location='headers', validate=validate_application_json),
         'query': fields.Str(required=True, validate=validate.Length(min=1)),
         'id': fields.Str(required=True, validate=validate.Length(min=1))
     }
     
-    @use_args(classify_args)
+    @use_args(analyze_args)
     def post(self, args):
         """
         Returns the intent classification of the query.
         """
         analyzer = Analyzer()
         results = analyzer.analyze(args['query'], args['id'])
-        intent_guess = results[0]['intent']
-        estimated_confidence = results['intents']['confidence']
+        intent_guess = results['classification'][0]['intent']
+        estimated_confidence = results[0]['intents']['confidence']
         try:
             db = get_db()
             db.add_unlabeled_expression(args['query'], intent_guess, estimated_confidence)
         except DatabaseError as e:
             logger.exception(e.value)
-        resp = jsonify(intents=result)
+        resp = jsonify(intents=results)
         resp.status_code = 200
         return resp
         
