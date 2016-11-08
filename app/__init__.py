@@ -27,6 +27,6 @@ api.add_resource(restful_api.Expressions, '/database/expressions/<string:intent>
 api.add_resource(restful_api.Intents, '/database/intents')
 api.add_resource(restful_api.UnlabeledExpressions, '/database/unlabeled_expressions')
 api.add_resource(restful_api.ArchivedExpressions, '/database/archived_expressions')
-api.add_resource(restful_api.Classify, '/classification/classify')
+api.add_resource(restful_api.Analyze, '/classification/analyze')
 api.add_resource(restful_api.Train, '/classification/train/<string:classifier>')
 api.add_resource(restful_api.Health, '/aws-eb-health')

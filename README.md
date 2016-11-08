@@ -55,7 +55,7 @@ Additionally, make sure to create the following file (ensure proper .yml format 
 	- confidence metrics for classification results
 - Caching of SpaCy model
 - Routes
-	- /classification/classify => returns intent classification of a given expression
+	- /classification/analyze => returns intent classification and product name matches of a given expression
 	- /classification/train => trains the classifier again (hopefully after new expressions were added
 	- /database/expressions/<string:intent>
 		- post => add expression/s to the intent passed in the url
@@ -111,23 +111,27 @@ Additionally, make sure to create the following file (ensure proper .yml format 
 - [ ] Start prototyping 'Trait' parsing
 - [ ] Start prototyping datetime parsing
 	- In talks with maintained of SpaCy
-- [ ] Implement different classify responses based on Naive Bayes or LinearSVC
-- [ ] Create route to rebuild classifier with new options
-	- [ ] code
-	- [ ] test
+- [ ] Expand gazetteer beyond prodiuct names to include types, vendors, colors etc,.
 
 ##### In-Progress:
 - [ ] COMMENT/DOCUMENTATION OVERHAUL => START STRONG, FINISH STRONG
-- [ ] Create basic validation webpage for unlabeled expressions.
+- [ ] Create gazetteer
+	- [x] code
+	- [] test
+- [ ] Create Analysis pipeline to combine classifier and gazetteer
 	- [x] code
 	- [ ] test
-- [ ] Prototype 'Entity' parsing
-	- [ ] Gazetteer (Look into Matcher
-		- Indexing techniques??
-	- [ ] SpaCy NER
-
+- [ ] Build out additional database methods to support entity types and stopwords associted with intents
+	- [x] code
+	- [ ] test
+- [ ] integrate new db mmethods into Classification class, return results to be used by classification annotator
+	- [ ] code
+	- [ ] test
 
 ##### Completed:
+- [x] Create basic validation webpage for unlabeled expressions.
+	- [x] code
+	- [x] test
 - [x] Build out archive table and unlabeled expression table
 - [x] Look into using Flask's g object for persistent db connection
 - [x] Implement unlabeled expressions table and routes to add un-validated expressions

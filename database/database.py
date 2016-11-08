@@ -44,7 +44,7 @@ class NLPDatabase:
             logger.exception(e.pgerror)
             raise DatabaseError(e.pgerror)
 
-    def get_intent_expressions(self,intent):
+    def get_intent_expressions(self, intent):
         try: 
             self.cur.execute("SELECT id FROM public.intents WHERE public.intents.intents = %s;", (intent,))
             intent_ID = self.cur.fetchone()
@@ -64,8 +64,43 @@ class NLPDatabase:
             msg = "Method expects valid/existing intent as argument"
             logger.exception(msg)
             raise DatabaseInputError(msg)
-                
     
+    def get_intent_entities(self, intent):
+        """ NEEDS TEST """
+        try: 
+            self.cur.execute("SELECT id FROM public.intents WHERE public.intents.intents = %s;", (intent,))
+            intent_ID = self.cur.fetchone()
+        except psycopg2.Error as e:
+                raise DatabaseError(e.pgerror)
+        if intent_ID is not None:            
+            try:
+                self.cur.execute("SELECT entities FROM public.intents WHERE public.intents.intents = %s;", (intent,))
+                logger.debug("Retrieving entity types for the intent: %s", intent)
+                intent_entities = self.cur.fetchall()
+                return intent_entities
+            except psycopg2.Error as e:
+                self.conn.rollback()
+                logger.exception(e.pgerror)
+                raise DatabaseError(e.pgerror)
+    
+    def get_intent_stopwords(self, intent):
+        """ NEEDS TEST """
+        try: 
+            self.cur.execute("SELECT id FROM public.intents WHERE public.intents.intents = %s;", (intent,))
+            intent_ID = self.cur.fetchone()
+        except psycopg2.Error as e:
+                raise DatabaseError(e.pgerror)
+        if intent_ID is not None:            
+            try:
+                self.cur.execute("SELECT stopwords FROM public.intents WHERE public.intents.intents = %s;", (intent,))
+                logger.debug("Retrieving stopwords for the intent: %s", intent)
+                stopwords = self.cur.fetchall()
+                return stopwords
+            except psycopg2.Error as e:
+                self.conn.rollback()
+                logger.exception(e.pgerror)
+                raise DatabaseError(e.pgerror)
+            
     def get_intents_and_expressions(self):
         try:
             self.cur.execute("SELECT intents, expressions FROM public.intents INNER JOIN public.expressions ON public.intents.id = public.expressions.intent_id;")
@@ -154,6 +189,12 @@ class NLPDatabase:
             msg = "Method expects valid/existing intent as argument"
             logger.exception(msg)
             raise DatabaseInputError(msg)
+    
+    def add_entities_to_intent(self):
+        pass
+    
+    def add_stopwords_to_intent(self):
+        pass
     
     def add_unlabeled_expression(self, expression, estimatedIntent=None, estimatedConfidence=None):
         if expression:

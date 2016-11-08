@@ -37,11 +37,11 @@ class Analyzer:
         self.clf_accessor = ClassificationModelAccessor()
 
     
-    def run_analysis(self, query, bot_id):
-        annotation = Annotation(query, bot_id)
+    def run_analysis(self, query, id_):
+        annotation = Annotation(query, id_)
         pipeline = AnalysisPipeline()
-        gazetteers = self.gaz_accessor.get_gazeteers(["product_names"], 1234)
-        clf = self.clf_accessor.get_classification_pipeline()
+        gazetteers = self.gaz_accessor.get_gazeteers(['product_names'], 1234)
+        clf = self.clf_accessor.get_classification_pipeline('intent_classifier')
         
         clf_annotator = ClassificationAnnotator('clf', clf)
         pipeline.add_annotator(clf_annotator)

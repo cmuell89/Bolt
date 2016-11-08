@@ -34,16 +34,10 @@ from functools import partial
 from app.authorization import tokenAuth
 from app.validators import valid_application_type, list_of_strings
 from database.database import NLPDatabase
-from nlp.clf.classification import train_classification_pipeline, classify_document
+from nlp import Analyzer, Updater
 from utils.exceptions import DatabaseError, DatabaseInputError
 
 logger = logging.getLogger('BOLT.api')
-try:
-    __CLF__ = train_classification_pipeline()
-    logger.info('Created default LinearSVC classifier on startup')
-except Exception as e:
-    logger.exception(e)
-    logger.warning("All API endpoints requiring the trained clf will fail.")
 
 """
 Store database object and its connections in the local context object g.
@@ -58,14 +52,16 @@ def get_db():
 """
 Resources Classes
 """
-class Classify(Resource):
+class Analyze(Resource):
+    
     
     decorators = [tokenAuth.login_required]
     validate_application_json = partial(valid_application_type, 'application/json')
     
     classify_args = {
         'content_type': fields.Str(required=True, load_from='Content-Type', location='headers', validate=validate_application_json),
-        'query': fields.Str(required=True, validate=validate.Length(min=1))
+        'query': fields.Str(required=True, validate=validate.Length(min=1)),
+        'id': fields.Str(required=True, validate=validate.Length(min=1))
     }
     
     @use_args(classify_args)
@@ -73,9 +69,10 @@ class Classify(Resource):
         """
         Returns the intent classification of the query.
         """
-        result = classify_document(__CLF__, args['query'])
-        intent_guess = result[0]['intent']
-        estimated_confidence = result[0]['confidence']
+        analyzer = Analyzer()
+        results = analyzer.analyze(args['query'], args['id'])
+        intent_guess = results[0]['intent']
+        estimated_confidence = results['intents']['confidence']
         try:
             db = get_db()
             db.add_unlabeled_expression(args['query'], intent_guess, estimated_confidence)

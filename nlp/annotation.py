@@ -72,12 +72,12 @@ class ClassificationAnnotator(AbstractAnnotator):
         pass
         
     def annotate(self, annotation):
-        classification_results = classify_document(self.classifier, annotation.annotations['original_text'])
+        classification_results = self.classifier.classify_document()(annotation.annotations['original_text'])
 #         TODO: Implement the stopword results and entity type results from classification based on the resulting intent:
 #         annotation['stopwords'] = classification_results['stopwords']
 #         annotation['entity_types'] = classification_results['entity_types']
-        annotation.annotations['entity_types'] = ["product_names"]
-        annotation.annotations['stopwords'] = ['inventory','best','selling','items','many','how','what','in','are','the','stock','is','most', 'warehouse', 'sell', 'this', 'total', 'sales']
+#         annotation.annotations['entity_types'] = ["product_names"]
+#         annotation.annotations['stopwords'] = ['inventory','best','selling','items','many','how','what','in','are','the','stock','is','most', 'warehouse', 'sell', 'this', 'total', 'sales']
 #         annotation.annotations['results']['classification'] = classification_results['results']
         annotation.annotations['results']['classification'] = classification_results
         return annotation
