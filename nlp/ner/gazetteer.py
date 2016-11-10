@@ -12,6 +12,7 @@ from nlp.ner.trie import TrieBuilder, DictionaryBuilder, TrieNode
 
 GAZETTEERS = {}
 
+
 class GazetteerModelBuilder:
     
     def initialize_gazetteer_models(self):
@@ -71,8 +72,7 @@ class GazetteerModelBuilder:
             new_trie = trie_builder.build_trie_from_dictionary(entities)
             new_gazetteer = Gazetteer(new_trie)
             GAZETTEERS[gazetteer_type][id_] = new_gazetteer
-        
-    
+
     def get_entities_for_training(self, gazetteer_type, id_):
         """
         Obtain the entities that will be used used to train a gazetteer model
@@ -95,9 +95,10 @@ class GazetteerModelBuilder:
         products = product_json['products']
         return products
 
+
 class GazetteerModelAccessor:
             
-    def get_gazeteers(self, gazetteer_types, id_):
+    def get_gazeteers(self, id_):
         """
         Get the gazetteers associated with an id
         
@@ -117,9 +118,9 @@ class GazetteerModelAccessor:
         """
         global GAZETTEERS
         gazetteers = {}
-        for gazetteer_type in gazetteer_types:
-            if gazetteer_type in GAZETTEERS:
-                gazetteers[gazetteer_type] = GAZETTEERS[gazetteer_type][id_]
+
+        for gazetteer in GAZETTEERS:
+                gazetteers[gazetteer] = GAZETTEERS[gazetteer][id_]
         return gazetteers
     
 class Gazetteer:
@@ -175,7 +176,7 @@ class Gazetteer:
     def _get_single_word_tag(self, query, custom_stopwords):   
         """ Generate tags based on single word matches against trie """
         potential_single_words = set()
-        query = [x for x in query if x.lower() not in self.nltk_stopwords]
+        query = [x for x in query if x.lower() not in self.nltk_stopwords or custom_stopwords]
         for word in query:
             stemmed_word = self.stemmer.stem(word)
             results = TrieNode.search(self.trie, stemmed_word, 1)

@@ -1,9 +1,10 @@
-'''
+"""
 Created on Nov 3, 2016
 
 @author: Carl Mueller
 @company: Lightning in a Bot, Inc
-'''
+
+"""
 from nlp.clf.classification import ClassificationModelBuilder, ClassificationModelAccessor
 from nlp.annotation import ClassificationAnnotator, GazetteerAnnotator, Annotation
 from nlp.ner.gazetteer import GazetteerModelAccessor, GazetteerModelBuilder
@@ -18,7 +19,8 @@ clf_builder = ClassificationModelBuilder()
 gaz_builder = GazetteerModelBuilder()
 
 clf_builder.update_serialized_model()
-gaz_builder.create_new_gazetteer_model("product_names", 1234)
+gaz_builder.create_new_gazetteer_model("product_name", 1234)
+
 
 class Updater:
     def __init__(self):
@@ -31,27 +33,27 @@ class Updater:
     def update_gazetteer(self, gazetteer_type=None, id_=None):
         self.gaz_builder.update_single_gazetteer_model(gazetteer_type, id_)
 
+
 class Analyzer:
     def __init__(self):
         self.gaz_accessor = GazetteerModelAccessor()
         self.clf_accessor = ClassificationModelAccessor()
 
-    
     def run_analysis(self, query, id_):
-        annotation = Annotation(query, id_)
+        core_annotation = Annotation(query, id_)
         pipeline = AnalysisPipeline()
-        gazetteers = self.gaz_accessor.get_gazeteers(['product_names'], id_)
+        gazetteers = self.gaz_accessor.get_gazeteers(id_)
         clf = self.clf_accessor.get_classification_pipeline('intent_classifier')
-        
         clf_annotator = ClassificationAnnotator('clf', clf)
         pipeline.add_annotator(clf_annotator)
         for gazetteer in gazetteers:
             gaz_annotator = GazetteerAnnotator(gazetteer, gazetteers[gazetteer])
             pipeline.add_annotator(gaz_annotator)
-             
-        annotation = pipeline.analyze(annotation)
-        return annotation.annotations['results']
-         
+
+        core_annotation = pipeline.analyze(core_annotation)
+        return core_annotation.annotations['results']
+
+
 class AnalysisPipeline:
     def __init__(self, *args):
         self.sequence = list()
@@ -72,7 +74,7 @@ class AnalysisPipeline:
     
 
 query = ''
-while(query != "exit"):
+while query != "exit":
     query = input("Enter query:\n")
     start = timeit.default_timer()
     analyzer = Analyzer()

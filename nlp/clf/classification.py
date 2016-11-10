@@ -82,13 +82,13 @@ class ClassificationModelBuilder:
             LinearSVC(): Multitlcass capable support vector machine
             MultinomialNB(): Multinomial Naive Bayes classifier
         """
-        if(skl_classifier==None):
+        if skl_classifier == None:
             skl_classifier = 'svm'
-        vectorizer = CountVectorizer(tokenizer=self._tokenize_text, ngram_range=(1,2))
-        if(skl_classifier == 'svm'):
+        vectorizer = CountVectorizer(tokenizer=self._tokenize_text, ngram_range=(1, 2))
+        if skl_classifier == 'svm':
             logger.debug("Creating LinearSVC classifier")
             clf = svm.LinearSVC()
-        elif (skl_classifier == 'nb'):
+        elif skl_classifier == 'nb':
             logger.debug("Creating Multinomial Naive Bayes classifier")
             clf = naive_bayes.MultinomialNB()
         calibrated_clf = CalibratedClassifierCV(clf)
@@ -118,13 +118,16 @@ class ClassificationModelBuilder:
             normalize_whitespace(tok)
     
         return tokens
-    
+
+
 class ClassificationModelAccessor:
     
     def get_classification_pipeline(self, classifier_type):
         global CLASSIFIERS
         pipeline = pickle.loads(CLASSIFIERS[classifier_type])
-        return pipeline
+        classifier = Classifier(pipeline)
+        return classifier
+
 
 class Classifier:
     """
@@ -143,9 +146,10 @@ class Classifier:
         intents = sorted(confidence_metrics, key=lambda tup: tup[1], reverse=True)
         for i in range(3):
             tup = intents[i]
-            top_3.append({"intent":tup[0],"confidence":tup[1]})
-        intent_entities = self.db.get_intent_entities(intents[0][0])
-        intent_stopwords = self.db.get_intent_stopwords(intents[0][0])
+            top_3.append({"intent": tup[0], "confidence": tup[1]})
+        # The dababase call returns a single tuple for which the list of entities and stopwords is the second element.
+        intent_entities = self.db.get_intent_entities(intents[0][0])[0][1]
+        intent_stopwords = self.db.get_intent_stopwords(intents[0][0])[0][1]
         results['results'] = top_3
         results['entity_types'] = intent_entities
         results['stopwords'] = intent_stopwords

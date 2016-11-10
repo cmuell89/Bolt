@@ -1,9 +1,12 @@
-'''
+"""
 Created on Nov 2, 2016
 
 @author: Carl Mueller
-'''
+"""
 from abc import abstractmethod, ABCMeta
+from utils.exceptions import AnnotatorValidationError
+import logging
+
 
 class Annotation:
     """ Annotation object that is passed along a sequence of annotators """
@@ -26,7 +29,8 @@ class AbstractAnnotator(metaclass=ABCMeta):
     
     def __init__(self, name):
         self.name = name
-    
+        self.logger = logging.getLogger('BOLT.annotation')
+
     def validate_and_annotate(self, annotation):
         """ 
         Take the incoming annotation and return the updated annotation object
@@ -45,13 +49,12 @@ class AbstractAnnotator(metaclass=ABCMeta):
         annotation: the annotation object that is passed along to each annotator
                     in the sequence
         """
-#         try:
-        self.validate(annotation)
-        return self.annotate(annotation)
-#         except annotation.ValidationError as e:
-#             # Log the validation error and assign the failure to the name
-#             annotation['results'][self.name] = "Failure"
-#             return annotation
+        try:
+            self.validate(annotation)
+            return self.annotate(annotation)
+        except AnnotatorValidationError as e:
+            self.logger.debug(e.value)
+            return annotation
     
     @abstractmethod
     def validate(self):
@@ -61,7 +64,8 @@ class AbstractAnnotator(metaclass=ABCMeta):
     @abstractmethod
     def annotate(self):
         pass
-    
+
+
 class ClassificationAnnotator(AbstractAnnotator):
     def __init__(self, name, classifier):
         self.classifier = classifier
@@ -71,11 +75,12 @@ class ClassificationAnnotator(AbstractAnnotator):
         pass
         
     def annotate(self, annotation):
-        classification_results = self.classifier.classify()(annotation.annotations['original_text'])
-        annotation['stopwords'] = classification_results['stopwords']
-        annotation['entity_types'] = classification_results['entity_types']
+        classification_results = self.classifier.classify(annotation.annotations['original_text'])
+        annotation.annotations['stopwords'] = classification_results['stopwords']
+        annotation.annotations['entity_types'] = classification_results['entity_types']
         annotation.annotations['results']['classification'] = classification_results['results']
         return annotation
+
 
 class GazetteerAnnotator(AbstractAnnotator):
     def __init__(self, name, gazetteer, max_edit_distance=2):
@@ -84,11 +89,11 @@ class GazetteerAnnotator(AbstractAnnotator):
         super().__init__(name)
         
     def validate(self, annotation):
+        if not annotation.annotations['entity_types']:
+            raise AnnotatorValidationError("No entity types found in annotation")
         if self.name not in annotation.annotations['entity_types']:
-            annotation.annotations['results'][self.name] = "fail"
-            """ Will raise validation error if not in entity_types """
-            
-    
+            raise AnnotatorValidationError("Annotator validation error for: " + self.name)
+
     def annotate(self, annotation):
         stopwords = annotation.annotations['stopwords']
         text = annotation.annotations['original_text']
