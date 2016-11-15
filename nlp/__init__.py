@@ -49,7 +49,6 @@ class Analyzer:
         for gazetteer in gazetteers:
             gaz_annotator = GazetteerAnnotator(gazetteer, gazetteers[gazetteer])
             pipeline.add_annotator(gaz_annotator)
-
         core_annotation = pipeline.analyze(core_annotation)
         return core_annotation.annotations['results']
 
@@ -81,5 +80,6 @@ while query != "exit":
     result = analyzer.run_analysis(query, 1234)
     pp = PrettyPrinter(indent=4)
     pp.pprint(result)
+    print("\nExecution time to obtain NLP results:")
     print((timeit.default_timer() - start)/100000)
     print()

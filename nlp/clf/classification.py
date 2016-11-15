@@ -16,7 +16,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.calibration import CalibratedClassifierCV
 from models.spacy_model import load_spacy
 from transformers.clean_text_transformer import CleanTextTransformer
-from database.database import NLPDatabase
+from database.database import StopwordsDatabase, EntitiesDatabase
 from utils import io
 from utils.string_cleaners import normalize_whitespace
 import json
@@ -40,7 +40,7 @@ class ClassificationModelBuilder:
     """
     
     def update_serialized_model(self, skl_classifier=None):
-        global SERIALIZED_CLF
+        global CLASSIFIERS
         fitted_pipeline = self._train_classification_pipeline(None, None, skl_classifier)
         CLASSIFIERS['intent_classifier'] = pickle.dumps(fitted_pipeline)
     
@@ -82,7 +82,7 @@ class ClassificationModelBuilder:
             LinearSVC(): Multitlcass capable support vector machine
             MultinomialNB(): Multinomial Naive Bayes classifier
         """
-        if skl_classifier == None:
+        if skl_classifier is None:
             skl_classifier = 'svm'
         vectorizer = CountVectorizer(tokenizer=self._tokenize_text, ngram_range=(1, 2))
         if skl_classifier == 'svm':
@@ -135,7 +135,8 @@ class Classifier:
     """
     def __init__(self, pipeline):
         self.pipeline = pipeline
-        self.db = NLPDatabase()
+        self.stopwords_db = StopwordsDatabase()
+        self.entities_db = EntitiesDatabase()
         
     def classify(self, document):
         results = {}
@@ -148,8 +149,8 @@ class Classifier:
             tup = intents[i]
             top_3.append({"intent": tup[0], "confidence": tup[1]})
         # The dababase call returns a single tuple for which the list of entities and stopwords is the second element.
-        intent_entities = self.db.get_intent_entities(intents[0][0])[0][1]
-        intent_stopwords = self.db.get_intent_stopwords(intents[0][0])[0][1]
+        intent_entities = self.entities_db.get_intent_entities(intents[0][0])[0][1]
+        intent_stopwords = self.stopwords_db.get_intent_stopwords(intents[0][0])[0][1]
         results['results'] = top_3
         results['entity_types'] = intent_entities
         results['stopwords'] = intent_stopwords

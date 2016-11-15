@@ -20,7 +20,7 @@ formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(messag
 stdoutHandler = logging.StreamHandler(sys.stdout)
 stdoutHandler.setFormatter(formatter)
 
-fileHandler = logging.FileHandler("{0}/{1}.log".format('../logs', 'stdout'))
+fileHandler = logging.FileHandler("{0}/{1}.log".format('./logs', 'stdout'))
 fileHandler.setFormatter(formatter)
 
 logger.addHandler(fileHandler)

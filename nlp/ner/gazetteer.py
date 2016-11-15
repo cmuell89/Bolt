@@ -42,7 +42,7 @@ class GazetteerModelBuilder:
         """
         global GAZETTEERS
         trie_builder = TrieBuilder()
-        entities = self.get_entities_for_training(gazetteer_type, id_)
+        entities = self._get_entities_for_training(gazetteer_type, id_)
         new_trie = trie_builder.build_trie_from_dictionary(entities)
         new_gazetteer = Gazetteer(new_trie)
         if gazetteer_type not in GAZETTEERS:
@@ -68,12 +68,12 @@ class GazetteerModelBuilder:
         trie_builder = TrieBuilder()
         
         if gazetteer_type in GAZETTEERS:
-            entities = self.get_entities_for_training(gazetteer_type, id_)
+            entities = self._get_entities_for_training(gazetteer_type, id_)
             new_trie = trie_builder.build_trie_from_dictionary(entities)
             new_gazetteer = Gazetteer(new_trie)
             GAZETTEERS[gazetteer_type][id_] = new_gazetteer
 
-    def get_entities_for_training(self, gazetteer_type, id_):
+    def _get_entities_for_training(self, gazetteer_type, id_):
         """
         Obtain the entities that will be used used to train a gazetteer model
         
@@ -84,12 +84,12 @@ class GazetteerModelBuilder:
         
         Exceptions
         ----------
-            TODO
-            
+        TODO
+
         """
-        
+        # TODO Create database methods to get entities
         """ dummy method to simple obtain entities for testing """
-        file_name = "../resources/product_lists/productList.json"
+        file_name = "../resources/product_lists/productList5k.json"
         product_file = open(file_name)
         product_json = json.load(product_file)
         products = product_json['products']
@@ -122,7 +122,8 @@ class GazetteerModelAccessor:
         for gazetteer in GAZETTEERS:
                 gazetteers[gazetteer] = GAZETTEERS[gazetteer][id_]
         return gazetteers
-    
+
+
 class Gazetteer:
     
     def __init__(self, trie=None):
@@ -136,7 +137,9 @@ class Gazetteer:
         """ If a very small string, empty string, or null is passed as the query, return None """ 
         if len(query)<2 or query==None or query == "":
             return None
-        
+        if custom_stopwords is None:
+            custom_stopwords = []
+
         """ Create a list of the query ngrams to be searched in the Trie """
         query = self.clean_query(query).lower()
         query = [w for w in query.split(' ') if w.lower() not in custom_stopwords]

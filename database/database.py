@@ -15,55 +15,92 @@ from utils.exceptions import DatabaseError, DatabaseInputError
 logger = logging.getLogger('BOLT.db')
 
 
-class NLPDatabase:
-    """
-    Core database communication layer to interact with postgreSQL. 
-    Constructing an NLP_Databse depends on two sets of environment variables LOCAL vs RDS. 
-    """
-    def __init__(self):
+class CoreDatabase:
+    def __init__(self, database='BOLT'):
         try:
-            if os.environ.get('ENVIRONMENT')=='prod':
-                self.conn = psycopg2.connect(database=os.environ.get('RDS_DB_NAME'), user=os.environ.get('RDS_USERNAME'),
-                                             password=os.environ.get('RDS_PASSWORD'), host=os.environ.get('RDS_HOSTNAME'),
-                                             port=os.environ.get('RDS_PORT'))
-            else:
-                self.conn = psycopg2.connect(database=os.environ.get('LOCAL_DB_NAME'), user=os.environ.get('LOCAL_DB_USER'),
-                                             password=os.environ.get('LOCAL_DB_PASSWORD'), host=os.environ.get('LOCAL_DB_HOST'),
+            if database == 'BOLT':
+                self.conn = psycopg2.connect(database=os.environ.get('BOLT_DB_NAME'),
+                                             user=os.environ.get('BOLT_DB_USERNAME'),
+                                             password=os.environ.get('BOLT_DB_PASSWORD'),
+                                             host=os.environ.get('BOLT_DB_HOSTNAME'),
+                                             port=os.environ.get('BOLT_DB_PORT'))
+            elif database == 'SHOPIFY':
+                self.conn = psycopg2.connect(database=os.environ.get('SHOPIFY_DB_NAME'),
+                                             user=os.environ.get('SHOPIFY_DB_USERNAME'),
+                                             password=os.environ.get('SHOPIFY_DB_PASSWORD'),
+                                             host=os.environ.get('SHOPIFY_DB_HOSTNAME'),
+                                             port=os.environ.get('SHOPIFY_DB_PORT'))
+            elif database == 'LOCAL':
+                self.conn = psycopg2.connect(database=os.environ.get('LOCAL_DB_NAME'),
+                                             user=os.environ.get('LOCAL_DB_USER'),
+                                             password=os.environ.get('LOCAL_DB_PASSWORD'),
+                                             host=os.environ.get('LOCAL_DB_HOST'),
                                              port=os.environ.get('LOCAL_DB_PORT'))
             self.cur = self.conn.cursor()
         except psycopg2.Error as e:
             raise e
-        
-    """
-    Retrieval operations.
-    """
-    def get_intents(self):
-        try:
-            self.cur.execute("SELECT intents FROM public.intents;")
-            logger.debug("Retrieving all intents") 
-            list_of_intents = list(map(lambda x: x[0], self.cur.fetchall()))          
-            return list_of_intents 
-        except psycopg2.Error as e:
-            self.conn.rollback()
-            logger.exception(e.pgerror)
-            raise DatabaseError(e.pgerror)
 
-    def get_intent_expressions(self, intent):
-        try: 
-            self.cur.execute("SELECT id FROM public.intents WHERE public.intents.intents = %s;", (intent,))
-            intent_ID = self.cur.fetchone()
+    def close_database_connection(self):
+        self.cur.close()
+        self.conn.close()
+
+
+class StopwordsDatabase(CoreDatabase):
+    def __init__(self):
+        if os.environ.get('ENVIRONMENT') == 'prod':
+            database = 'BOLT'
+        else:
+            database = 'LOCAL'
+        CoreDatabase.__init__(self, database)
+
+    def get_intent_stopwords(self, intent):
+        """ NEEDS TEST """
+        try:
+            self.cur.execute("SELECT id FROM public.intents "
+                             "WHERE public.intents.intents = %s;", (intent,))
+            intent_id = self.cur.fetchone()
+        except psycopg2.Error as e:
+            raise DatabaseError(e.pgerror)
+        if intent_id is not None:
+            try:
+                self.cur.execute("SELECT intents, stopwords "
+                                 "FROM public.intents "
+                                 "WHERE public.intents.intents = %s;", (intent,))
+                logger.debug("Retrieving stopwords for the intent: %s", intent)
+                intent_stopwords = self.cur.fetchall()
+                return intent_stopwords
+            except psycopg2.Error as e:
+                self.conn.rollback()
+                logger.exception(e.pgerror)
+                raise DatabaseError(e.pgerror)
+
+    def add_stopwords_to_intent(self, intent, stopwords):
+        try:
+            self.cur.execute("SELECT id "
+                             "FROM public.intents "
+                             "WHERE public.intents.intents = %s;", (intent,))
+            intent_id = self.cur.fetchone()
         except psycopg2.Error as e:
                 raise DatabaseError(e.pgerror)
-        if intent_ID is not None:
+        if intent_id is not None:
             try:
-                self.cur.execute("SELECT expressions "
-                                 "FROM public.intents "
-                                 "INNER JOIN public.expressions "
-                                 "ON public.intents.id = public.expressions.intent_id "
-                                 "WHERE public.intents.intents = %s;", (intent,))
-                logger.debug("Retrieving all expressions for the intent: %s", intent)
-                list_of_expressions = list(map(lambda x: x[0], self.cur.fetchall()))
-                return list_of_expressions
+                if len(stopwords) > 0:
+                    if isinstance(stopwords, str):
+                        self.cur.execute("UPDATE public.intents "
+                                         "SET stopwords = array_append(public.intents.stopwords, (stopwords)) "
+                                         "WHERE public.intents.id = (intent_id) "
+                                         "VALUES (%s, %s)", (stopwords, intent_id))
+                        self.conn.commit()
+                    if isinstance(stopwords, list):
+                        self.cur.execute("UPDATE public.intents "
+                                         "SET stopwords = array_cat(public.intents.stopwords, (stopwords)) "
+                                         "WHERE public.intents.id = (intent_id) "
+                                         "VALUES (%s, %s)", (stopwords, intent_id))
+                        self.conn.commit()
+                else:
+                    msg = "Method expects a string or non-empty list of stopwords"
+                    logger.exception(msg)
+                    raise DatabaseInputError(msg)
             except psycopg2.Error as e:
                 self.conn.rollback()
                 logger.exception(e.pgerror)
@@ -72,10 +109,36 @@ class NLPDatabase:
             msg = "Method expects valid/existing intent as argument"
             logger.exception(msg)
             raise DatabaseInputError(msg)
-    
+
+    def delete_stopwords_from_intent(self, intent, stopwords):
+        try:
+            existing_stopwords = self.get_intent_stopwords(intent)[0][1]
+            if type(stopwords) is not list:
+                entities = list(stopwords)
+                for entity in entities:
+                    if entity in existing_stopwords:
+                        existing_stopwords.remove(entity)
+                self.cur.execute("UPDATE public.intents "
+                                 "SET stopwords = (existing_stopwords) "
+                                 "WHERE intents.intents = (intent)", (intent,))
+                self.conn.commit()
+        except psycopg2.Error as e:
+            self.conn.rollback()
+            logger.exception(e.pgerror)
+            raise DatabaseError(e.pgerror)
+
+
+class EntitiesDatabase(CoreDatabase):
+    def __init__(self):
+        if os.environ.get('ENVIRONMENT') == 'prod':
+            database = 'BOLT'
+        else:
+            database = 'LOCAL'
+        CoreDatabase.__init__(self, database)
+
     def get_intent_entities(self, intent):
         """ NEEDS TEST """
-        try: 
+        try:
             self.cur.execute("SELECT id "
                              "FROM public.intents "
                              "WHERE public.intents.intents = %s;", (intent,))
@@ -94,27 +157,161 @@ class NLPDatabase:
                 self.conn.rollback()
                 logger.exception(e.pgerror)
                 raise DatabaseError(e.pgerror)
-    
-    def get_intent_stopwords(self, intent):
-        """ NEEDS TEST """
-        try: 
-            self.cur.execute("SELECT id FROM public.intents "
-                             "WHERE public.intents.intents = %s;", (intent,))
+
+    def add_entities_to_intent(self, intent, entities):
+        try:
+            self.cur.execute("SELECT id FROM public.intents WHERE public.intents.intents = %s;", (intent,))
             intent_id = self.cur.fetchone()
         except psycopg2.Error as e:
                 raise DatabaseError(e.pgerror)
         if intent_id is not None:
             try:
-                self.cur.execute("SELECT intents, stopwords "
-                                 "FROM public.intents "
-                                 "WHERE public.intents.intents = %s;", (intent,))
-                logger.debug("Retrieving stopwords for the intent: %s", intent)
-                intent_stopwords = self.cur.fetchall()
-                return intent_stopwords
+                if len(entities) > 0:
+                    logger.debug("Adding entities to intent: %s", intent)
+                    if isinstance(entities, str):
+                        self.cur.execute("UPDATE public.intents "
+                                         "SET entities = array_append(public.intents.entities, (entities)) "
+                                         "WHERE public.intents.id = (intent_id) "
+                                         "VALUES (%s, %s)", (entities, intent_id))
+                        self.conn.commit()
+                    if isinstance(entities, list):
+                        self.cur.execute("UPDATE public.intents "
+                                         "SET entities = array_cat(public.intents.entities, (entities)) "
+                                         "WHERE public.intents.id = (intent_id) "
+                                         "VALUES (%s, %s)", (entities, intent_id))
+                        self.conn.commit()
+                    return self.get_intent_entities(intent)
+                else:
+                    msg = "Method expects a string or non-empty list of entities"
+                    logger.exception(msg)
+                    raise DatabaseInputError(msg)
             except psycopg2.Error as e:
                 self.conn.rollback()
                 logger.exception(e.pgerror)
                 raise DatabaseError(e.pgerror)
+        else:
+            msg = "Method expects valid/existing intent as argument"
+            logger.exception(msg)
+            raise DatabaseInputError(msg)
+
+    def delete_entities_from_intent(self, intent, entities):
+        try:
+            exisiting_entities = self.get_intent_entities(intent)[0][1]
+            if type(entities) is not list:
+                entities = list(entities)
+            for entity in entities:
+                if entity in exisiting_entities:
+                    exisiting_entities.remove(entity)
+            self.cur.execute("UPDATE public.intents "
+                             "SET entities = (existing_entities) "
+                             "WHERE intents.intents = (intent)", (intent,))
+            self.conn.commit()
+        except psycopg2.Error as e:
+            self.conn.rollback()
+            logger.exception(e.pgerror)
+            raise DatabaseError(e.pgerror)
+
+
+class IntentsDatabase(CoreDatabase):
+    def __init__(self):
+        if os.environ.get('ENVIRONMENT') == 'prod':
+            database = 'BOLT'
+        else:
+            database = 'LOCAL'
+        CoreDatabase(self, database)
+
+    def get_intents(self):
+        try:
+            self.cur.execute("SELECT intents FROM public.intents;")
+            logger.debug("Retrieving all intents")
+            list_of_intents = list(map(lambda x: x[0], self.cur.fetchall()))
+            return list_of_intents
+        except psycopg2.Error as e:
+            self.conn.rollback()
+            logger.exception(e.pgerror)
+            raise DatabaseError(e.pgerror)
+
+    def add_intent(self, intent):
+        try:
+            self.cur.execute("INSERT INTO public.intents (intents) VALUES (%s);", (intent,))
+            self.conn.commit()
+            logger.debug("Adding intent: %s", intent)
+            return self.get_intents()
+        except psycopg2.Error as e:
+            self.conn.rollback()
+            logger.exception(e.pgerror)
+            raise DatabaseError(e.pgerror)
+
+    def delete_intent(self, intent):
+        try:
+            self.delete_all_intent_expressions(intent)
+            self.cur.execute("DELETE * "
+                             "FROM public.intents "
+                             "WHERE public.intents.intents = %s;", (intent,))
+            self.conn.commit()
+            logger.debug("Deleting intent: %s", intent)
+            return self.get_intents()
+        except psycopg2.Error as e:
+            self.conn.rollback()
+            logger.exception(e.pgerror)
+            raise DatabaseError(e.pgerror)
+
+    def confirm_intent_exists(self, intent):
+        try:
+            self.cur.execute("SELECT intents "
+                             "FROM public.intents "
+                             "WHERE intents = (%s)", (intent,))
+            logger.debug("Confirming intent exists")
+            result = self.cur.fetchone()
+            if result is None:
+                return False
+            else:
+                return True
+        except psycopg2.Error as e:
+            self.conn.rollback()
+            logger.exception(e.pgerror)
+            raise DatabaseError(e.pgerror)
+
+
+class ExpressionsDatabase(CoreDatabase):
+    """
+    Core database communication layer to interact with postgreSQL to manage expresssions in Bolt.
+    Constructing an NLP_Databse depends on two sets of environment variables LOCAL vs RDS. 
+    """
+    def __init__(self):
+        if os.environ.get('ENVIRONMENT') == 'prod':
+            database = 'BOLT'
+        else:
+            database = 'LOCAL'
+        CoreDatabase(self, database)
+        
+    """
+    Retrieval operations.
+    """
+    def get_intent_expressions(self, intent):
+        try: 
+            self.cur.execute("SELECT id FROM public.intents WHERE public.intents.intents = %s;", (intent,))
+            intent_id = self.cur.fetchone()
+        except psycopg2.Error as e:
+                raise DatabaseError(e.pgerror)
+        if intent_id is not None:
+            try:
+                self.cur.execute("SELECT expressions "
+                                 "FROM public.intents "
+                                 "INNER JOIN public.expressions "
+                                 "ON public.intents.id = public.expressions.intent_id "
+                                 "WHERE public.intents.intents = %s;", (intent,))
+                logger.debug("Retrieving all expressions for the intent: %s", intent)
+                list_of_expressions = list(map(lambda x: x[0], self.cur.fetchall()))
+                return list_of_expressions
+            except psycopg2.Error as e:
+                self.conn.rollback()
+                logger.exception(e.pgerror)
+                raise DatabaseError(e.pgerror)
+        else:
+            msg = "Method expects valid/existing intent as argument"
+            logger.exception(msg)
+            raise DatabaseInputError(msg)
             
     def get_intents_and_expressions(self):
         try:
@@ -170,16 +367,6 @@ class NLPDatabase:
     """
     Addition operations
     """
-    def add_intent(self, intent):
-        try:
-            self.cur.execute("INSERT INTO public.intents (intents) VALUES (%s);", (intent,))
-            self.conn.commit()
-            logger.debug("Adding intent: %s", intent)
-            return self.get_intents()
-        except psycopg2.Error as e:
-            self.conn.rollback()
-            logger.exception(e.pgerror)
-            raise DatabaseError(e.pgerror)
     
     def add_expressions_to_intent(self, intent, expressions):
         try: 
@@ -204,78 +391,6 @@ class NLPDatabase:
                     return self.get_intent_expressions(intent)
                 else:
                     msg = "Method expects a non-empty list of expressions"
-                    logger.exception(msg)
-                    raise DatabaseInputError(msg)
-            except psycopg2.Error as e:
-                self.conn.rollback()
-                logger.exception(e.pgerror)
-                raise DatabaseError(e.pgerror)
-        else:
-            msg = "Method expects valid/existing intent as argument"
-            logger.exception(msg)
-            raise DatabaseInputError(msg)
-    
-    def add_entities_to_intent(self, intent, entities):
-        try: 
-            self.cur.execute("SELECT id FROM public.intents WHERE public.intents.intents = %s;", (intent,))
-            intentID = self.cur.fetchone()
-        except psycopg2.Error as e:
-                raise DatabaseError(e.pgerror)
-        if intentID is not None:
-            try:
-                if len(entities) > 0:
-                    logger.debug("Adding entities to intent: %s", intent)
-                    if isinstance(entities, str):
-                        self.cur.execute("UPDATE public.intents "
-                                         "SET entities = array_append(public.intents.entities, (entities)) "
-                                         "WHERE public.intents.id = (intentID) "
-                                         "VALUES (%s, %s)", (entities, intentID))
-                        self.conn.commit()
-                    if isinstance(entities, list):
-                        self.cur.execute("UPDATE public.intents "
-                                         "SET entities = array_cat(public.intents.entities, (entities)) "
-                                         "WHERE public.intents.id = (intentID) "
-                                         "VALUES (%s, %s)", (entities, intentID))
-                        self.conn.commit()
-                    return self.get_intent_expressions(intent)
-                else:
-                    msg = "Method expects a string or non-empty list of entities"
-                    logger.exception(msg)
-                    raise DatabaseInputError(msg)
-            except psycopg2.Error as e:
-                self.conn.rollback()
-                logger.exception(e.pgerror)
-                raise DatabaseError(e.pgerror)
-        else:
-            msg = "Method expects valid/existing intent as argument"
-            logger.exception(msg)
-            raise DatabaseInputError(msg)
-    
-    def add_stopwords_to_intent(self, intent, stopwords):
-        try: 
-            self.cur.execute("SELECT id "
-                             "FROM public.intents "
-                             "WHERE public.intents.intents = %s;", (intent,))
-            intentID = self.cur.fetchone()
-        except psycopg2.Error as e:
-                raise DatabaseError(e.pgerror)
-        if intentID is not None:
-            try:
-                if len(stopwords) > 0:
-                    if isinstance(stopwords, str):
-                        self.cur.execute("UPDATE public.intents "
-                                         "SET stopwords = array_append(public.intents.stopwords, (stopwords)) "
-                                         "WHERE public.intents.id = (intentID) "
-                                         "VALUES (%s, %s)", (stopwords, intentID))
-                        self.conn.commit()
-                    if isinstance(stopwords, list):
-                        self.cur.execute("UPDATE public.intents "
-                                         "SET stopwords = array_cat(public.intents.stopwords, (stopwords)) "
-                                         "WHERE public.intents.id = (intentID) "
-                                         "VALUES (%s, %s)", (stopwords, intentID))
-                        self.conn.commit()
-                else:
-                    msg = "Method expects a string or non-empty list of stopwords"
                     logger.exception(msg)
                     raise DatabaseInputError(msg)
             except psycopg2.Error as e:
@@ -333,20 +448,6 @@ class NLPDatabase:
     """
     Deletion operations
     """
-    def delete_intent(self, intent):
-        try:
-            self.delete_all_intent_expressions(intent)
-            self.cur.execute("DELETE * "
-                             "FROM public.intents "
-                             "WHERE public.intents.intents = %s;", (intent,))
-            self.conn.commit()
-            logger.debug("Deleting intent: %s", intent)
-            return self.get_intents()
-        except psycopg2.Error as e:
-            self.conn.rollback()
-            logger.exception(e.pgerror)
-            raise DatabaseError(e.pgerror)
-    
     def delete_all_intent_expressions(self, intent):
         try:
             self.cur.execute("DELETE FROM expressions "
@@ -359,13 +460,7 @@ class NLPDatabase:
             self.conn.rollback()
             logger.exception(e.pgerror)
             raise DatabaseError(e.pgerror)
-    
-    def delete_entity_from_intent(self, intent, entity):
-        pass
-    
-    def delete_stopword_from_intent(self, intent, stopword):
-        pass
-    
+
     def delete_expressions_from_intent(self, intent, expressions):
         try:
             for expression in expressions:
@@ -409,21 +504,6 @@ class NLPDatabase:
     """
     Confirmation operations
     """
-    def confirm_intent_exists(self, intent):
-        try:
-            self.cur.execute("SELECT intents "
-                             "FROM public.intents "
-                             "WHERE intents = (%s)", (intent,))
-            logger.debug("Confirming intent exists") 
-            result = self.cur.fetchone()
-            if result is None:
-                return False
-            else:
-                return True          
-        except psycopg2.Error as e:
-            self.conn.rollback()
-            logger.exception(e.pgerror)
-            raise DatabaseError(e.pgerror)
     
     def confirm_archived_expression_exists(self, id_):
         try:
@@ -457,6 +537,3 @@ class NLPDatabase:
             logger.exception(e.pgerror)
             raise DatabaseError(e.pgerror)
         
-    def close_database_connection(self):
-        self.cur.close()
-        self.conn.close()

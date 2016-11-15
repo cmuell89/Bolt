@@ -33,28 +33,39 @@ from marshmallow import fields
 from functools import partial
 from app.authorization import tokenAuth
 from app.validators import valid_application_type, list_of_strings
-from database.database import NLPDatabase
+from database.database import IntentsDatabase, ExpressionsDatabase, EntitiesDatabase, StopwordsDatabase
 from nlp import Analyzer, Updater
 from utils.exceptions import DatabaseError, DatabaseInputError
 
 logger = logging.getLogger('BOLT.api')
 
+
+# TODO Refactor with new analyzer
+
+
 """
 Store database object and its connections in the local context object g.
-"""    
+"""
+def get_db(database):
+    """
 
-def get_db():
+    :param database:
+    :return: The referenced database object given the type.
+    """
     db = getattr(g, '_database', None)
     if db is None:
-        db = g._database = db = NLPDatabase()
-    return db
+        db = {'intents': IntentsDatabase(),
+              'exoressions': ExpressionsDatabase(),
+              'stopwords': StopwordsDatabase(),
+              'entites': EntitiesDatabase()}
+        db = g._database = db
+    return db[database]
 
 """
 Resources Classes
 """
 class Analyze(Resource):
-    
-    
+
     decorators = [tokenAuth.login_required]
     validate_application_json = partial(valid_application_type, 'application/json')
     
@@ -74,7 +85,7 @@ class Analyze(Resource):
         intent_guess = results['classification'][0]['intent']
         estimated_confidence = results[0]['intents']['confidence']
         try:
-            db = get_db()
+            db = get_db('expressions')
             db.add_unlabeled_expression(args['query'], intent_guess, estimated_confidence)
         except DatabaseError as e:
             logger.exception(e.value)
@@ -104,7 +115,7 @@ class Train(Resource):
             response_message = "Classifier defaulting to " + classifier + " due to malformed variable URL."
         else:
             response_message = "Classifier successfully trained: " + classifier
-        __CLF__ = train_classification_pipeline(None,None, classifier)
+        __CLF__ = train_classification_pipeline(None, None, classifier)
         resp = jsonify(message=response_message)
         resp.status_code = 200
         return resp
@@ -127,9 +138,9 @@ class Expressions(Resource):
         Currently only supports 'application/json' mimetype.
         """
         try:
-            db = get_db()
+            db = get_db('expressions')
             expressions = db.add_expressions_to_intent(intent, args['expressions'])
-            resp = jsonify(intent=intent,expressions=expressions)
+            resp = jsonify(intent=intent, expressions=expressions)
             resp.status_code = 200
             return resp
         except DatabaseError as error:
@@ -151,9 +162,9 @@ class Expressions(Resource):
         Returns the expressions for an intent
         """ 
         try:
-            db = get_db()
+            db = get_db('expressions')
             expressions = db.get_intent_expressions(intent)
-            resp = jsonify(intent=intent,expressions=expressions)
+            resp = jsonify(intent=intent, expressions=expressions)
             resp.status_code = 200
             return resp
         except DatabaseError as error:
@@ -164,8 +175,7 @@ class Expressions(Resource):
             resp = jsonify(error=error.value)
             resp.status_code = 400
             return resp
-        
-    
+
     expressions_delete_args = {
         'content_type': fields.Str(required=True, load_from='Content-Type', location='headers', validate=validate_application_json),
         'expressions': fields.List(fields.Str(), required=True, validate=list_of_strings),
@@ -180,7 +190,7 @@ class Expressions(Resource):
         """
         if args['all'] == True:
             try:
-                db = get_db()
+                db = get_db('expressions')
                 expressions = db.delete_all_intent_expressions(intent)
                 resp = jsonify(intent=intent,expressions=expressions)
                 return resp
@@ -194,7 +204,7 @@ class Expressions(Resource):
                 return resp   
         elif args['expressions']:
             try:
-                db = get_db()
+                db = get_db('expressions')
                 expressions = db.delete_expressions_from_intent(intent, args['expressions'])
                 resp = jsonify(intent=intent,expressions=expressions, deleted_expressions=args['expressions'])
                 return resp
@@ -206,6 +216,7 @@ class Expressions(Resource):
                 resp = jsonify(error=error.value)
                 resp.status_code = 400
                 return resp 
+
 
 class UnlabeledExpressions(Resource):
     
@@ -222,7 +233,7 @@ class UnlabeledExpressions(Resource):
         Gets a list of tuples of unlabeled expressions.
         """
         try:
-            db = get_db()
+            db = get_db('expressions')
             unlabeled_expressions = list(map(lambda x: {"id": x[0], "expression": x[1], "estimated_intent": x[2], "estimated_confidence":x[3]}, db.get_unlabeled_expressions()))
             resp = jsonify(unlabeled_expressions = unlabeled_expressions)
             resp.status_code = 200
@@ -249,7 +260,7 @@ class UnlabeledExpressions(Resource):
         Adds an unlabeled expression to database.
         """
         try:
-            db = get_db()
+            db = get_db('expressions')
             db_results = db.add_unlabeled_expression(args['expression'], args['estimated_intent'], args['estimated_confidence'])
             unlabeled_expressions = list(map(lambda x: {"id": x[0], "expression": x[1], "estimated_intent": x[2], "estimated_confidence":x[3]}, db_results))
             resp = jsonify(unlabeled_expressions=unlabeled_expressions)
@@ -274,7 +285,7 @@ class UnlabeledExpressions(Resource):
         Deleted an unlabeled expression from the database by ID.
         """
         try:
-            db = get_db()
+            db = get_db('expressions')
             db_results = db.delete_unlabeled_expression(args['id'])
             unlabeled_expressions = list(map(lambda x: {"id": x[0], "expression": x[1], "estimated_intent": x[2], "estimated_confidence":x[3]}, db_results))
             resp = jsonify(unlabeled_expressions = unlabeled_expressions)
@@ -288,7 +299,8 @@ class UnlabeledExpressions(Resource):
             resp = jsonify(error=error.value)
             resp.status_code = 400
             return resp
-    
+
+
 class ArchivedExpressions(Resource):
     
     decorators = [tokenAuth.login_required]
@@ -304,7 +316,7 @@ class ArchivedExpressions(Resource):
         Gets as list of tuples of archived expressions.
         """
         try:
-            db = get_db()
+            db = get_db('expressions')
             archived_expressions = list(map(lambda x: {"id": x[0], "expression": x[1], "estimated_intent": x[2], "estimated_confidence":x[3]}, db.get_archived_expressions()))
             resp = jsonify(archived_expressions = archived_expressions)
             resp.status_code = 200
@@ -331,7 +343,7 @@ class ArchivedExpressions(Resource):
         Adds archived expression to database.
         """
         try:
-            db = get_db()
+            db = get_db('expressions')
             db_results = db.add_archived_expression(args['expression'], args['estimated_intent'], args['estimated_confidence'])
             archived_expressions = list(map(lambda x: {"id": x[0], "expression": x[1], "estimated_intent": x[2], "estimated_confidence":x[3]}, db_results))
             resp = jsonify(archived_expressions=archived_expressions)
@@ -357,7 +369,7 @@ class ArchivedExpressions(Resource):
         Deletes an archived expressions from database based on ID.
         """
         try:
-            db = get_db()
+            db = get_db('expressions')
             db_results = db.delete_archived_expression(args['id'])
             archived_expressions = list(map(lambda x: {"id": x[0], "expression": x[1], "estimated_intent": x[2], "estimated_confidence":x[3]}, db_results))
             resp = jsonify(archived_expressions = archived_expressions)
@@ -371,7 +383,8 @@ class ArchivedExpressions(Resource):
             resp = jsonify(error=error.value)
             resp.status_code = 400
             return resp
-    
+
+
 class Intents(Resource):
     
     decorators = [tokenAuth.login_required]
@@ -389,7 +402,7 @@ class Intents(Resource):
         Currently only supports 'application/json' mimetype.
         """
         try:
-            db = get_db()
+            db = get_db('intents')
             intents = db.add_intent(args['intent'])
             resp = jsonify(intents=intents)
             resp.status_code = 200
@@ -412,7 +425,7 @@ class Intents(Resource):
         """
         Gets the current intents stored in the NLP database
         """
-        db = get_db()
+        db = get_db('intents')
         intents = db.get_intents()
         resp = jsonify(intents=intents)
         resp.status_code = 200
@@ -430,7 +443,7 @@ class Intents(Resource):
         Deletes an intent including all its associated expressions
         """
         try:
-            db = get_db()
+            db = get_db('intents')
             intents = db.delete_intent(args['intent'])
             resp = jsonify(intents=intents)
             resp.status_code = 200
@@ -445,7 +458,6 @@ class Intents(Resource):
             return resp
 
 
-
 class Health(Resource):
     def get(self):
         """
@@ -453,7 +465,6 @@ class Health(Resource):
         """
         resp = Response()
         return resp
-    
 
 
 @parser.error_handler
@@ -463,4 +474,3 @@ def handle_request_parsing_error(err):
     """
     code, msg = getattr(err, 'status_code', 400), getattr(err, 'messages', 'Invalid Request')
     abort(code, msg)
-        
