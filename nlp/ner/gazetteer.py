@@ -4,10 +4,11 @@ Created on October 26, 2016
 @author: Carl L. Mueller
 @copyright: Lightning in a Bot, Inc
 """
+import json
 from nltk.corpus import stopwords
 from nltk.stem.porter import PorterStemmer
 from utils.string_cleaners import remove_apostrophe, normalize_whitespace, remove_question_mark, dash_to_single_space
-import json
+from database.database import ExternalDatabaseEngine
 from nlp.ner.trie import TrieBuilder, DictionaryBuilder, TrieNode
 
 GAZETTEERS = {}
@@ -18,13 +19,18 @@ class GazetteerModelBuilder:
     def initialize_gazetteer_models(self):
         """
         Builds from scratch the entire GAZETTEERS dict
-        
+
         Exceptions:
         -----------
-            TODO
-            
         """
-        pass
+        global GAZETTEERS
+        gazetteer_types = ['product_name', 'product_type', 'vendor']
+        db = ExternalDatabaseEngine()
+        keys = db.get_keys()
+        for key in keys:
+            for gaz_type in gazetteer_types:
+                self.create_new_gazetteer_model(gaz_type, key)
+        print(GAZETTEERS)
  
     def create_new_gazetteer_model(self, gazetteer_type, id_):
         """
@@ -42,12 +48,16 @@ class GazetteerModelBuilder:
         """
         global GAZETTEERS
         trie_builder = TrieBuilder()
-        entities = self._get_entities_for_training(gazetteer_type, id_)
-        new_trie = trie_builder.build_trie_from_dictionary(entities)
-        new_gazetteer = Gazetteer(new_trie)
-        if gazetteer_type not in GAZETTEERS:
-            GAZETTEERS[gazetteer_type] = {}
-            GAZETTEERS[gazetteer_type][id_] = new_gazetteer
+        entities = self._get_entities_from_external_database(gazetteer_type, id_)
+        entities = [x for x in entities if x is not None]
+        if len(entities) > 0:
+            new_trie = trie_builder.build_trie_from_dictionary(entities)
+            new_gazetteer = Gazetteer(new_trie)
+            if gazetteer_type not in GAZETTEERS:
+                GAZETTEERS[gazetteer_type] = {}
+                GAZETTEERS[gazetteer_type][id_] = new_gazetteer
+            else:
+                GAZETTEERS[gazetteer_type][id_] = new_gazetteer
     
     def update_single_gazetteer_model(self, gazetteer_type, id_):
         """
@@ -68,12 +78,12 @@ class GazetteerModelBuilder:
         trie_builder = TrieBuilder()
         
         if gazetteer_type in GAZETTEERS:
-            entities = self._get_entities_for_training(gazetteer_type, id_)
+            entities = self._get_entities_from_external_database(gazetteer_type, id_)
             new_trie = trie_builder.build_trie_from_dictionary(entities)
             new_gazetteer = Gazetteer(new_trie)
             GAZETTEERS[gazetteer_type][id_] = new_gazetteer
 
-    def _get_entities_for_training(self, gazetteer_type, id_):
+    def _get_entities_from_external_database(self, gazetteer_type, id_):
         """
         Obtain the entities that will be used used to train a gazetteer model
         
@@ -87,13 +97,22 @@ class GazetteerModelBuilder:
         TODO
 
         """
-        # TODO Create database methods to get entities
-        """ dummy method to simple obtain entities for testing """
-        file_name = "../resources/product_lists/productList5k.json"
-        product_file = open(file_name)
-        product_json = json.load(product_file)
-        products = product_json['products']
-        return products
+
+        def entities_function_generator(entity_type):
+            """
+            Contains a dict. key: entity type; value: function that returns entities by id_
+            :param entity_type:
+            :return: function returning entities for given id_ for the entity type
+            """
+            db = ExternalDatabaseEngine()
+            drivers = {'product_name': db.get_product_names_by_key,
+                       'product_type': db.get_product_types_by_key,
+                       'vendor': db.get_vendors_by_key}
+            return drivers[entity_type]
+
+        db_function = entities_function_generator(gazetteer_type)
+        entities = db_function(id_)
+        return entities
 
 
 class GazetteerModelAccessor:
@@ -135,7 +154,7 @@ class Gazetteer:
     def search_query(self, query, custom_stopwords=None, max_edit_distance=2):
         
         """ If a very small string, empty string, or null is passed as the query, return None """ 
-        if len(query)<2 or query==None or query == "":
+        if len(query) < 2 or query == None or query == "":
             return None
         if custom_stopwords is None:
             custom_stopwords = []
@@ -192,24 +211,9 @@ class Gazetteer:
         else:
             return None
 
-
     def clean_query(self, query):
         query = remove_question_mark(query)
         query = normalize_whitespace(query)
         query = dash_to_single_space(query)
         query = remove_apostrophe(query)
         return query
-   
-
-        
-
-
-
-
-
-
-
-
-
-
-                

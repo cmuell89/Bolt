@@ -16,7 +16,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.calibration import CalibratedClassifierCV
 from models.spacy_model import load_spacy
 from transformers.clean_text_transformer import CleanTextTransformer
-from database.database import StopwordsDatabase, EntitiesDatabase
+from database.database import StopwordDatabaseEngine, EntitiesDatabaseEngine
 from utils import io
 from utils.string_cleaners import normalize_whitespace
 import json
@@ -135,8 +135,8 @@ class Classifier:
     """
     def __init__(self, pipeline):
         self.pipeline = pipeline
-        self.stopwords_db = StopwordsDatabase()
-        self.entities_db = EntitiesDatabase()
+        self.stopwords_db = StopwordDatabaseEngine()
+        self.entities_db = EntitiesDatabaseEngine()
         
     def classify(self, document):
         results = {}
@@ -151,17 +151,10 @@ class Classifier:
         # The dababase call returns a single tuple for which the list of entities and stopwords is the second element.
         intent_entities = self.entities_db.get_intent_entities(intents[0][0])[0][1]
         intent_stopwords = self.stopwords_db.get_intent_stopwords(intents[0][0])[0][1]
-        results['results'] = top_3
+        results['intents'] = top_3
         results['entity_types'] = intent_entities
         results['stopwords'] = intent_stopwords
         return results
-
-    def _get_top_intent_entities(self, intent):
-        return ["product_entities"]
-    
-    def _get_intent_stopwords(self, intent):
-        return ['inventory','best','selling','items','many','how','what','in','are','the','stock','is','most', 'warehouse', 'sell', 'this', 'total', 'sales']
-
     
 
 

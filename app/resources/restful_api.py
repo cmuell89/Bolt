@@ -33,7 +33,7 @@ from marshmallow import fields
 from functools import partial
 from app.authorization import tokenAuth
 from app.validators import valid_application_type, list_of_strings
-from database.database import IntentsDatabase, ExpressionsDatabase, EntitiesDatabase, StopwordsDatabase
+from database.database import IntentsDatabaseEngine, ExpressionsDatabaseEngine, EntitiesDatabaseEngine, StopwordDatabaseEngine
 from nlp import Analyzer, Updater
 from utils.exceptions import DatabaseError, DatabaseInputError
 
@@ -42,28 +42,22 @@ logger = logging.getLogger('BOLT.api')
 
 # TODO Refactor with new analyzer
 
-
-"""
-Store database object and its connections in the local context object g.
-"""
 def get_db(database):
     """
-
+    Store database objects and its connections in the local context object g.
     :param database:
     :return: The referenced database object given the type.
     """
     db = getattr(g, '_database', None)
     if db is None:
-        db = {'intents': IntentsDatabase(),
-              'exoressions': ExpressionsDatabase(),
-              'stopwords': StopwordsDatabase(),
-              'entites': EntitiesDatabase()}
+        db = {'intents': IntentsDatabaseEngine(),
+              'expressions': ExpressionsDatabaseEngine(),
+              'stopwords': StopwordDatabaseEngine(),
+              'entites': EntitiesDatabaseEngine()}
         db = g._database = db
     return db[database]
 
-"""
-Resources Classes
-"""
+
 class Analyze(Resource):
 
     decorators = [tokenAuth.login_required]
@@ -81,15 +75,15 @@ class Analyze(Resource):
         Returns the intent classification of the query.
         """
         analyzer = Analyzer()
-        results = analyzer.analyze(args['query'], args['id'])
-        intent_guess = results['classification'][0]['intent']
-        estimated_confidence = results[0]['intents']['confidence']
+        results = analyzer.run_analysis(args['query'], args['id'])
+        estimated_intent = results['classification'][0]['intent']
+        estimated_confidence = results['classification'][0]['confidence']
         try:
             db = get_db('expressions')
-            db.add_unlabeled_expression(args['query'], intent_guess, estimated_confidence)
+            db.add_unlabeled_expression(args['query'], estimated_intent, estimated_confidence)
         except DatabaseError as e:
             logger.exception(e.value)
-        resp = jsonify(intents=results)
+        resp = jsonify(results)
         resp.status_code = 200
         return resp
         
@@ -108,14 +102,13 @@ class Train(Resource):
         """
         Trains the existing classifier object accessed by all '/classification/*' routes.
         """
-        #Declare the global instance of __CLF__
-        global __CLF__
-        if classifier not in ('svm','nb'):
+        if classifier not in ('svm', 'nb'):
             classifier = 'svm'
             response_message = "Classifier defaulting to " + classifier + " due to malformed variable URL."
         else:
             response_message = "Classifier successfully trained: " + classifier
-        __CLF__ = train_classification_pipeline(None, None, classifier)
+        updater = Updater()
+        updater.update_classifier(classifier)
         resp = jsonify(message=response_message)
         resp.status_code = 200
         return resp
@@ -192,7 +185,7 @@ class Expressions(Resource):
             try:
                 db = get_db('expressions')
                 expressions = db.delete_all_intent_expressions(intent)
-                resp = jsonify(intent=intent,expressions=expressions)
+                resp = jsonify(intent=intent, expressions=expressions)
                 return resp
             except DatabaseError as error:
                 resp = jsonify(error=error.value)
@@ -318,7 +311,7 @@ class ArchivedExpressions(Resource):
         try:
             db = get_db('expressions')
             archived_expressions = list(map(lambda x: {"id": x[0], "expression": x[1], "estimated_intent": x[2], "estimated_confidence":x[3]}, db.get_archived_expressions()))
-            resp = jsonify(archived_expressions = archived_expressions)
+            resp = jsonify(archived_expressions=archived_expressions)
             resp.status_code = 200
             return resp
         except DatabaseError as error:

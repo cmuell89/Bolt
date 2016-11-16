@@ -11,7 +11,8 @@ application = app = Flask(__name__)
 def close_connection(exception):
     db = getattr(g, '_database', None)
     if db is not None:
-        db.close_database_connection()
+        for key, db_class_instance in db.items():
+            db_class_instance.close_database_connection()
 """
 Web client routes.
 """

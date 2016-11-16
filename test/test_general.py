@@ -12,7 +12,7 @@ import logging
 from utils.custom_assertions import CustomAssertions
 from nlp.clf.classification import ClassificationModelBuilder, ClassificationModelAccessor, Classifier
 from nlp.ner.gazetteer import GazetteerModelBuilder, GazetteerModelAccessor, Gazetteer
-from database.database import EntitiesDatabase, StopwordsDatabase, ExpressionsDatabase, IntentsDatabase
+from database.database import EntitiesDatabaseEngine, StopwordDatabaseEngine, ExpressionsDatabaseEngine, IntentsDatabaseEngine
 from builtins import int, str
 
 logger = logging.getLogger('BOLT.test')
@@ -28,14 +28,14 @@ class EntitiesDatabaseTest(unittest.TestCase, CustomAssertions):
     def tearDownClass(cls):
         logger.info('')
 
-    def test_intent_entities(self):
-        self.fail()
-
-    def test_add_entities_to_intent(self):
-        self.fail()
-
-    def test_delete_entities_from_intent(self):
-        self.fail()
+    # def test_intent_entities(self):
+    #     self.fail()
+    #
+    # def test_add_entities_to_intent(self):
+    #     self.fail()
+    #
+    # def test_delete_entities_from_intent(self):
+    #     self.fail()
 
 
 class StopwordsDatabaseTest(unittest.TestCase, CustomAssertions):
@@ -51,14 +51,14 @@ class StopwordsDatabaseTest(unittest.TestCase, CustomAssertions):
     def tearDownClass(cls):
         logger.info('')
 
-    def test_get_intent_stopwords(self):
-        self.fail()
-
-    def test_add_stopwords_to_intent(self):
-        self.fail()
-
-    def test_delete_stopwords_from_intent(self):
-        self.fail()
+    # def test_get_intent_stopwords(self):
+    #     self.fail()
+    #
+    # def test_add_stopwords_to_intent(self):
+    #     self.fail()
+    #
+    # def test_delete_stopwords_from_intent(self):
+    #     self.fail()
 
 
 class IntentsDatabaseTest(unittest.TestCase, CustomAssertions):
@@ -75,7 +75,7 @@ class IntentsDatabaseTest(unittest.TestCase, CustomAssertions):
 
     def test_get_intents(self):
         logger.debug("Testing for 'get_intents'")
-        db = ExpressionsDatabase()
+        db = IntentsDatabaseEngine()
         intents = db.get_intents()
         self.assertListOfString(intents)
         db.close_database_connection()
@@ -83,7 +83,7 @@ class IntentsDatabaseTest(unittest.TestCase, CustomAssertions):
 
     def test_add_intent(self):
         logger.debug("Testing for 'add_intent'")
-        db = ExpressionsDatabase()
+        db = IntentsDatabaseEngine()
         new_list_of_intents = db.add_intent('some-new-intent')
         self.assertIn('some-new-intent', new_list_of_intents)
         db.delete_intent('some-new-intent')
@@ -92,7 +92,7 @@ class IntentsDatabaseTest(unittest.TestCase, CustomAssertions):
 
     def test_delete_intent(self):
         logger.debug("\nTesting for 'delete_intent'")
-        db = IntentsDatabase()
+        db = IntentsDatabaseEngine()
         db.add_intent('soon-to-be-deleted')
         results = db.delete_intent('soon-to-be-deleted')
         self.assertNotIn(('soon-to-be-deleted',), results)
@@ -100,7 +100,7 @@ class IntentsDatabaseTest(unittest.TestCase, CustomAssertions):
 
     def test_confirm_intent_exists(self):
         logger.debug("\nTesting for 'confirm_intent_exists'")
-        db = IntentsDatabase()
+        db = IntentsDatabaseEngine()
         db.add_intent('confirmation-intent')
         intent_exists = db.confirm_intent_exists('confirmation-intent')
         self.assertEqual(True, intent_exists)
@@ -127,7 +127,7 @@ class ExpressionsDatabaseTest(unittest.TestCase, CustomAssertions):
     '''
     def test_get_intents_and_expressions(self):
         logger.debug("Testing for 'get_intents_and_expressions'")
-        db = ExpressionsDatabase()
+        db = ExpressionsDatabaseEngine()
         intents_and_expressions = db.get_intents_and_expressions()
         self.assertListOfTuples(intents_and_expressions, [str, str])
         db.close_database_connection()
@@ -136,7 +136,7 @@ class ExpressionsDatabaseTest(unittest.TestCase, CustomAssertions):
     def test_get_intent_expressions(self):
         logger.debug("\n")
         logger.debug("Testing for 'get_intent_expressions'")
-        db = ExpressionsDatabase()
+        db = ExpressionsDatabaseEngine()
         intent_expressions = db.get_intent_expressions('get-order')
         self.assertListOfString(intent_expressions)
         db.close_database_connection()
@@ -144,7 +144,7 @@ class ExpressionsDatabaseTest(unittest.TestCase, CustomAssertions):
 
     def test_get_unlabeled_expressions(self):
         logger.debug("Testing for 'get_unlabeled_expressions")
-        db = ExpressionsDatabase()
+        db = ExpressionsDatabaseEngine()
         unlabeled_expressions = db.get_unlabeled_expressions()
         self.assertListOfTuples(unlabeled_expressions, [int, str, str, float])
         db.close_database_connection()
@@ -152,7 +152,7 @@ class ExpressionsDatabaseTest(unittest.TestCase, CustomAssertions):
     
     def test_get_unlabeled_expression_by_id(self):
         logger.debug("Testing for 'get_unlabeled_expressions")
-        db = ExpressionsDatabase()
+        db = ExpressionsDatabaseEngine()
         results = db.add_unlabeled_expression('This is an unlabeled expression', 'guess-intent', .9900)
         tuple_list = [tup for tup in results if tup[1] == 'This is an unlabeled expression']
         actual_unlabeled_expression = tuple_list[0]
@@ -163,7 +163,7 @@ class ExpressionsDatabaseTest(unittest.TestCase, CustomAssertions):
     
     def test_get_archived_expressions(self):    
         logger.debug("Testing for 'get_archived_expressions")
-        db = ExpressionsDatabase()
+        db = ExpressionsDatabaseEngine()
         unlabeled_expressions = db.get_archived_expressions()
         self.assertListOfTuples(unlabeled_expressions, [int, str, str, float])
         db.close_database_connection()
@@ -174,8 +174,8 @@ class ExpressionsDatabaseTest(unittest.TestCase, CustomAssertions):
     '''
     def test_add_expressions_to_intent(self):
         logger.debug("Testing for 'add_expressions_to_intent'")
-        expressions_db = ExpressionsDatabase()
-        intents_db = IntentsDatabase()
+        expressions_db = ExpressionsDatabaseEngine()
+        intents_db = IntentsDatabaseEngine()
         intents_db.add_intent('expressionless')
         # Test for a list of expressions as argument.
         obj = expressions_db.add_expressions_to_intent('expressionless', ["Expression one", "Expression two", "Expression three"])
@@ -185,14 +185,14 @@ class ExpressionsDatabaseTest(unittest.TestCase, CustomAssertions):
         obj2 = expressions_db.add_expressions_to_intent('expressionless', "Expression argument is a string")
         self.assertListOfString(obj)
         self.assertListEqual(["Expression one", "Expression two", "Expression three", "Expression argument is a string"], obj2)
-        expressions_db.delete_intent('expressionless')
+        intents_db.delete_intent('expressionless')
         expressions_db.close_database_connection()
         intents_db.close_database_connection()
         logger.info("Testing for 'add_expressions_to_intent' a success!")
 
     def test_add_unlabeled_expression(self):
         logger.debug("Testing for 'add_unlabeled_expression'")
-        db = ExpressionsDatabase()
+        db = ExpressionsDatabaseEngine()
         results = db.add_unlabeled_expression('This is an unlabeled expression', 'guess-intent', .9900)
         self.assertListOfTuples(results, [int, str, str, float])
         expression_id = [tup[0] for tup in results if tup[1] == 'This is an unlabeled expression']
@@ -202,7 +202,7 @@ class ExpressionsDatabaseTest(unittest.TestCase, CustomAssertions):
        
     def test_add_archived_expressions(self):
         logger.debug("Testing for 'add_archived_expression'")
-        db = ExpressionsDatabase()
+        db = ExpressionsDatabaseEngine()
         results = db.add_archived_expression('This is an archived expression', 'guess-intent', .9900)
         self.assertListOfTuples(results, [int, str, str, float])
         expression_id = [tup[0] for tup in results if tup[1] == 'This is an archived expression']
@@ -215,8 +215,8 @@ class ExpressionsDatabaseTest(unittest.TestCase, CustomAssertions):
     '''
     def test_delete_expressions_from_intent(self):
         logger.debug("Testing for 'delete_expressions_from_intent'")
-        expressions_db = ExpressionsDatabase()
-        intents_db = IntentsDatabase()
+        expressions_db = ExpressionsDatabaseEngine()
+        intents_db = IntentsDatabaseEngine()
         intents_db.add_intent('expressionless')
         expressions_db.add_expressions_to_intent('expressionless', ["Expression one", "Expression two", "Expression three"])
         obj = expressions_db.delete_all_intent_expressions('expressionless')
@@ -229,7 +229,7 @@ class ExpressionsDatabaseTest(unittest.TestCase, CustomAssertions):
     def test_delete_unlabeled_expression(self):
         logger.debug("\nTesting for 'delete_unlabeled_expression'")
         test_expression = 'This is another unlabeled expression'
-        db = ExpressionsDatabase()
+        db = ExpressionsDatabaseEngine()
         before_results = db.add_unlabeled_expression(test_expression, 'guess-intent', .9900)
         before_expression = [tup[1] for tup in before_results]
         self.assertIn(test_expression, before_expression)
@@ -242,7 +242,7 @@ class ExpressionsDatabaseTest(unittest.TestCase, CustomAssertions):
     def test_delete_archived_expression(self):
         logger.debug("\nTesting for 'delete_archived_expression'")
         test_expression = 'This is another archived expression'
-        db = ExpressionsDatabase()
+        db = ExpressionsDatabaseEngine()
         before_results = db.add_archived_expression(test_expression, 'guess-intent', .9900)
         before_expression = [tup[1] for tup in before_results]
         self.assertIn(test_expression, before_expression)
@@ -258,7 +258,7 @@ class ExpressionsDatabaseTest(unittest.TestCase, CustomAssertions):
     def test_confirm_unlabeled_expression_exists(self):
         logger.debug("\nTesting for 'confirm_unlabeled_expression_exists'")
         test_expression = 'This is another unlabeled expression'
-        db = ExpressionsDatabase()
+        db = ExpressionsDatabaseEngine()
         results = db.add_unlabeled_expression(test_expression, 'guess-intent', .9900)
         expression_id = [tup[0] for tup in results if tup[1] == test_expression]
         expression_exists = db.confirm_unlabeled_expression_exists(expression_id[0])
@@ -271,7 +271,7 @@ class ExpressionsDatabaseTest(unittest.TestCase, CustomAssertions):
     def test_confirm_archived_expression_exists(self):
         logger.debug("\nTesting for 'confirm_archived_expression_exists'")
         test_expression = 'This is another archived expression'
-        db = ExpressionsDatabase()
+        db = ExpressionsDatabaseEngine()
         results = db.add_archived_expression(test_expression, 'guess-intent', .9900)
         expression_id = [tup[0] for tup in results if tup[1] == test_expression]
         expression_exists = db.confirm_archived_expression_exists(expression_id[0])
@@ -294,11 +294,9 @@ class ClassifierTest(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
+        cls.builder = ClassificationModelBuilder()
+        cls.accesor = ClassificationModelAccessor()
         logger.info("Testing for Classification methods:")
-
-    def setUp(self):
-        self.builder = ClassificationModelBuilder()
-        self.accesor = ClassificationModelAccessor()
 
     @classmethod
     def tearDownClass(cls):
@@ -306,31 +304,31 @@ class ClassifierTest(unittest.TestCase):
     
     def test_tokenize_text(self):
         logger.debug("Testing for '_tokenize_text' of class ClassificationModelBuilder")
-        test = self.builder._tokenize_text("What is the best selling item of  all  time?")
+        test = ClassifierTest.builder._tokenize_text("What is the best selling item of  all  time?")
         actual = [u"what", u"be", u"the", u"best", u"sell", u"item", u"of", u"all", u"time"]
         self.assertListEqual(test, actual)
         logger.info("Testing for 'tokenize_text' a success!")
     
     def test_build_classification_pipeline(self):
         logger.debug("Testing for '_build_classification_pipeline' of class ClassificationModelBuilder")
-        pipeline = self.builer._build_classification_pipeline()
+        pipeline = ClassifierTest.builder._build_classification_pipeline()
         self.assertIsInstance(pipeline, sklearn.pipeline.Pipeline)
         logger.info("Testing for 'build_classification_pipeline' a success!")
     
     def test_train_classification_pipeline(self):
         logger.debug("Testing for '_train_classification_pipeline' of class ClassificationModelBuilder")
-        pipeline = self.builder._train_classification_pipeline()
+        pipeline = ClassifierTest.builder._train_classification_pipeline()
         self.assertIsInstance(pipeline, sklearn.pipeline.Pipeline)
         logger.info("Testing for 'train_classification_pipeline' a success!")
 
     def test_classify(self):
         logger.debug("Testing for 'classify_document' of class Classifier")
-        self.builder.update_serialized_model()
-        clf = self.accesor.get_classification_pipeline()
+        ClassifierTest.builder.update_serialized_model()
+        clf = ClassifierTest.accesor.get_classification_pipeline('intent_classifier')
         self.assertEqual(Classifier, type(clf))
         result = clf.classify("What is the best selling item of all time?")
-        self.assertIsInstance(result, list)
-        self.assertEqual("get-best-selling-items", result[0]['intent'])
+        self.assertIsInstance(result, dict)
+        self.assertEqual("get-best-selling-items", result['intents'][0]['intent'])
         logger.info("Testing for 'classify_document' a success!")
 
 
@@ -356,17 +354,17 @@ class GazetteerTest(unittest.TestCase):
     def tearDownClass(cls):
         logger.info('')
 
-    def test_create_new_gazetteer_model(self):
-        self.fail()
-
-    def test_update_single_gazetteer_model(self):
-        self.fail()
-
-    def test_get_entities_for_training(self):
-        self.fail()
-
-    def get_gazeteers(self):
-        self.fail()
-
-    def test_search_query(self):
-        self.fail()
+    # def test_create_new_gazetteer_model(self):
+    #     self.fail()
+    #
+    # def test_update_single_gazetteer_model(self):
+    #     self.fail()
+    #
+    # def test_get_entities_for_training(self):
+    #     self.fail()
+    #
+    # def get_gazeteers(self):
+    #     self.fail()
+    #
+    # def test_search_query(self):
+    #     self.fail()

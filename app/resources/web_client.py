@@ -17,8 +17,7 @@ from webargs.flaskparser import use_args
 from marshmallow import fields
 from app.authorization import basicAuth
 from app.validators import valid_application_type
-from database.database import NLPDatabase
-from utils.exceptions import DatabaseError, DatabaseInputError
+from database.database import IntentsDatabaseEngine, EntitiesDatabaseEngine, StopwordDatabaseEngine, ExpressionsDatabaseEngine
 from flask.templating import render_template
 
 logger = logging.getLogger('BOLT.api')
@@ -27,20 +26,31 @@ logger = logging.getLogger('BOLT.api')
 Store database object and its connections in the local context object g.
 """    
 
-def get_db():
+def get_db(database):
+    """
+
+    :param database:
+    :return: The referenced database object given the type.
+    """
     db = getattr(g, '_database', None)
     if db is None:
-        db = g._database = db = NLPDatabase()
-    return db
+        db = {'intents': IntentsDatabaseEngine(),
+              'expressions': ExpressionsDatabaseEngine(),
+              'stopwords': StopwordDatabaseEngine(),
+              'entites': EntitiesDatabaseEngine()}
+        db = g._database = db
+    return db[database]
+
 
 class Home(MethodView):
     
     decorators = [basicAuth.login_required]
 
     def get(self):
-        db = get_db()
-        unlabeledExpressions = db.get_unlabeled_expressions()
-        return render_template('index.html', expressions=unlabeledExpressions)
+        db = get_db('expressions')
+        unlabeled_expressions = db.get_unlabeled_expressions()
+        return render_template('index.html', expressions=unlabeled_expressions)
+
 
 class ValidateExpression(MethodView):
     
@@ -59,12 +69,13 @@ class ValidateExpression(MethodView):
     '''
     @use_args(validation_args)
     def post(self, args):
-        db = get_db()
+        expressions_db = get_db('expressions')
+        intents_db = get_db('intents')
         if args['gridRadios'] == 'validate':
             logger.debug("Validating expression '{0}' for intent '{1}'".format(args['expression'], args['intent']))
-            if db.confirm_intent_exists(args['intent']):
-                db.add_expressions_to_intent(args['intent'], args['expression'])
-                db.delete_unlabeled_expression(args['id'])
+            if intents_db.confirm_intent_exists(args['intent']):
+                expressions_db.add_expressions_to_intent(args['intent'], args['expression'])
+                expressions_db.delete_unlabeled_expression(args['id'])
                 return redirect(url_for('home'))
             else:
                 logger.debug("Intent '{0}' does not exist".format(args['intent']))
@@ -72,25 +83,13 @@ class ValidateExpression(MethodView):
                 return redirect(url_for('home'))
         elif args['gridRadios'] == 'archive':
             logger.debug("Archiving expression '{0}' for intent '{1}'".format(args['expression'], args['intent']))
-            expression = db.get_unlabeled_expression_by_id(args['id'])
+            expression = expressions_db.get_unlabeled_expression_by_id(args['id'])
             estimated_intent = expression[2]
             estimated_confidence = expression[3]
-            db.add_archived_expression(args['expression'], estimated_intent, estimated_confidence)
-            db.delete_unlabeled_expression(args['id'])
+            expressions_db.add_archived_expression(args['expression'], estimated_intent, estimated_confidence)
+            expressions_db.delete_unlabeled_expression(args['id'])
             return redirect(url_for('home'))
         elif args['gridRadios'] == 'delete':
             logger.debug("Deleting expression '{0}' from unlabeled expressions table".format(args['expression'], args['intent']))
-            db.delete_unlabeled_expression(args['id'])
+            expressions_db.delete_unlabeled_expression(args['id'])
             return redirect(url_for('home'))
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            

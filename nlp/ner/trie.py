@@ -18,7 +18,7 @@ class TrieBuilder:
         dict_builder = DictionaryBuilder()
         
         cleaned_dictionary = dict_builder.clean_dictionary(dictionary)
-        word_list = dict_builder.extract_vocab_from_dictionary(cleaned_dictionary, stemmed=True)
+        word_list = dict_builder.extract_vocab_from_dictionary(cleaned_dictionary, stemmed=False)
         word_list.extend(dict_builder.ngram_generator(cleaned_dictionary))
         word_list.extend(dict_builder.skipgram_generator(cleaned_dictionary))
         

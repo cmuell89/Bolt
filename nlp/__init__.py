@@ -19,7 +19,7 @@ clf_builder = ClassificationModelBuilder()
 gaz_builder = GazetteerModelBuilder()
 
 clf_builder.update_serialized_model()
-gaz_builder.create_new_gazetteer_model("product_name", 1234)
+gaz_builder.initialize_gazetteer_models()
 
 
 class Updater:
@@ -77,7 +77,7 @@ while query != "exit":
     query = input("Enter query:\n")
     start = timeit.default_timer()
     analyzer = Analyzer()
-    result = analyzer.run_analysis(query, 1234)
+    result = analyzer.run_analysis(query, '8b10af10-011b-11e6-896c-6924b93e8186')
     pp = PrettyPrinter(indent=4)
     pp.pprint(result)
     print("\nExecution time to obtain NLP results:")

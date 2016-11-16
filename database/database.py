@@ -45,7 +45,65 @@ class CoreDatabase:
         self.conn.close()
 
 
-class StopwordsDatabase(CoreDatabase):
+class ExternalDatabaseEngine(CoreDatabase):
+    def __init__(self):
+        CoreDatabase.__init__(self, 'SHOPIFY')
+
+    def get_keys(self):
+        try:
+            self.cur.execute("SELECT DISTINCT ON (key) key "
+                             "FROM public.entities")
+            logger.debug("Retrieving keys from shopify database")
+            list_of_keys = [x[0] for x in self.cur.fetchall()]
+            return list_of_keys
+        except psycopg2.Error as e:
+            self.conn.rollback()
+            logger.exception(e.pgerror)
+            raise DatabaseError(e.pgerror)
+
+    def get_product_names_by_key(self, key):
+        try:
+            self.cur.execute("SELECT DISTINCT ON (product_name) product_name "
+                             "FROM public.entities "
+                             "WHERE key = %s", (key,))
+            logger.debug("Retrieving product name entities from shopify database for given key.")
+            product_name_entities = [x[0] for x in self.cur.fetchall()]
+            return product_name_entities
+        except psycopg2.Error as e:
+            self.conn.rollback()
+            logger.exception(e.pgerror)
+            raise DatabaseError(e.pgerror)
+
+    def get_product_types_by_key(self, key):
+        try:
+            self.cur.execute("SELECT DISTINCT ON (product_type) product_type "
+                             "FROM public.entities "
+                             "WHERE key = %s", (key,))
+            logger.debug("Retrieving product type entities from shopify database for given key.")
+            product_name_entities = [x[0] for x in self.cur.fetchall()]
+            return product_name_entities
+        except psycopg2.Error as e:
+            self.conn.rollback()
+            logger.exception(e.pgerror)
+            raise DatabaseError(e.pgerror)
+
+    def get_vendors_by_key(self, key):
+        try:
+            self.cur.execute("SELECT DISTINCT ON (vendor) vendor "
+                             "FROM public.entities "
+                             "WHERE key = %s", (key,))
+            logger.debug("Retrieving vendor entities from shopify database for given key.")
+            vendor_entities = [x[0] for x in self.cur.fetchall()]
+            return vendor_entities
+        except psycopg2.Error as e:
+            self.conn.rollback()
+            logger.exception(e.pgerror)
+            raise DatabaseError(e.pgerror)
+
+    # TODO: get_options_by_key()
+
+
+class StopwordDatabaseEngine(CoreDatabase):
     def __init__(self):
         if os.environ.get('ENVIRONMENT') == 'prod':
             database = 'BOLT'
@@ -128,7 +186,7 @@ class StopwordsDatabase(CoreDatabase):
             raise DatabaseError(e.pgerror)
 
 
-class EntitiesDatabase(CoreDatabase):
+class EntitiesDatabaseEngine(CoreDatabase):
     def __init__(self):
         if os.environ.get('ENVIRONMENT') == 'prod':
             database = 'BOLT'
@@ -212,13 +270,13 @@ class EntitiesDatabase(CoreDatabase):
             raise DatabaseError(e.pgerror)
 
 
-class IntentsDatabase(CoreDatabase):
+class IntentsDatabaseEngine(CoreDatabase):
     def __init__(self):
         if os.environ.get('ENVIRONMENT') == 'prod':
             database = 'BOLT'
         else:
             database = 'LOCAL'
-        CoreDatabase(self, database)
+        CoreDatabase.__init__(self, database)
 
     def get_intents(self):
         try:
@@ -244,9 +302,10 @@ class IntentsDatabase(CoreDatabase):
 
     def delete_intent(self, intent):
         try:
-            self.delete_all_intent_expressions(intent)
-            self.cur.execute("DELETE * "
-                             "FROM public.intents "
+            self.cur.execute("DELETE FROM public.expressions "
+                             "WHERE public.expressions.intent_id = "
+                             "(SELECT id FROM public.intents WHERE public.intents.intents = %s);", (intent,))
+            self.cur.execute("DELETE FROM public.intents "
                              "WHERE public.intents.intents = %s;", (intent,))
             self.conn.commit()
             logger.debug("Deleting intent: %s", intent)
@@ -273,7 +332,7 @@ class IntentsDatabase(CoreDatabase):
             raise DatabaseError(e.pgerror)
 
 
-class ExpressionsDatabase(CoreDatabase):
+class ExpressionsDatabaseEngine(CoreDatabase):
     """
     Core database communication layer to interact with postgreSQL to manage expresssions in Bolt.
     Constructing an NLP_Databse depends on two sets of environment variables LOCAL vs RDS. 
@@ -283,7 +342,7 @@ class ExpressionsDatabase(CoreDatabase):
             database = 'BOLT'
         else:
             database = 'LOCAL'
-        CoreDatabase(self, database)
+        CoreDatabase.__init__(self, database)
         
     """
     Retrieval operations.
@@ -367,7 +426,6 @@ class ExpressionsDatabase(CoreDatabase):
     """
     Addition operations
     """
-    
     def add_expressions_to_intent(self, intent, expressions):
         try: 
             self.cur.execute("SELECT id FROM public.intents "
@@ -418,7 +476,7 @@ class ExpressionsDatabase(CoreDatabase):
             except psycopg2.Error as e:
                 self.conn.rollback()
                 logger.exception(e.pgerror)
-                raise DatabaseError
+                raise DatabaseError(e.pgerror)
         else:
             msg = "Method expects valid expression string as argument"
             logger.exception(msg)
@@ -450,7 +508,7 @@ class ExpressionsDatabase(CoreDatabase):
     """
     def delete_all_intent_expressions(self, intent):
         try:
-            self.cur.execute("DELETE FROM expressions "
+            self.cur.execute("DELETE FROM public.expressions "
                              "WHERE public.expressions.intent_id = "
                              "(SELECT id FROM public.intents WHERE public.intents.intents = %s);", (intent,))
             self.conn.commit()
@@ -478,7 +536,7 @@ class ExpressionsDatabase(CoreDatabase):
     
     def delete_unlabeled_expression(self, id_):
         try:
-            self.cur.execute("DELETE * FROM unlabeled_expressions "
+            self.cur.execute("DELETE FROM unlabeled_expressions "
                              "WHERE public.unlabeled_expressions.id = %s", (id_,))
             self.conn.commit()
             logger.debug("Deleting unlabeled expression.")
@@ -490,8 +548,7 @@ class ExpressionsDatabase(CoreDatabase):
     
     def delete_archived_expression(self, id_):
         try:
-            self.cur.execute("DELETE * "
-                             "FROM archived_expressions "
+            self.cur.execute("DELETE FROM archived_expressions "
                              "WHERE public.archived_expressions.id = %s", (id_,))
             self.conn.commit()
             logger.debug("Deleting archived expression.")
@@ -504,7 +561,6 @@ class ExpressionsDatabase(CoreDatabase):
     """
     Confirmation operations
     """
-    
     def confirm_archived_expression_exists(self, id_):
         try:
             self.cur.execute("SELECT id "
@@ -536,4 +592,4 @@ class ExpressionsDatabase(CoreDatabase):
             self.conn.rollback()
             logger.exception(e.pgerror)
             raise DatabaseError(e.pgerror)
-        
+

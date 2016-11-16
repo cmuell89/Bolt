@@ -78,7 +78,7 @@ class ClassificationAnnotator(AbstractAnnotator):
         classification_results = self.classifier.classify(annotation.annotations['original_text'])
         annotation.annotations['stopwords'] = classification_results['stopwords']
         annotation.annotations['entity_types'] = classification_results['entity_types']
-        annotation.annotations['results']['classification'] = classification_results['results']
+        annotation.annotations['results']['classification'] = classification_results['intents']
         return annotation
 
 
@@ -90,7 +90,7 @@ class GazetteerAnnotator(AbstractAnnotator):
         
     def validate(self, annotation):
         if not annotation.annotations['entity_types']:
-            raise AnnotatorValidationError("No entity types found in annotation")
+            raise AnnotatorValidationError("No entity types found in annotation: " + self.name)
         if self.name not in annotation.annotations['entity_types']:
             raise AnnotatorValidationError("Annotator validation error for: " + self.name)
 
