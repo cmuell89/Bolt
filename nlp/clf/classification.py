@@ -16,7 +16,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.calibration import CalibratedClassifierCV
 from models.spacy_model import load_spacy
 from transformers.clean_text_transformer import CleanTextTransformer
-from database.database import StopwordDatabaseEngine, EntitiesDatabaseEngine
+from database.database import IntentsDatabaseEngine
 from utils import io
 from utils.string_cleaners import normalize_whitespace
 import json
@@ -135,8 +135,7 @@ class Classifier:
     """
     def __init__(self, pipeline):
         self.pipeline = pipeline
-        self.stopwords_db = StopwordDatabaseEngine()
-        self.entities_db = EntitiesDatabaseEngine()
+        self.db = IntentsDatabaseEngine()
         
     def classify(self, document):
         results = {}
@@ -149,8 +148,8 @@ class Classifier:
             tup = intents[i]
             top_3.append({"intent": tup[0], "confidence": tup[1]})
         # The dababase call returns a single tuple for which the list of entities and stopwords is the second element.
-        intent_entities = self.entities_db.get_intent_entities(intents[0][0])[0][1]
-        intent_stopwords = self.stopwords_db.get_intent_stopwords(intents[0][0])[0][1]
+        intent_entities = self.db.get_intent_entities(intents[0][0])[0][1]
+        intent_stopwords = self.db.get_intent_stopwords(intents[0][0])[0][1]
         results['intents'] = top_3
         results['entity_types'] = intent_entities
         results['stopwords'] = intent_stopwords

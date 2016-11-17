@@ -8,8 +8,6 @@ import os
 ENVIRONMENT 
 .env settings for local environments
 """
-
-
 if os.path.isfile(os.path.join(os.path.dirname(__file__), '.env')):
     print("Setting environment variables...")
     dotenv_path = join(dirname(__file__), '.env')

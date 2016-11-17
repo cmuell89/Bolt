@@ -3,23 +3,19 @@ Created on Nov 3, 2016
 
 @author: Carl Mueller
 @company: Lightning in a Bot, Inc
-
 """
+import os
 from nlp.clf.classification import ClassificationModelBuilder, ClassificationModelAccessor
 from nlp.annotation import ClassificationAnnotator, GazetteerAnnotator, Annotation
 from nlp.ner.gazetteer import GazetteerModelAccessor, GazetteerModelBuilder
-
-""" For test only """
-import settings
-import timeit
-from pprint import PrettyPrinter
-
 
 clf_builder = ClassificationModelBuilder()
 gaz_builder = GazetteerModelBuilder()
 
 clf_builder.update_serialized_model()
-gaz_builder.initialize_gazetteer_models()
+environment = os.environ.get('ENVIRONMENT')
+if environment == 'prod' or environment == 'dev':
+    gaz_builder.initialize_gazetteer_models()
 
 
 class Updater:
@@ -70,16 +66,3 @@ class AnalysisPipeline:
       
     def __str__(self):
         return [(annotator.name, annotator) for annotator in self.sequence]
-    
-
-query = ''
-while query != "exit":
-    query = input("Enter query:\n")
-    start = timeit.default_timer()
-    analyzer = Analyzer()
-    result = analyzer.run_analysis(query, '8b10af10-011b-11e6-896c-6924b93e8186')
-    pp = PrettyPrinter(indent=4)
-    pp.pprint(result)
-    print("\nExecution time to obtain NLP results:")
-    print((timeit.default_timer() - start)/100000)
-    print()

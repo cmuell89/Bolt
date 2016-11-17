@@ -24,14 +24,14 @@ class ClassificationTest(unittest.TestCase):
         cls.app = app.test_client()
         cls.app.testing = True
         cls.access_token = os.environ.get('ACCESS_TOKEN')
-        logger.info("Route testing for '/classification/*' endpoints:")
+        logger.info("TEST SUITE: ClassificationTest <API>")
 
     @classmethod
     def tearDownClass(cls):
-        logger.info('')
+        logger.info("TEST SUITE PASS: ClassificationTest <API>\n")
 
     def test_classify_route(self):
-        logger.debug("Testing 'POST' '/classification/analyze'")
+        logger.debug("TEST: 'POST' '/classification/analyze'")
         test_headers = Headers()
         test_headers.add('Content-Type', 'application/json')
         test_headers.add('Authorization', 'Token ' + self.access_token)
@@ -47,10 +47,10 @@ class ClassificationTest(unittest.TestCase):
                                                       data=json.dumps(dict(query='What is order 2313?')),
                                                       headers=second_test_headers)
         self.assertEqual(second_response.status_code, 415)
-        logger.info("Testing 'POST' '/classification/classify' route a success!")
+        logger.info("TEST PASS: 'POST' '/classification/analyze'")
     
     def test_train_route(self):
-        logger.debug("Testing 'GET' '/classification/train'")
+        logger.debug("TEST: 'GET' '/classification/train'")
         test_headers = Headers()
         test_headers.add('Content-Type', 'application/json')
         test_headers.add('Authorization', 'Token ' + self.access_token)
@@ -65,8 +65,7 @@ class ClassificationTest(unittest.TestCase):
         self.assertEqual(second_response.status_code, 200) 
         second_result = json.loads(second_response.get_data(as_text=True))
         self.assertEqual(second_result['message'], "Classifier successfully trained: svm")
-        logger.info("Testing 'GET' '/classification/train' route a success!")
-        logger.info("Note: Still needs functional test")
+        logger.info("TEST PASS: 'GET' '/classification/train'")
 
 
 class ExpressionsTest(unittest.TestCase):
@@ -87,7 +86,7 @@ class ExpressionsTest(unittest.TestCase):
                                                        "test expression four"])
         cls.intents_db.add_intent('delete-intent')
         cls.expressions_db.add_expressions_to_intent('delete-intent', ["one", "two", "three", "four"])
-        logger.info("Route testing for 'database/expressions/<string:intent>' endpoints:")
+        logger.info("TEST SUITE: ExpressionsTest <API>")
 
     @classmethod
     def tearDownClass(cls):
@@ -95,10 +94,10 @@ class ExpressionsTest(unittest.TestCase):
         cls.intents_db.delete_intent('test-intent')
         cls.intents_db.close_database_connection()
         cls.expressions_db.close_database_connection()
-        logger.info('')
+        logger.info("TEST SUITE PASS: ExpressionsTest <API>\n")
 
     def test_post_expressions_to_intent_route(self):
-        logger.debug("Testing 'POST' '/database/expressions/<intent>'")
+        logger.debug("TEST: 'POST' '/database/expressions/<intent>'")
         expressions = ["test expression five", "test expression six", "test expression seven"]
         test_headers = Headers()
         test_headers.add('Content-Type', 'application/json')
@@ -111,10 +110,10 @@ class ExpressionsTest(unittest.TestCase):
         second_test_headers.add('Authorization', 'Token ' + ExpressionsTest.access_token)
         second_response = ExpressionsTest.app.post('/database/expressions/test-intent', data=json.dumps(dict(expressions=expressions)), headers=second_test_headers)
         self.assertEqual(second_response.status_code, 415) 
-        logger.info("Testing 'POST' '/database/expressions/<intent>' route a success!")
+        logger.info("TEST PASS: 'POST' '/database/expressions/<intent>'")
         
     def test_get_intent_expressions_route(self):
-        logger.debug("Testing 'GET' '/database/expressions/<intent>'")
+        logger.debug("TEST: 'GET' '/database/expressions/<intent>'")
         test_headers = Headers()
         test_headers.add('Content-Type', 'application/json')
         test_headers.add('Authorization', 'Token ' + ExpressionsTest.access_token)
@@ -122,10 +121,10 @@ class ExpressionsTest(unittest.TestCase):
         result = json.loads(response.get_data(as_text=True))
         self.assertEqual(response.status_code, 200)
         self.assertIn("test expression two", result['expressions']) 
-        logger.info("Testing 'GET' '/database/expressions/<intent>' route a success!")
+        logger.info("TEST PASS: 'GET' '/database/expressions/<intent>'")
         
     def test_delete_intent_expressions_route(self):
-        logger.debug("Testing 'DELETE' '/database/expressions/*'")
+        logger.debug("TEST: 'DELETE' '/database/expressions/*'")
         test_headers = Headers()
         test_headers.add('Content-Type', 'application/json')
         test_headers.add('Authorization', 'Token ' + self.access_token)
@@ -142,7 +141,7 @@ class ExpressionsTest(unittest.TestCase):
         third_test_headers.add('Authorization', 'Token ' + ExpressionsTest.access_token)
         third_response = ExpressionsTest.app.delete('/database/expressions/delete-intent', data=json.dumps(dict(all=True)), headers=third_test_headers)
         self.assertEqual(third_response.status_code, 415) 
-        logger.info("Testing 'DELETE' '/database/expressions/*' route a success!")
+        logger.info("TEST PASS: 'DELETE' '/database/expressions/*'")
 
 
 class UnlabeledExpressionsTest(unittest.TestCase):
@@ -159,16 +158,16 @@ class UnlabeledExpressionsTest(unittest.TestCase):
         cls.db_results = cls.db.add_unlabeled_expression(cls.post_unlabeled_test_expression, 'guess-intent', .99)
         cls.unlabeled_test_expression_ID = [tup[0] for tup in cls.db_results if
                                              tup[1] == cls.post_unlabeled_test_expression]
-        logger.info("Route testing for 'database/unlabeled_expressions' endpoints:") 
+        logger.info("TEST SUITE: UnlabeldExpressionsTest <API>")
     
     @classmethod
     def tearDownClass(cls):
         cls.db.delete_unlabeled_expression(cls.unlabeled_test_expression_ID[0])
         cls.db.close_database_connection()
-        logger.info('')
+        logger.info("TEST PASS: UnlabeldExpressionsTest <API>\n")
 
     def test_post_unlabeled_expression(self):
-        logger.debug("Testing 'POST' '/database/unlabeled_expressions'")
+        logger.debug("TEST: 'POST' '/database/unlabeled_expressions'")
         expression = UnlabeledExpressionsTest.post_unlabeled_test_expression
         test_headers = Headers()
         test_headers.add('Content-Type', 'application/json')
@@ -182,10 +181,10 @@ class UnlabeledExpressionsTest(unittest.TestCase):
         second_test_headers.add('Authorization', 'Token ' + UnlabeledExpressionsTest.access_token)
         second_response = UnlabeledExpressionsTest.app.post('/database/unlabeled_expressions', data=json.dumps(dict(expression=expression, estimated_intent="guess-intent", estimated_confidence=.99)), headers=second_test_headers)
         self.assertEqual(second_response.status_code, 415) 
-        logger.info("Testing 'POST' '/database/unlabeled_expressions' route a success!")
+        logger.info("TEST PASS: 'POST' '/database/unlabeled_expressions'")
     
     def test_get_unlabeled_expressions(self):
-        logger.debug("Testing 'GET' '/database/unlabeled_expressions'")
+        logger.debug("TEST: 'GET' '/database/unlabeled_expressions'")
         test_headers = Headers()
         test_headers.add('Content-Type', 'application/json')
         test_headers.add('Authorization', 'Token ' + UnlabeledExpressionsTest.access_token)
@@ -197,10 +196,10 @@ class UnlabeledExpressionsTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("add unlabeled expression test", list_of_expressions)
         UnlabeledExpressionsTest.db.delete_unlabeled_expression(expression_ID[0])
-        logger.info("Testing 'GET' '/database/unlabeled_expressions' route a success!")
+        logger.info("TEST PASS: 'GET' '/database/unlabeled_expressions'")
         
     def test_delete_unlabeled_expression(self):
-        logger.debug("Testing 'DELETE' '/database/unlabeled_expressions")
+        logger.debug("TEST: 'DELETE' '/database/unlabeled_expressions")
         test_headers = Headers()
         test_headers.add('Content-Type', 'application/json')
         test_headers.add('Authorization', 'Token ' + UnlabeledExpressionsTest.access_token)
@@ -211,7 +210,7 @@ class UnlabeledExpressionsTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         exists = UnlabeledExpressionsTest.db.confirm_unlabeled_expression_exists(expression_ID[0])
         self.assertNotEqual(True, exists)
-        logger.info("Testing 'DELETE' '/database/expressions/*' route a success!")
+        logger.info("TEST PASS: 'DELETE' '/database/unlabeled_expressions")
 
 
 class ArchivedExpressionsTest(unittest.TestCase):
@@ -227,16 +226,16 @@ class ArchivedExpressionsTest(unittest.TestCase):
         cls.post_archived_test_expression = "post_archived_test_expression"
         cls.db_results = cls.db.add_archived_expression(cls.post_archived_test_expression, 'guess-intent', .99)
         cls.archived_test_expression_ID = [tup[0] for tup in cls.db_results if
-                                            tup[1] == cls.post_archived_test_expression]
-        logger.info("Route testing for 'database/unlabeled_expressions' endpoints:") 
+                                           tup[1] == cls.post_archived_test_expression]
+        logger.info("TEST SUITE: ArchivedExpressionsTest <API>")
 
     @classmethod
     def tearDownClass(cls):
         cls.db.close_database_connection()
-        logger.info('')
+        logger.info("TEST SUITE PASS: ArchivedExpressionsTest <API>\n")
 
     def test_post_archived_expression(self):
-        logger.debug("Testing 'POST' '/database/archived_expressions'")
+        logger.debug("TEST: 'POST' '/database/archived_expressions'")
         expression = ArchivedExpressionsTest.post_archived_test_expression
         test_headers = Headers()
         test_headers.add('Content-Type', 'application/json')
@@ -250,10 +249,10 @@ class ArchivedExpressionsTest(unittest.TestCase):
         second_test_headers.add('Authorization', 'Token ' + ArchivedExpressionsTest.access_token)
         second_response = ArchivedExpressionsTest.app.post('/database/archived_expressions', data=json.dumps(dict(expression=expression, estimated_intent="guess-intent", estimated_confidence=.99)), headers=second_test_headers)
         self.assertEqual(second_response.status_code, 415) 
-        logger.info("Testing 'POST' '/database/archived_expressions' route a success!")
+        logger.info("TEST PASS: 'POST' '/database/archived_expressions'")
     
     def test_get_archived_expressions(self):
-        logger.debug("Testing 'GET' '/database/archived_expressions'")
+        logger.debug("TEST: 'GET' '/database/archived_expressions'")
         test_headers = Headers()
         test_headers.add('Content-Type', 'application/json')
         test_headers.add('Authorization', 'Token ' + ArchivedExpressionsTest.access_token)
@@ -265,10 +264,10 @@ class ArchivedExpressionsTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("add archived expression test", list_of_expressions)
         ArchivedExpressionsTest.db.delete_unlabeled_expression(expression_ID[0])
-        logger.info("Testing 'GET' '/database/archived_expressions' route a success!")
+        logger.info("TEST PASS: 'GET' '/database/archived_expressions'")
         
     def test_delete_archived_expression(self):
-        logger.debug("Testing 'DELETE' '/database/archived_expressions")
+        logger.debug("TEST: 'DELETE' '/database/archived_expressions")
         test_headers = Headers()
         test_headers.add('Content-Type', 'application/json')
         test_headers.add('Authorization', 'Token ' + ArchivedExpressionsTest.access_token)
@@ -278,7 +277,7 @@ class ArchivedExpressionsTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         exists = ArchivedExpressionsTest.db.confirm_archived_expression_exists(expression_ID[0])
         self.assertNotEqual(True, exists)
-        logger.info("Testing 'DELETE' '/database/archived_expressions' route a success!")
+        logger.info("TEST PASS: 'DELETE' '/database/archived_expressions")
     
          
 class IntentsTest(unittest.TestCase):
@@ -292,15 +291,15 @@ class IntentsTest(unittest.TestCase):
         cls.access_token = os.environ.get('ACCESS_TOKEN')
         cls.db = IntentsDatabaseEngine()
         cls.db.add_intent('to-be-deleted')
-        logger.info("Route testing for '/database/intents/' endpoints:")
+        logger.info("TEST SUITE: IntentsTest <API>")
 
     @classmethod
-    def tearDownClass(self):
-        self.db.close_database_connection()
-        logger.info('')
+    def tearDownClass(cls):
+        cls.db.close_database_connection()
+        logger.info("TEST SUITE PASS: IntentsTest <API>\n")
     
     def test_post_intent_route(self):
-        logger.debug("Testing 'POST' '/database/intents/")
+        logger.debug("TEST: 'POST' '/database/intents/")
         intent = "some-new-intent"
         test_headers = Headers()
         test_headers.add('Content-Type', 'application/json')
@@ -314,10 +313,10 @@ class IntentsTest(unittest.TestCase):
         second_test_headers.add('Authorization', 'Token ' + IntentsTest.access_token)
         second_response = IntentsTest.app.post('/database/intents', data=json.dumps(dict(intent=intent)), headers=second_test_headers)
         self.assertEqual(second_response.status_code, 415)
-        logger.info("Testing 'POST' '/database/intents/ route a success!")
+        logger.info("TEST PASS: 'POST' '/database/intents/")
         
     def test_get_intents_route(self):
-        logger.debug("Testing 'GET' '/database/intents/")
+        logger.debug("TEST: 'GET' '/database/intents/")
         test_headers = Headers()
         test_headers.add('Content-Type', 'application/json')
         test_headers.add('Authorization', 'Token ' + IntentsTest.access_token)
@@ -325,15 +324,15 @@ class IntentsTest(unittest.TestCase):
         result = json.loads(response.get_data(as_text=True))
         self.assertEqual(response.status_code, 200)
         self.assertIn("get-order", result['intents'])
-        logger.info("Testing 'GET' '/database/intents/ route a success!")
+        logger.info("TEST PASS: 'GET' '/database/intents/")
         
     def test_delete_intent_route(self):
-        logger.debug("Testing 'DELETE' '/database/intents/")
+        logger.debug("TEST: 'DELETE' '/database/intents/")
         test_headers = Headers()
         test_headers.add('Content-Type', 'application/json')
         test_headers.add('Authorization', 'Token ' + IntentsTest.access_token)
         response = IntentsTest.app.delete('/database/intents', data=json.dumps(dict(intent='to-be-deleted')), headers=test_headers)
         result = json.loads(response.get_data(as_text=True))
         self.assertNotIn('to-be-deleted', result['intents'])
-        logger.info("Testing 'DELETE' '/database/intents/ route a success!")
+        logger.info("TEST: 'DELETE' '/database/intents/")
 

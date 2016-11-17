@@ -17,7 +17,7 @@ from webargs.flaskparser import use_args
 from marshmallow import fields
 from app.authorization import basicAuth
 from app.validators import valid_application_type
-from database.database import IntentsDatabaseEngine, EntitiesDatabaseEngine, StopwordDatabaseEngine, ExpressionsDatabaseEngine
+from database.database import IntentsDatabaseEngine, ExpressionsDatabaseEngine
 from flask.templating import render_template
 
 logger = logging.getLogger('BOLT.api')
@@ -35,9 +35,7 @@ def get_db(database):
     db = getattr(g, '_database', None)
     if db is None:
         db = {'intents': IntentsDatabaseEngine(),
-              'expressions': ExpressionsDatabaseEngine(),
-              'stopwords': StopwordDatabaseEngine(),
-              'entites': EntitiesDatabaseEngine()}
+              'expressions': ExpressionsDatabaseEngine()}
         db = g._database = db
     return db[database]
 

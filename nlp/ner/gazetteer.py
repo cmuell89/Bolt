@@ -23,6 +23,7 @@ class GazetteerModelBuilder:
         Exceptions:
         -----------
         """
+
         global GAZETTEERS
         gazetteer_types = ['product_name', 'product_type', 'vendor']
         db = ExternalDatabaseEngine()
@@ -30,9 +31,8 @@ class GazetteerModelBuilder:
         for key in keys:
             for gaz_type in gazetteer_types:
                 self.create_new_gazetteer_model(gaz_type, key)
-        print(GAZETTEERS)
- 
-    def create_new_gazetteer_model(self, gazetteer_type, id_):
+
+    def create_new_gazetteer_model(self, gazetteer_type, key):
         """
         Creates a single gazetteer in the global dictionary GAZETTEERS
         
@@ -48,18 +48,18 @@ class GazetteerModelBuilder:
         """
         global GAZETTEERS
         trie_builder = TrieBuilder()
-        entities = self._get_entities_from_external_database(gazetteer_type, id_)
+        entities = self._get_entities_from_external_database(gazetteer_type, key)
         entities = [x for x in entities if x is not None]
         if len(entities) > 0:
             new_trie = trie_builder.build_trie_from_dictionary(entities)
             new_gazetteer = Gazetteer(new_trie)
             if gazetteer_type not in GAZETTEERS:
                 GAZETTEERS[gazetteer_type] = {}
-                GAZETTEERS[gazetteer_type][id_] = new_gazetteer
+                GAZETTEERS[gazetteer_type][key] = new_gazetteer
             else:
-                GAZETTEERS[gazetteer_type][id_] = new_gazetteer
+                GAZETTEERS[gazetteer_type][key] = new_gazetteer
     
-    def update_single_gazetteer_model(self, gazetteer_type, id_):
+    def update_single_gazetteer_model(self, gazetteer_type, key):
         """
         Updates a single gazetteer in the global dictionary GAZETTEERS
         
@@ -67,7 +67,7 @@ class GazetteerModelBuilder:
         -----------
         
         gazetteer_type: the type of gazetteer. Example: product_name, product_type, vendor etc,.
-        _id: the id used to access the specific gazetteer hashed within the dictionary.
+        key: the key used to access the specific gazetteer hashed within the dictionary.
         
         Exceptions:
         -----------
@@ -78,18 +78,18 @@ class GazetteerModelBuilder:
         trie_builder = TrieBuilder()
         
         if gazetteer_type in GAZETTEERS:
-            entities = self._get_entities_from_external_database(gazetteer_type, id_)
+            entities = self._get_entities_from_external_database(gazetteer_type, key)
             new_trie = trie_builder.build_trie_from_dictionary(entities)
             new_gazetteer = Gazetteer(new_trie)
-            GAZETTEERS[gazetteer_type][id_] = new_gazetteer
+            GAZETTEERS[gazetteer_type][key] = new_gazetteer
 
-    def _get_entities_from_external_database(self, gazetteer_type, id_):
+    def _get_entities_from_external_database(self, gazetteer_type, key):
         """
         Obtain the entities that will be used used to train a gazetteer model
         
         Parameters
         ----------
-        id_: The id that will differentiate entity lists in the database
+        key: The id that will differentiate entity lists in the database
         gazetteer_type: The type of entity list to be retrieved from the database
         
         Exceptions
@@ -100,9 +100,9 @@ class GazetteerModelBuilder:
 
         def entities_function_generator(entity_type):
             """
-            Contains a dict. key: entity type; value: function that returns entities by id_
+            Contains a dict. key: entity type; value: function that returns entities by key
             :param entity_type:
-            :return: function returning entities for given id_ for the entity type
+            :return: function returning entities for given key for the entity type
             """
             db = ExternalDatabaseEngine()
             drivers = {'product_name': db.get_product_names_by_key,
@@ -111,19 +111,19 @@ class GazetteerModelBuilder:
             return drivers[entity_type]
 
         db_function = entities_function_generator(gazetteer_type)
-        entities = db_function(id_)
+        entities = db_function(key)
         return entities
 
 
 class GazetteerModelAccessor:
             
-    def get_gazeteers(self, id_):
+    def get_gazeteers(self, key):
         """
         Get the gazetteers associated with an id
         
         Parameters
         ----------
-        id_: The id that will differentiate entity lists in the database
+        key: The id that will differentiate entity lists in the database
         gazetteer_types: A list of entity list to be retrieved from the database
         
         Returns:
@@ -139,7 +139,7 @@ class GazetteerModelAccessor:
         gazetteers = {}
 
         for gazetteer in GAZETTEERS:
-                gazetteers[gazetteer] = GAZETTEERS[gazetteer][id_]
+                gazetteers[gazetteer] = GAZETTEERS[gazetteer][key]
         return gazetteers
 
 
@@ -160,7 +160,7 @@ class Gazetteer:
             custom_stopwords = []
 
         """ Create a list of the query ngrams to be searched in the Trie """
-        query = self.clean_query(query).lower()
+        query = self._clean_query(query).lower()
         query = [w for w in query.split(' ') if w.lower() not in custom_stopwords]
         query_grams = self.dict_builder.ngrammer(query, 2, len(query)+1)
         query_grams = sorted(query_grams, key=lambda word: len(word), reverse=True)
@@ -176,7 +176,7 @@ class Gazetteer:
         for idx, target in enumerate(query_grams):
             """ 
             Do not search nor add to tags if the test query gram has less tokens than any tag existing in the tags list.
-            This is to ensure that the large matched tag is used and to reduce search times significantly.
+            This is to ensure that the largest matched tag is used and to reduce search times significantly.
             The idea is that if there is a match for a long query gram, then searching smaller ngrams is unnecessary
             """
             if len(tags) == 0 or not any(len(tag[0].split(' ')) > len(target.split(' ')) for tag in tags):
@@ -202,7 +202,7 @@ class Gazetteer:
         for word in query:
             stemmed_word = self.stemmer.stem(word)
             results = TrieNode.search(self.trie, stemmed_word, 1)
-            if(len(results)>0):
+            if len(results) > 0:
                 for result in results:
                     potential_single_words.add(result)
         tags = sorted(list(potential_single_words), key=lambda word: word[1])
@@ -211,7 +211,7 @@ class Gazetteer:
         else:
             return None
 
-    def clean_query(self, query):
+    def _clean_query(self, query):
         query = remove_question_mark(query)
         query = normalize_whitespace(query)
         query = dash_to_single_space(query)

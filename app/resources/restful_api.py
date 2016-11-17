@@ -33,7 +33,7 @@ from marshmallow import fields
 from functools import partial
 from app.authorization import tokenAuth
 from app.validators import valid_application_type, list_of_strings
-from database.database import IntentsDatabaseEngine, ExpressionsDatabaseEngine, EntitiesDatabaseEngine, StopwordDatabaseEngine
+from database.database import IntentsDatabaseEngine, ExpressionsDatabaseEngine
 from nlp import Analyzer, Updater
 from utils.exceptions import DatabaseError, DatabaseInputError
 
@@ -51,9 +51,7 @@ def get_db(database):
     db = getattr(g, '_database', None)
     if db is None:
         db = {'intents': IntentsDatabaseEngine(),
-              'expressions': ExpressionsDatabaseEngine(),
-              'stopwords': StopwordDatabaseEngine(),
-              'entites': EntitiesDatabaseEngine()}
+              'expressions': ExpressionsDatabaseEngine()}
         db = g._database = db
     return db[database]
 
