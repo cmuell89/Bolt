@@ -6,27 +6,34 @@
 
 - [ ] Start prototyping 'Trait' parsing
 - [ ] Start prototyping datetime parsing
-	- In talks with maintained of SpaCy
-- [ ] Expand gazetteer beyond prodiuct names to include types, vendors, colors etc,.
+	- In talks with maintainer of SpaCy
+	- User proposed regex based toy library
+
 
 ##### In-Progress:
-- [ ] COMMENT/DOCUMENTATION OVERHAUL => START STRONG, FINISH STRONG
-- [ ] Create gazetteer
-	- [x] code
-	- [ ] test
-- [ ] Create Analysis pipeline to combine classifier and gazetteer
-	- [x] code
-	- [ ] test
-- [ ] Build out additional database methods to support entity types and stopwords associted with intents
-	- [x] code
-	- [ ] test
-- [ ] integrate new db mmethods into Classification class, return results to be used by classification annotator
-	- [x] code
-	- [ ] test
-
+- [X] COMMENT/DOCUMENTATION OVERHAUL => START STRONG, FINISH STRONG
+- [ ] Work on gazetteer specificity
+- [ ] Create ReGex annotor capability
+- [ ] Create location and geographical parsring
+    - Look into geograpy library
+    
 ##### Version Change Log:
 
-###### Version 0.2 - Initial Version
+###### Version 0.3: Major change for gazeteer and analysis pipeline
+- [x] Create gazetteer
+	- [x] code
+	- [x] test
+- [x] Create Analysis pipeline to combine classifier and gazetteer
+	- [x] code
+	- [x] test
+- [x] Build out additional database methods to support entity types and stopwords associted with intents
+	- [x] code
+	- [x] test
+- [x] integrate new db mmethods into Classification class, return results to be used by classification annotator
+	- [x] code
+	- [x] test
+
+###### Version 0.2
 - [x] Create basic validation webpage for unlabeled expressions.
 	- [x] code
 	- [x] test

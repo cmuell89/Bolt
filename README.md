@@ -48,7 +48,9 @@ Additionally, make sure to create the following file (ensure proper .yml format 
         value: password
   
 
-#### Current Release Features
+#### Current Release Major Features 
+###### (See CHANGE.md for specific version updates)
+
 - Scikit learn based classfication
 	- Scikit learn pipeline
 	- training data pulled from postgres db
