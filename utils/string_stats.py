@@ -12,12 +12,15 @@ class IntentStopwordGenerator:
     def __init__(self):
         self.exp_db = ExpressionsDatabaseEngine()
         self.int_db = IntentsDatabaseEngine()
-        self.sw_db = StopwordDatabaseEngine()
+
+    def __del__(self):
+        self.exp_db.release_database_connection()
+        self.int_db.release_database_connection()
 
     def add_stopwords_to_intent_in_database(self):
         intent_stopwords = self.get_intent_stopwords_dict()
         for intent, stopwords in intent_stopwords.items():
-            self.sw_db.add_stopwords_to_intent(intent, stopwords)
+            self.int_db.add_stopwords_to_intent(intent, stopwords)
 
     def get_intent_stopwords_dict(self, n=20):
         intents = self.int_db.get_intents()

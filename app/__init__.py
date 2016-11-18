@@ -12,7 +12,7 @@ def close_connection(exception):
     db = getattr(g, '_database', None)
     if db is not None:
         for key, db_class_instance in db.items():
-            db_class_instance.close_database_connection()
+            db_class_instance.release_database_connection()
 """
 Web client routes.
 """
@@ -28,6 +28,6 @@ api.add_resource(restful_api.Expressions, '/database/expressions/<string:intent>
 api.add_resource(restful_api.Intents, '/database/intents')
 api.add_resource(restful_api.UnlabeledExpressions, '/database/unlabeled_expressions')
 api.add_resource(restful_api.ArchivedExpressions, '/database/archived_expressions')
-api.add_resource(restful_api.Analyze, '/classification/analyze')
+api.add_resource(restful_api.Analyze, '/nlp/analyze')
 api.add_resource(restful_api.Train, '/classification/train/<string:classifier>')
 api.add_resource(restful_api.Health, '/aws-eb-health')

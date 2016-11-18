@@ -7,8 +7,8 @@ __CLF__: the NLP classification pipeline built using sk-learn (defaults to Naive
 db: the NLP_Database() object used to make calls to the associated Bolt postgreSQL database
 
 Classes:
-    Classify:
-        post - Returns the intent classification of the query.
+    Analyze:
+        post - Returns the intent classification of the query, and the entities and stopwords of the intent.
     Train:
         get - Trains the existing classifier object accessed by all '/classification/*' routes.
     Expressions:
@@ -64,16 +64,19 @@ class Analyze(Resource):
     analyze_args = {
         'content_type': fields.Str(required=True, load_from='Content-Type', location='headers', validate=validate_application_json),
         'query': fields.Str(required=True, validate=validate.Length(min=1)),
-        'id': fields.Str(required=True, validate=validate.Length(min=1))
+        'key': fields.Str(required=True, validate=validate.Length(min=1))
     }
     
     @use_args(analyze_args)
     def post(self, args):
         """
-        Returns the intent classification of the query.
+        POST route that returns the analysis on a given query (classification results, entities etc,.)
+        :param args: Incoming data from request containing the query and the access key.
+        :return: JSON response with the results of the Analyzer on the query
         """
+
         analyzer = Analyzer()
-        results = analyzer.run_analysis(args['query'], args['id'])
+        results = analyzer.run_analysis(args['query'], args['key'])
         estimated_intent = results['classification'][0]['intent']
         estimated_confidence = results['classification'][0]['confidence']
         try:
@@ -98,7 +101,9 @@ class Train(Resource):
     @use_args(train_args)
     def get(self, args, classifier):
         """
-        Trains the existing classifier object accessed by all '/classification/*' routes.
+        Trains the existing classification models used by Classifier objects.
+        :param classifier: Classifier type (nb, svm)
+        :return:
         """
         if classifier not in ('svm', 'nb'):
             classifier = 'svm'
@@ -127,6 +132,9 @@ class Expressions(Resource):
         """
         Adds expression/s to an intent
         Currently only supports 'application/json' mimetype.
+        :param args: dict containing expressions argument.
+        :param intent: Target intent that is passed in as a URL query parameter.
+        :return:
         """
         try:
             db = get_db('expressions')
@@ -150,8 +158,11 @@ class Expressions(Resource):
     @use_args(expressions_get_args)
     def get(self, args, intent):
         """
-        Returns the expressions for an intent
-        """ 
+        Retrieves the the expressions for an intent
+        :param intent: Target intent that is passed in as a URL query parameter.
+        :return: JSON containing the itnent name and list of expressions for that intent
+        """
+
         try:
             db = get_db('expressions')
             expressions = db.get_intent_expressions(intent)
@@ -175,9 +186,13 @@ class Expressions(Resource):
     
     @use_args(expressions_delete_args)
     def delete(self, args, intent):
-        
         """
-        Deletes an expression/s from an intent
+        Deletes expressions from a given intent
+        :param args: Dict containg 'expressions': The expressions to be deleted; 'all': boolean value that determines if
+                     all expressiosn are deleted.
+        :param intent: Target intent that is passed in as a URL query parameter.
+        :return: If 'all' returns dict with intent and empty expressions list, else dict of intent with new list of
+                 expressions
         """
         if args['all'] == True:
             try:
@@ -221,12 +236,16 @@ class UnlabeledExpressions(Resource):
     @use_args(unlabeled_get_args)
     def get(self, args):
         """
-        Gets a list of tuples of unlabeled expressions.
+        :return: Returns a JSON styled list of the unlabeled expressions
         """
         try:
             db = get_db('expressions')
-            unlabeled_expressions = list(map(lambda x: {"id": x[0], "expression": x[1], "estimated_intent": x[2], "estimated_confidence":x[3]}, db.get_unlabeled_expressions()))
-            resp = jsonify(unlabeled_expressions = unlabeled_expressions)
+            unlabeled_expressions = list(map(lambda x: {"id": x[0],
+                                                        "expression": x[1],
+                                                        "estimated_intent": x[2],
+                                                        "estimated_confidence": x[3]},
+                                             db.get_unlabeled_expressions()))
+            resp = jsonify(unlabeled_expressions=unlabeled_expressions)
             resp.status_code = 200
             return resp
         except DatabaseError as error:
@@ -247,6 +266,13 @@ class UnlabeledExpressions(Resource):
     
     @use_args(unlabeled_post_args)
     def post(self, args):
+        """
+        Adds an unlabeled_expression to database including additional data
+        :param args: arg[expression]: expression to add to unlabeled list in database
+                     args[estimated_intent]: guess intent from classifier
+                     args[estimated_confidence]: classifier's confidence on the guess intent
+        :return: Returns a JSON styled list of the unlabeled expressions
+        """
         """
         Adds an unlabeled expression to database.
         """
@@ -270,16 +296,18 @@ class UnlabeledExpressions(Resource):
         'content_type': fields.Str(required=True, load_from='Content-Type', location='headers', validate=validate_application_json),
         'id': fields.Int(required=True)
     }
+
     @use_args(unlabeled_delete_args)
     def delete(self, args):
         """
-        Deleted an unlabeled expression from the database by ID.
+        :param args: args['id']: id of unlabeled expression to be deleted
+        :return: JSON styled list of unlabeled_expressions
         """
         try:
             db = get_db('expressions')
             db_results = db.delete_unlabeled_expression(args['id'])
             unlabeled_expressions = list(map(lambda x: {"id": x[0], "expression": x[1], "estimated_intent": x[2], "estimated_confidence":x[3]}, db_results))
-            resp = jsonify(unlabeled_expressions = unlabeled_expressions)
+            resp = jsonify(unlabeled_expressions=unlabeled_expressions)
             resp.status_code = 200
             return resp
         except DatabaseError as error:
@@ -304,7 +332,7 @@ class ArchivedExpressions(Resource):
     @use_args(archived_get_args)
     def get(self, args):
         """
-        Gets as list of tuples of archived expressions.
+        :return: Returns JSON styled list of archived expressions
         """
         try:
             db = get_db('expressions')
@@ -332,6 +360,10 @@ class ArchivedExpressions(Resource):
     def post(self, args):
         """
         Adds archived expression to database.
+        :param args: arg[expression]: expression to add to archived expressions list in database
+                     args[estimated_intent]: guess intent from classifier
+                     args[estimated_confidence]: classifier's confidence on the guess intent
+        :return: Returns a JSON styled list of the archived expressions
         """
         try:
             db = get_db('expressions')
@@ -357,7 +389,8 @@ class ArchivedExpressions(Resource):
     @use_args(archived_delete_args)
     def delete(self, args):
         """
-        Deletes an archived expressions from database based on ID.
+        :param args: args['id']: id of archived expression to be deleted
+        :return: JSON styled list of archived_expressions
         """
         try:
             db = get_db('expressions')
@@ -383,7 +416,9 @@ class Intents(Resource):
     
     intents_post_args = {
         'content_type': fields.Str(required=True, load_from='Content-Type', location='headers', validate=validate_application_json),
-        'intent': fields.Str(required=True, validate=lambda val: len(val) > 0)
+        'intent': fields.Str(required=True, validate=lambda val: len(val) > 0),
+        'entities': fields.List(fields.Str(), required=False),
+        'stopwords': fields.List(fields.Str(), required=False)
     }
     
     @use_args(intents_post_args)
@@ -391,10 +426,22 @@ class Intents(Resource):
         """
         Posts an intent to NLP postgres database.
         Currently only supports 'application/json' mimetype.
+        :param args: args['intent']: name of intent to be added
+                     args['entities']: list of entities associated with intent
+                     args['stopwords']: list of custom stopwords associated with intent and its expressions
+        :return: JSON styled list of intents
+        """
+        """
+
         """
         try:
             db = get_db('intents')
-            intents = db.add_intent(args['intent'])
+            db.add_intent(args['intent'])
+            if args['entities']:
+                db.add_entities_to_intent(args['intent'], args['entities'])
+            if args['stopwords']:
+                db.add_stopwords_to_intent(args['intent'], args['stopwords'])
+            intents = db.get_intents()
             resp = jsonify(intents=intents)
             resp.status_code = 200
             return resp
@@ -414,15 +461,14 @@ class Intents(Resource):
     @use_args(intents_get_args)
     def get(self, args):
         """
-        Gets the current intents stored in the NLP database
+        :return: JSON styled list of intents in database.
         """
         db = get_db('intents')
         intents = db.get_intents()
         resp = jsonify(intents=intents)
         resp.status_code = 200
         return resp
-    
-    
+
     intents_delete_args = {
         'content_type': fields.Str(required=True, load_from='Content-Type', location='headers', validate=validate_application_json),
         'intent': fields.Str(required=True, validate=lambda val: len(val) > 0)
@@ -432,6 +478,8 @@ class Intents(Resource):
     def delete(self, args):
         """
         Deletes an intent including all its associated expressions
+        :param args: args['intent']: Intent to be deleted
+        :return: JSON styled list of intents less the deleted intent
         """
         try:
             db = get_db('intents')
@@ -450,9 +498,11 @@ class Intents(Resource):
 
 
 class Health(Resource):
+
     def get(self):
         """
-        Gets the current intents stored in the NLP database
+        Health endpoint used by AWS elastic beanstalk to determine the load/stress on current deployment.
+        :return: 200 response.
         """
         resp = Response()
         return resp
@@ -460,8 +510,11 @@ class Health(Resource):
 
 @parser.error_handler
 def handle_request_parsing_error(err):
-    """webargs error handler that uses Flask-RESTful's abort function to return
-    a JSON error response to the client.
     """
+    webargs error handler that uses Flask-RESTful's abort function to return
+    a JSON error response to the client.
+    :param err: err object
+    """
+
     code, msg = getattr(err, 'status_code', 400), getattr(err, 'messages', 'Invalid Request')
     abort(code, msg)

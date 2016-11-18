@@ -19,8 +19,6 @@ from transformers.clean_text_transformer import CleanTextTransformer
 from database.database import IntentsDatabaseEngine
 from utils import io
 from utils.string_cleaners import normalize_whitespace
-import json
-from numpy import string_
 
 # load Spacy pipeline from cached model    
 spacy_nlp = load_spacy('en')
@@ -34,28 +32,26 @@ CLASSIFIERS = {}
 
 
 class ClassificationModelBuilder:
-    """ 
-    TODO: Build a class object that generates sckikit-learn pipeline classifiers
-    Could be a pool or factory design
     """
-    
+    Builds classification models stored in the global dict CLASSIFIERS
+    """
     def update_serialized_model(self, skl_classifier=None):
+        """
+        Saves to the global dict CLASSIFIERS a pickled (serialized) fitted Scikit-learn model
+        :param skl_classifier: type of classifier (svm, nb)
+        """
         global CLASSIFIERS
         fitted_pipeline = self._train_classification_pipeline(None, None, skl_classifier)
         CLASSIFIERS['intent_classifier'] = pickle.dumps(fitted_pipeline)
     
     def _train_classification_pipeline(self, pipeline=None, training_data=None, skl_classifier=None):
         """
-         Args:
-            pipeline: Scikit-Learn Pipeline object
-            training_data: paired arrays of training documents and labels
-            skl_classifer: string that indicates the type of classification algorithm to use (svm, nb)
-        Returns:
-            :class:``
-        Raises:
-            RuntimeError: if package can't be loaded
+        Trains the Scikit-Learn Pipeline object via the fit methods and the provided or default training data
+        :param pipeline: Scikit-Learn Pipeline object
+        :param training_data: paired arrays of training documents and labels
+        :param skl_classifier: string that indicates the type of classification algorithm to use (svm, nb)
+        :return: fitted sci-kit learn pipeline object
         """
-    
         if skl_classifier is None:
             skl_classifier = 'svm'
         if pipeline is None:
@@ -73,14 +69,14 @@ class ClassificationModelBuilder:
         """
         Function that builds a sklearn pipeline.
         Currently the estimators used in this build function are hard-coded
-        
         Estimators/Transformers:
-            
             CleanTextTransformer: Custom class to clean text
             CountVectorizor: sklearn native transfomer
                 Note that I changed the tokenizer in CountVectorizer to use a custom function 'tokenizeText' using spaCy's tokenizer
             LinearSVC(): Multitlcass capable support vector machine
             MultinomialNB(): Multinomial Naive Bayes classifier
+        :param skl_classifier: classifier type (svm, nb)
+        :return: Scikit-learn Pipeline object, unfitted
         """
         if skl_classifier is None:
             skl_classifier = 'svm'
@@ -98,6 +94,8 @@ class ClassificationModelBuilder:
         """
         Function that tokenizes, lemmatizes, removes potential stopwords/stop-symbols, and cleans whitespace.
         Lemmas may be useful only for intent classification but not other types of functionality (traits like plurality etc,.)
+        :param sample: sample of text to be tokenized
+        :return: returns the tokens of the sample
         """
         sample = normalize_whitespace(sample)
         tokens = spacy_nlp(sample)
@@ -116,13 +114,19 @@ class ClassificationModelBuilder:
         # clean up whitespace and line breaks etc,.
         for tok in tokens:
             normalize_whitespace(tok)
-    
         return tokens
 
 
 class ClassificationModelAccessor:
-    
+    """
+    Class providing methods to access classification models
+    """
     def get_classification_pipeline(self, classifier_type):
+        """
+        Loads the pickled classifier from the global CLASSIFIERS dict and returns a Classifier object
+        :param classifier_type:
+        :return: the Classifier object build from the pickled object from the CLASSIFIERS global dict
+        """
         global CLASSIFIERS
         pipeline = pickle.loads(CLASSIFIERS[classifier_type])
         classifier = Classifier(pipeline)
@@ -136,8 +140,18 @@ class Classifier:
     def __init__(self, pipeline):
         self.pipeline = pipeline
         self.db = IntentsDatabaseEngine()
-        
+
+    def __exit__(self):
+        self.db.release_database_connection()
+
     def classify(self, document):
+        """
+        Classifies the document and provides additional data based on those classification results
+        :param document:
+        :type document:
+        :return: Returns of a dict that contains the top3 classification results (which includes their confidences),
+                 the entity types and stopwords associated with the top (highest confidence) classification result
+        """
         results = {}
         top_3 = []
         classes = self.pipeline.classes_.tolist()

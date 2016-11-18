@@ -3,6 +3,7 @@ Created on Jul 4, 2016
 
 @author: carl
 """
+import os
 import json
 import logging
 from database.database import ExpressionsDatabaseEngine
@@ -31,7 +32,7 @@ def create_data_for_pipeline_from_file(file_address):
             docs = docs + intent["expressions"]
             for i in range(len(intent["expressions"])):
                 labels.append(intent["name"])
-        return [docs,labels]
+        return [docs, labels]
     except IOError as e:
         print("IO error: ", e)
 
@@ -49,6 +50,7 @@ def create_data_for_pipeline_from_database():
     try:
         db = ExpressionsDatabaseEngine()
         data = db.get_intents_and_expressions()
+        db.release_database_connection()
         for datum in data:
             labels.append(datum[0])
             docs.append(datum[1])
@@ -61,10 +63,10 @@ def create_data_for_pipeline_from_database():
 
 
 def get_intents_from_JSON_data(fileAddress):
-    file_ = open(fileAddress)
-    data = json.load(file_)
-    intents = data["intents"]
-    labels = []
-    for intent in intents:
-        labels.append(intent["name"])
-    return labels
+    with open(fileAddress) as file_:
+        data = json.load(file_)
+        intents = data["intents"]
+        labels = []
+        for intent in intents:
+            labels.append(intent["name"])
+        return labels

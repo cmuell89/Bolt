@@ -4,81 +4,77 @@ Created on October 26, 2016
 @author: Carl L. Mueller
 @copyright: Lightning in a Bot, Inc
 """
-import json
+import logging
 from nltk.corpus import stopwords
 from nltk.stem.porter import PorterStemmer
 from utils.string_cleaners import remove_apostrophe, normalize_whitespace, remove_question_mark, dash_to_single_space
 from database.database import ExternalDatabaseEngine
 from nlp.ner.trie import TrieBuilder, DictionaryBuilder, TrieNode
 
+logger = logging.getLogger('BOLT.gaz')
+
 GAZETTEERS = {}
 
 
 class GazetteerModelBuilder:
-    
+    """
+    Class that provides methods to initializing and updating gazetteer models.
+    """
     def initialize_gazetteer_models(self):
         """
         Builds from scratch the entire GAZETTEERS dict
 
-        Exceptions:
-        -----------
         """
-
+        logger.info('Building GAZETTEERS global dict.')
         global GAZETTEERS
         gazetteer_types = ['product_name', 'product_type', 'vendor']
         db = ExternalDatabaseEngine()
         keys = db.get_keys()
+        db.release_database_connection()
         for key in keys:
             for gaz_type in gazetteer_types:
                 self.create_new_gazetteer_model(gaz_type, key)
+        logger.info('Completed building GAZETTEERS global dict.')
 
-    def create_new_gazetteer_model(self, gazetteer_type, key):
+    def create_new_gazetteer_model(self, gazetteer_type, key, entity_data=None):
         """
         Creates a single gazetteer in the global dictionary GAZETTEERS
-        
-        Parameters:
-        -----------
-            gazetteer_type: the type of gazetteer. Example: product_name, product_type, vendor etc,.
-            _id: the id used to access the specific gazetteer hashed within the dictionary.
-            
-        Exceptions:
-        -----------
-            TODO
-        
+        :param gazetteer_type: the type of gazetteer. Example: product_name, product_type, vendor etc,.
+        :param key: the id used to access the specific gazetteer hashed within the dictionary.
+        :param entity_data: list of entity strings to use as entiy source.
         """
         global GAZETTEERS
         trie_builder = TrieBuilder()
-        entities = self._get_entities_from_external_database(gazetteer_type, key)
+        if entity_data and isinstance(entity_data, list):
+            entities = entity_data
+        else:
+            entities = self._get_entities_from_external_database(gazetteer_type, key)
         entities = [x for x in entities if x is not None]
         if len(entities) > 0:
             new_trie = trie_builder.build_trie_from_dictionary(entities)
             new_gazetteer = Gazetteer(new_trie)
             if gazetteer_type not in GAZETTEERS:
+                logger.debug('Building new gazetteer model')
                 GAZETTEERS[gazetteer_type] = {}
                 GAZETTEERS[gazetteer_type][key] = new_gazetteer
             else:
                 GAZETTEERS[gazetteer_type][key] = new_gazetteer
     
-    def update_single_gazetteer_model(self, gazetteer_type, key):
+    def update_single_gazetteer_model(self, gazetteer_type, key, entity_data=None):
         """
         Updates a single gazetteer in the global dictionary GAZETTEERS
-        
-        Parameters:
-        -----------
-        
-        gazetteer_type: the type of gazetteer. Example: product_name, product_type, vendor etc,.
-        key: the key used to access the specific gazetteer hashed within the dictionary.
-        
-        Exceptions:
-        -----------
-            TODO
-            
+        :param gazetteer_type:  the type of gazetteer. Example: product_name, product_type, vendor etc,.
+        :param key: the key used to access the specific gazetteer hashed within the dictionary.
         """
         global GAZETTEERS
         trie_builder = TrieBuilder()
-        
+
+        logger.debug('Updating gazetteer model')
         if gazetteer_type in GAZETTEERS:
-            entities = self._get_entities_from_external_database(gazetteer_type, key)
+            if entity_data and isinstance(entity_data, list):
+                entities = entity_data
+            else:
+                entities = self._get_entities_from_external_database(gazetteer_type, key)
             new_trie = trie_builder.build_trie_from_dictionary(entities)
             new_gazetteer = Gazetteer(new_trie)
             GAZETTEERS[gazetteer_type][key] = new_gazetteer
@@ -86,54 +82,39 @@ class GazetteerModelBuilder:
     def _get_entities_from_external_database(self, gazetteer_type, key):
         """
         Obtain the entities that will be used used to train a gazetteer model
-        
-        Parameters
-        ----------
-        key: The id that will differentiate entity lists in the database
-        gazetteer_type: The type of entity list to be retrieved from the database
-        
-        Exceptions
-        ----------
-        TODO
-
+        :param gazetteer_type: The type of entity list to be retrieved from the database
+        :param key: The id that will differentiate entity lists in the database
+        :return: list of entities
         """
+        db = ExternalDatabaseEngine()
 
-        def entities_function_generator(entity_type):
+        def entities_function_generator(entity_type, database):
             """
             Contains a dict. key: entity type; value: function that returns entities by key
             :param entity_type:
             :return: function returning entities for given key for the entity type
             """
-            db = ExternalDatabaseEngine()
-            drivers = {'product_name': db.get_product_names_by_key,
-                       'product_type': db.get_product_types_by_key,
-                       'vendor': db.get_vendors_by_key}
+
+            drivers = {'product_name': database.get_product_names_by_key,
+                       'product_type': database.get_product_types_by_key,
+                       'vendor': database.get_vendors_by_key}
             return drivers[entity_type]
 
-        db_function = entities_function_generator(gazetteer_type)
+        db_function = entities_function_generator(gazetteer_type, db)
         entities = db_function(key)
+        db.release_database_connection()
         return entities
 
 
 class GazetteerModelAccessor:
-            
+    """
+    Class providing methods to access gazetteer models.
+    """
     def get_gazeteers(self, key):
         """
-        Get the gazetteers associated with an id
-        
-        Parameters
-        ----------
-        key: The id that will differentiate entity lists in the database
-        gazetteer_types: A list of entity list to be retrieved from the database
-        
-        Returns:
-        --------
-        gazetteers: a dict of the gazetteer types and the associated gazetteer matched to the id
-        
-        Exceptions
-        ----------
-            TODO
-            
+        Get all gazetteers associated with a key, usually the bot key.
+        :param key: The id that will differentiate entity lists in the database
+        :return: dict of gazetteers associated with the provided key
         """
         global GAZETTEERS
         gazetteers = {}
@@ -144,7 +125,10 @@ class GazetteerModelAccessor:
 
 
 class Gazetteer:
-    
+    """
+    Gazetteer class creates objects that contain the search trie, dictionary builder stopwords and stemmer used to
+    search queries.
+    """
     def __init__(self, trie=None):
         self.trie = trie
         self.dict_builder = DictionaryBuilder()
@@ -152,9 +136,16 @@ class Gazetteer:
         self.stemmer = PorterStemmer()
         
     def search_query(self, query, custom_stopwords=None, max_edit_distance=2):
+        """
+        Searches the query for tags that are found for a given edit distance in the search Trie
+        :param query: Query on which to run gazetteer analysis
+        :param custom_stopwords: Custom stopwords that should be ignored during gazetteer analysis.
+        :param max_edit_distance: Max edit distance used for the Levenshtein Damerau algorithm.
+        :return: Returns the matching subsection/ngram of the query that meets the trie search criteria
+        """
         
         """ If a very small string, empty string, or null is passed as the query, return None """ 
-        if len(query) < 2 or query == None or query == "":
+        if len(query) < 2 or query is None or query == "":
             return None
         if custom_stopwords is None:
             custom_stopwords = []
@@ -165,13 +156,18 @@ class Gazetteer:
         query_grams = self.dict_builder.ngrammer(query, 2, len(query)+1)
         query_grams = sorted(query_grams, key=lambda word: len(word), reverse=True)
         tag = self._get_query_gram_tag(query_grams, max_edit_distance)
+        """ Resort to single word searching if none of the query grams returns a tag """
         if tag is None:
             tag = self._get_single_word_tag(query, custom_stopwords)
         return tag
     
     def _get_query_gram_tag(self, query_grams, max_edit_distance):
-        
-        """ Generate potential tags based on query grams searched against trie """
+        """
+        Generate potential tags based on query grams searched against trie
+        :param query_grams: set up token n-grams created from the query
+        :param max_edit_distance: Max edit distance used for the Levenshtein Damerau algorithm.
+        :return: Found tags, if any
+        """
         tags = []
         for idx, target in enumerate(query_grams):
             """ 
@@ -195,8 +191,13 @@ class Gazetteer:
         else:
             return None
         
-    def _get_single_word_tag(self, query, custom_stopwords):   
-        """ Generate tags based on single word matches against trie """
+    def _get_single_word_tag(self, query, custom_stopwords):
+        """
+        Generate tags based on single word matches against trie
+        :param query: The query in which to find single word matches
+        :param custom_stopwords: Custom stopwords that should be ignored during gazetteer analysis.
+        :return: Found tags, if any
+        """
         potential_single_words = set()
         query = [x for x in query if x.lower() not in self.nltk_stopwords or custom_stopwords]
         for word in query:
@@ -212,6 +213,10 @@ class Gazetteer:
             return None
 
     def _clean_query(self, query):
+        """
+        Cleans the query based on a set up string cleaning functions
+        :param query: query string to be cleaned
+        """
         query = remove_question_mark(query)
         query = normalize_whitespace(query)
         query = dash_to_single_space(query)

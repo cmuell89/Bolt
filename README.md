@@ -18,7 +18,7 @@ Run eb init to configure the current Bolt version to deploy to the test environm
 
 Additionally, make sure to create the following file (ensure proper .yml format 2 space indents!):
 
-	Directory location: .elasticbeanstalk
+	Directory location: root_of_app/.ebextensions
 	
 	Filename: 01_environment.config
 	

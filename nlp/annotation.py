@@ -10,44 +10,31 @@ import logging
 
 class Annotation:
     """ Annotation object that is passed along a sequence of annotators """
-    def __init__(self, original_text, id_):
+    def __init__(self, original_text, key):
         """
-        Parameters
-        ----------
-        
-        original_text: the original text passed into the annotation object, unadulterated
-        bot_id: the bot id used to obtain references in hashes to obtain bot specific models
+        :param original_text: the original text passed into the annotation object, unadulterated
+        :param key: the bot id used to obtain references in hashes to obtain bot specific models
         """
-        self.annotations = {}
+        self.annotations = dict()
         self.annotations['original_text'] = original_text
-        self.annotations['id'] = id_
+        self.annotations['key'] = key
         self.annotations['results'] = {}
     
     
 class AbstractAnnotator(metaclass=ABCMeta):
-    """ Mixin class for annotators used in nlp pipeline """
+    """ Abstract class for Annotators """
     
     def __init__(self, name):
         self.name = name
         self.logger = logging.getLogger('BOLT.annotation')
 
     def validate_and_annotate(self, annotation):
-        """ 
-        Take the incoming annotation and return the updated annotation object
-        
-        This method is called by the a pipeline object
-        
-        This method first validates that the current annotation object can be used by 
-        the extending Annotator
-        
-        which uses the in turn calls
-        the annotate method of the class extending this mixin.
-        
-        Parameters
-        ----------
-        
-        annotation: the annotation object that is passed along to each annotator
-                    in the sequence
+        """
+        Take the incoming annotation and return the updated annotation object by first validating that the current
+        annotation object can be used by the Annotator and then runs the annotate method of the annotation.
+        :param annotation: Annotation object to be updated.
+        :return: If no exception raised, returns the altered annotation object. If an exception is raised in validate,
+                 returns the orginal annotation passed into method call.
         """
         try:
             self.validate(annotation)
@@ -75,6 +62,11 @@ class ClassificationAnnotator(AbstractAnnotator):
         pass
         
     def annotate(self, annotation):
+        """
+        Runs the classifier.classify method on the original text and updates the Annotation object with the results.
+        :param annotation: Annotation object to be updated
+        :return: Updated annotation object
+        """
         classification_results = self.classifier.classify(annotation.annotations['original_text'])
         annotation.annotations['stopwords'] = classification_results['stopwords']
         annotation.annotations['entity_types'] = classification_results['entity_types']
@@ -89,6 +81,13 @@ class GazetteerAnnotator(AbstractAnnotator):
         super().__init__(name)
         
     def validate(self, annotation):
+        """
+        Valiates that the annotation.annotations dict contains entity types with the name equal to the self.name of the
+        current annotator.
+        :param annotation: Annotation object to be updated
+        :type annotation:
+        :return: Updated annotation object
+        """
         if not annotation.annotations['entity_types']:
             raise AnnotatorValidationError("No entity types found in annotation: " + self.name)
         if self.name not in annotation.annotations['entity_types']:

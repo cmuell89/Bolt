@@ -30,12 +30,12 @@ class ClassificationTest(unittest.TestCase):
     def tearDownClass(cls):
         logger.info("TEST SUITE PASS: ClassificationTest <API>\n")
 
-    def test_classify_route(self):
-        logger.debug("TEST: 'POST' '/classification/analyze'")
+    def test_analyze_route(self):
+        logger.debug("TEST: 'POST' '/nlp/analyze'")
         test_headers = Headers()
         test_headers.add('Content-Type', 'application/json')
         test_headers.add('Authorization', 'Token ' + self.access_token)
-        response = ClassificationTest.app.post('/classification/analyze',
+        response = ClassificationTest.app.post('/nlp/analyze',
                                                data=json.dumps(dict(query='What is order 2313?', id='1234')),
                                                headers=test_headers)
         self.assertEqual(response.status_code, 200) 
@@ -43,11 +43,11 @@ class ClassificationTest(unittest.TestCase):
         self.assertEqual(result['classification'][0]['intent'], u"get-order")
         second_test_headers = Headers()
         second_test_headers.add('Authorization', 'Token ' + self.access_token)
-        second_response = ClassificationTest.app.post('/classification/analyze',
+        second_response = ClassificationTest.app.post('/nlp/analyze',
                                                       data=json.dumps(dict(query='What is order 2313?')),
                                                       headers=second_test_headers)
         self.assertEqual(second_response.status_code, 415)
-        logger.info("TEST PASS: 'POST' '/classification/analyze'")
+        logger.info("TEST PASS: 'POST' '/nlp/analyze'")
     
     def test_train_route(self):
         logger.debug("TEST: 'GET' '/classification/train'")
@@ -92,8 +92,8 @@ class ExpressionsTest(unittest.TestCase):
     def tearDownClass(cls):
         cls.intents_db.delete_intent('delete-intent')
         cls.intents_db.delete_intent('test-intent')
-        cls.intents_db.close_database_connection()
-        cls.expressions_db.close_database_connection()
+        cls.intents_db.release_database_connection()
+        cls.expressions_db.release_database_connection()
         logger.info("TEST SUITE PASS: ExpressionsTest <API>\n")
 
     def test_post_expressions_to_intent_route(self):
@@ -163,7 +163,7 @@ class UnlabeledExpressionsTest(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.db.delete_unlabeled_expression(cls.unlabeled_test_expression_ID[0])
-        cls.db.close_database_connection()
+        cls.db.release_database_connection()
         logger.info("TEST PASS: UnlabeldExpressionsTest <API>\n")
 
     def test_post_unlabeled_expression(self):
@@ -231,8 +231,7 @@ class ArchivedExpressionsTest(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.db.close_database_connection()
-        logger.info("TEST SUITE PASS: ArchivedExpressionsTest <API>\n")
+        cls.db.release_database_connection()
 
     def test_post_archived_expression(self):
         logger.debug("TEST: 'POST' '/database/archived_expressions'")
@@ -295,16 +294,20 @@ class IntentsTest(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.db.close_database_connection()
+        cls.db.release_database_connection()
         logger.info("TEST SUITE PASS: IntentsTest <API>\n")
     
     def test_post_intent_route(self):
         logger.debug("TEST: 'POST' '/database/intents/")
         intent = "some-new-intent"
+        entities = ['entity1', 'entity2']
+        stopwords = ['stopword1', 'stopword2']
         test_headers = Headers()
         test_headers.add('Content-Type', 'application/json')
         test_headers.add('Authorization', 'Token ' + IntentsTest.access_token)
-        response = IntentsTest.app.post('/database/intents', data=json.dumps(dict(intent=intent)), headers=test_headers)
+        response = IntentsTest.app.post('/database/intents',
+                                        data=json.dumps(dict(intent=intent, entities=entities, stopwords=stopwords)),
+                                        headers=test_headers)
         result = json.loads(response.get_data(as_text=True))
         self.assertEqual(response.status_code, 200)
         self.assertIn("some-new-intent", result['intents'])

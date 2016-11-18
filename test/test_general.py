@@ -9,6 +9,8 @@ import unittest
 import sklearn
 import settings
 import logging
+import json
+import os
 from utils.custom_assertions import CustomAssertions
 from nlp.clf.classification import ClassificationModelBuilder, ClassificationModelAccessor, Classifier
 from nlp.ner.gazetteer import GazetteerModelBuilder, GazetteerModelAccessor, Gazetteer
@@ -34,7 +36,7 @@ class EntitiesDatabaseTest(unittest.TestCase, CustomAssertions):
         entities = db.get_intent_entities('get-best-selling-items')[0][1]
         self.assertIsInstance(entities, list)
         self.assertIn('product_name', entities)
-        db.close_database_connection()
+        db.release_database_connection()
         logger.info("TEST PASS: get_intent_entities()")
 
     def test_add_entities_to_intent(self):
@@ -48,7 +50,7 @@ class EntitiesDatabaseTest(unittest.TestCase, CustomAssertions):
         second_result = db.add_entities_to_intent('test_intent', 'test_entity_three')[0][1]
         self.assertIn('test_entity_three', second_result)
         db.delete_intent('test_intent')
-        db.close_database_connection()
+        db.release_database_connection()
         logger.info("TEST PASS: add_entities_to_intent()")
 
     def test_delete_entities_from_intent(self):
@@ -63,14 +65,14 @@ class EntitiesDatabaseTest(unittest.TestCase, CustomAssertions):
         second_results = db.delete_entities_from_intent('test_intent', 'test_entity_three')[0][1]
         self.assertEqual([], second_results)
         db.delete_intent('test_intent')
-        db.close_database_connection()
+        db.release_database_connection()
         logger.info("TEST PASS: delete_entities_from_intent()")
 
 
 class StopwordsDatabaseTest(unittest.TestCase, CustomAssertions):
     """
-        Class for unit testing all methods with the database.database.NLP_Database class
-        """
+    Class for unit testing all methods with the database.database.NLP_Database class
+    """
 
     @classmethod
     def setUpClass(cls):
@@ -86,7 +88,7 @@ class StopwordsDatabaseTest(unittest.TestCase, CustomAssertions):
         stopwords = db.get_intent_stopwords('get-best-selling-items')[0][1]
         self.assertIsInstance(stopwords, list)
         self.assertIn('selling', stopwords)
-        db.close_database_connection()
+        db.release_database_connection()
         logger.info("TEST PASS: get_intent_stopwords()")
 
     def test_add_stopwords_to_intent(self):
@@ -100,7 +102,7 @@ class StopwordsDatabaseTest(unittest.TestCase, CustomAssertions):
         second_result = db.add_stopwords_to_intent('test_intent', 'stop_three')[0][1]
         self.assertIn('stop_three', second_result)
         db.delete_intent('test_intent')
-        db.close_database_connection()
+        db.release_database_connection()
         logger.info("TEST PASS: add_stopwords_to_stopwords()")
 
     def test_delete_stopwords_from_intent(self):
@@ -115,13 +117,13 @@ class StopwordsDatabaseTest(unittest.TestCase, CustomAssertions):
         second_results = db.delete_stopwords_from_intent('test_intent', 'stop_three')[0][1]
         self.assertEqual([], second_results)
         db.delete_intent('test_intent')
-        db.close_database_connection()
+        db.release_database_connection()
         logger.info("TEST PASS: delete_stopwords_from_intent()")
 
 
 class IntentsDatabaseTest(unittest.TestCase, CustomAssertions):
     """
-       Class for unit testing all methods with the database.database.NLP_Database class
+    Class for unit testing all methods with the database.database.NLP_Database class
     """
     @classmethod
     def setUpClass(cls):
@@ -136,7 +138,7 @@ class IntentsDatabaseTest(unittest.TestCase, CustomAssertions):
         db = IntentsDatabaseEngine()
         intents = db.get_intents()
         self.assertListOfString(intents)
-        db.close_database_connection()
+        db.release_database_connection()
         logger.info("TEST PASS: get_intents()")
 
     def test_add_intent(self):
@@ -145,7 +147,7 @@ class IntentsDatabaseTest(unittest.TestCase, CustomAssertions):
         new_list_of_intents = db.add_intent('some-new-intent')
         self.assertIn('some-new-intent', new_list_of_intents)
         db.delete_intent('some-new-intent')
-        db.close_database_connection()
+        db.release_database_connection()
         logger.info("TEST PASS: add_intent()")
 
     def test_delete_intent(self):
@@ -188,7 +190,7 @@ class ExpressionsDatabaseTest(unittest.TestCase, CustomAssertions):
         db = ExpressionsDatabaseEngine()
         intents_and_expressions = db.get_intents_and_expressions()
         self.assertListOfTuples(intents_and_expressions, [str, str])
-        db.close_database_connection()
+        db.release_database_connection()
         logger.info("TEST PASS: get_intents_and_expressions()")
 
     def test_get_intent_expressions(self):
@@ -196,7 +198,7 @@ class ExpressionsDatabaseTest(unittest.TestCase, CustomAssertions):
         db = ExpressionsDatabaseEngine()
         intent_expressions = db.get_intent_expressions('get-order')
         self.assertListOfString(intent_expressions)
-        db.close_database_connection()
+        db.release_database_connection()
         logger.info("TEST PASS: get_intent_expressions()")
 
     def test_get_unlabeled_expressions(self):
@@ -204,7 +206,7 @@ class ExpressionsDatabaseTest(unittest.TestCase, CustomAssertions):
         db = ExpressionsDatabaseEngine()
         unlabeled_expressions = db.get_unlabeled_expressions()
         self.assertListOfTuples(unlabeled_expressions, [int, str, str, float])
-        db.close_database_connection()
+        db.release_database_connection()
         logger.info("TEST PASS: get_unlabeled_expressions()")
 
     def test_get_unlabeled_expression_by_id(self):
@@ -215,7 +217,7 @@ class ExpressionsDatabaseTest(unittest.TestCase, CustomAssertions):
         actual_unlabeled_expression = tuple_list[0]
         test_unlabeled_expression = db.get_unlabeled_expression_by_id(actual_unlabeled_expression[0])
         self.assertEqual(actual_unlabeled_expression, test_unlabeled_expression)
-        db.close_database_connection()
+        db.release_database_connection()
         logger.info("TEST PASS: get_unlabeled_expression_by_id()")
 
     def test_get_archived_expressions(self):
@@ -223,7 +225,7 @@ class ExpressionsDatabaseTest(unittest.TestCase, CustomAssertions):
         db = ExpressionsDatabaseEngine()
         unlabeled_expressions = db.get_archived_expressions()
         self.assertListOfTuples(unlabeled_expressions, [int, str, str, float])
-        db.close_database_connection()
+        db.release_database_connection()
         logger.info("TEST PASS: get_archived_epxressions()")
 
     '''
@@ -243,8 +245,8 @@ class ExpressionsDatabaseTest(unittest.TestCase, CustomAssertions):
         self.assertListOfString(obj)
         self.assertListEqual(["Expression one", "Expression two", "Expression three", "Expression argument is a string"], obj2)
         intents_db.delete_intent('expressionless')
-        expressions_db.close_database_connection()
-        intents_db.close_database_connection()
+        expressions_db.release_database_connection()
+        intents_db.release_database_connection()
         logger.info("TEST PASS: add_expressions_to_intent()")
 
     def test_add_unlabeled_expression(self):
@@ -254,7 +256,7 @@ class ExpressionsDatabaseTest(unittest.TestCase, CustomAssertions):
         self.assertListOfTuples(results, [int, str, str, float])
         expression_id = [tup[0] for tup in results if tup[1] == 'This is an unlabeled expression']
         db.delete_unlabeled_expression(expression_id[0])
-        db.close_database_connection()
+        db.release_database_connection()
         logger.info("TEST PASS: add_unlabeled_expression()")
 
     def test_add_archived_expressions(self):
@@ -264,7 +266,7 @@ class ExpressionsDatabaseTest(unittest.TestCase, CustomAssertions):
         self.assertListOfTuples(results, [int, str, str, float])
         expression_id = [tup[0] for tup in results if tup[1] == 'This is an archived expression']
         db.delete_archived_expression(expression_id[0])
-        db.close_database_connection()
+        db.release_database_connection()
         logger.info("TEST PASS: add_archived_expressions()")
 
     '''
@@ -279,8 +281,8 @@ class ExpressionsDatabaseTest(unittest.TestCase, CustomAssertions):
         obj = expressions_db.delete_all_intent_expressions('expressionless')
         self.assertEqual(len(obj), 0)
         intents_db.delete_intent('expressionless')
-        expressions_db.close_database_connection()
-        intents_db.close_database_connection()
+        expressions_db.release_database_connection()
+        intents_db.release_database_connection()
         logger.info("TEST PASS: delete_expressions_from_intent()")
 
     def test_delete_unlabeled_expression(self):
@@ -342,11 +344,6 @@ class ExpressionsDatabaseTest(unittest.TestCase, CustomAssertions):
 class ClassifierTest(unittest.TestCase):
     """
     Class for unit testing all methods with the nlp.clf.classification.
-
-    Most methods are not functionally testable in the sense that they really only build objects.
-    However they will be tested to ensure the correct objects are made via isInstance() methods
-    Apart from the tokenize_text and classify_document testing, these tests may be removed since
-    they're likely not providing much information.
     """
 
     @classmethod
@@ -394,37 +391,45 @@ class ClassifierTest(unittest.TestCase):
 
 class GazetteerTest(unittest.TestCase):
     """
-        Class for unit testing all methods with the nlp.ner.gazetteer.
-
-        Most methods are not functionally testable in the sense that they really only build objects.
-        However they will be tested to ensure the correct objects are made via isInstance() methods
-        Apart from the tokenize_text and classify_document testing, these tests may be removed since
-        they're likely not providing much information.
-        """
+    Class for unit testing all methods with the nlp.ner.gazetteer.
+    """
 
     @classmethod
     def setUpClass(cls):
         logger.info("TEST SUITE: GazetteerTest")
 
-    def setUp(self):
-        self.builder = GazetteerModelBuilder()
-        self.accessor = GazetteerModelAccessor()
-
     @classmethod
     def tearDownClass(cls):
-        logger.info("TEST SUITE: GazetteerTest\n")
+        logger.info("TEST SUITE PASS: GazetteerTest\n")
 
-    # def test_create_new_gazetteer_model(self):
-    #     self.fail()
-    #
-    # def test_update_single_gazetteer_model(self):
-    #     self.fail()
-    #
-    # def test_get_entities_for_training(self):
-    #     self.fail()
-    #
-    # def get_gazeteers(self):
-    #     self.fail()
-    #
-    # def test_search_query(self):
-    #     self.fail()
+    def test_create_new_gazetteer_model(self):
+        logger.debug("TEST: create_new_gazetteer_model()")
+        with open(os.path.join(os.path.dirname(__file__), '../resources/entities_for_testing.json')) as file_:
+            json_data = json.load(file_)
+            entities = json_data['test_entities']
+            builder = GazetteerModelBuilder()
+            accessor = GazetteerModelAccessor()
+            builder.create_new_gazetteer_model('example_type', 'test-key', entities)
+            gazetteers = accessor.get_gazeteers('test-key')
+            test_gazetteer = gazetteers['example_type']
+            self.assertIsInstance(test_gazetteer, Gazetteer)
+            results = test_gazetteer.search_query('entity1')
+            self.assertEqual('entity1', results)
+        logger.info("TEST PASS: create_new_gazetteer_model()")
+
+    def test_update_single_gazetteer_model(self):
+        logger.debug("TEST: create_new_gazetteer_model()")
+        with open(os.path.join(os.path.dirname(__file__), '../resources/entities_for_testing.json')) as file_:
+            json_data = json.load(file_)
+            entities = json_data['test_entities']
+            update_entities = json_data['test_update_entities']
+            builder = GazetteerModelBuilder()
+            accessor = GazetteerModelAccessor()
+            builder.create_new_gazetteer_model('example_type', 'test-key', entities)
+            builder.update_single_gazetteer_model('example_type', 'test-key', update_entities)
+            gazetteers = accessor.get_gazeteers('test-key')
+            test_gazetteer = gazetteers['example_type']
+            self.assertIsInstance(test_gazetteer, Gazetteer)
+            results = test_gazetteer.search_query('entity5')
+            self.assertEqual('entity5', results)
+        logger.info("TEST PASS: create_new_gazetteer_model()")
