@@ -15,7 +15,7 @@ from psycopg2.pool import ThreadedConnectionPool
 
 logger = logging.getLogger('BOLT.db')
 
-if os.environ.get('ENVIRONMENT') == 'prod':
+if os.environ.get('ENVIRONMENT') == 'dev':
     """ Connect to production database if in prod mode. """
     logger.debug('Created threaded database conenction pool for PRODUCTION environment.')
     pool = ThreadedConnectionPool(2,
@@ -26,7 +26,7 @@ if os.environ.get('ENVIRONMENT') == 'prod':
                                   host=os.environ.get('BOLT_DB_HOSTNAME'),
                                   port=os.environ.get('BOLT_DB_PORT'))
 else:
-    """ Connect to local database if in prod mode. """
+    """ Connect to local database if in test or dev mode. """
     logger.debug('Created threaded database conenction pool for TEST/DEV environment.')
     pool = ThreadedConnectionPool(2,
                                   20,
@@ -150,7 +150,7 @@ class IntentsDatabaseEngine(CoreDatabase):
         try:
             self.cur.execute("SELECT intents FROM nlp.intents;")
             logger.debug("Retrieving all intents")
-            list_of_intents = list(map(lambda x: x[0], self.cur.fetchall()))
+            list_of_intents = [x[0] for x in self.cur.fetchall()]
             return list_of_intents
         except psycopg2.Error as e:
             self.conn.rollback()
@@ -177,7 +177,7 @@ class IntentsDatabaseEngine(CoreDatabase):
         """
         Deletes intent from database
         :param intent: name of intent
-        :return: updated list of intents
+        :return: updated list of intents via get_intents() method call
         """
         try:
             self.cur.execute("DELETE FROM nlp.expressions "
@@ -213,6 +213,32 @@ class IntentsDatabaseEngine(CoreDatabase):
             self.conn.rollback()
             logger.exception(e.pgerror)
             raise DatabaseError(e.pgerror)
+
+    def get_intent_stopwords_and_entities(self, intent):
+        """
+        Retrives a list of stopwords for the given intent
+        :param intent: name of intent
+        :return: list of stopwords
+        """
+        # TODO NEEDS TEST!!!
+        try:
+            self.cur.execute("SELECT id FROM nlp.intents "
+                             "WHERE nlp.intents.intents = %s;", (intent,))
+            intent_id = self.cur.fetchone()
+        except psycopg2.Error as e:
+            raise DatabaseError(e.pgerror)
+        if intent_id is not None:
+            try:
+                self.cur.execute("SELECT intents, stopwords, entities "
+                                 "FROM nlp.intents "
+                                 "WHERE nlp.intents.intents = %s;", (intent,))
+                logger.debug("Retrieving intents and stopwords for the intent: %s", intent)
+                intents_and_stopwords = self.cur.fetchall()
+                return intents_and_stopwords
+            except psycopg2.Error as e:
+                self.conn.rollback()
+                logger.exception(e.pgerror)
+                raise DatabaseError(e.pgerror)
 
     def get_intent_stopwords(self, intent):
         """
@@ -643,7 +669,7 @@ class ExpressionsDatabaseEngine(CoreDatabase):
             logger.exception(e.pgerror)
             raise DatabaseError(e.pgerror)
     
-    def delete_unlabeled_expression(self, id_):
+    def delete_unlabeled_expression_by_id(self, id_):
         """
         Delete unlabeled expression by primary key id.
         :param id_: primary key id
@@ -660,7 +686,7 @@ class ExpressionsDatabaseEngine(CoreDatabase):
             logger.exception(e.pgerror)
             raise DatabaseError(e.pgerror)
     
-    def delete_archived_expression(self, id_):
+    def delete_archived_expression_by_id(self, id_):
         """
         Delete archived expression by primary key id.
         :param id_: primary key id

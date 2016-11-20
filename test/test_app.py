@@ -162,7 +162,7 @@ class UnlabeledExpressionsTest(unittest.TestCase):
     
     @classmethod
     def tearDownClass(cls):
-        cls.db.delete_unlabeled_expression(cls.unlabeled_test_expression_ID[0])
+        cls.db.delete_unlabeled_expression_by_id(cls.unlabeled_test_expression_ID[0])
         cls.db.release_database_connection()
         logger.info("TEST PASS: UnlabeldExpressionsTest <API>\n")
 
@@ -195,7 +195,7 @@ class UnlabeledExpressionsTest(unittest.TestCase):
         list_of_expressions = [exp['expression'] for exp in result['unlabeled_expressions']]
         self.assertEqual(response.status_code, 200)
         self.assertIn("add unlabeled expression test", list_of_expressions)
-        UnlabeledExpressionsTest.db.delete_unlabeled_expression(expression_ID[0])
+        UnlabeledExpressionsTest.db.delete_unlabeled_expression_by_id(expression_ID[0])
         logger.info("TEST PASS: 'GET' '/database/unlabeled_expressions'")
         
     def test_delete_unlabeled_expression(self):
@@ -262,7 +262,7 @@ class ArchivedExpressionsTest(unittest.TestCase):
         list_of_expressions = [exp['expression'] for exp in result['archived_expressions']]
         self.assertEqual(response.status_code, 200)
         self.assertIn("add archived expression test", list_of_expressions)
-        ArchivedExpressionsTest.db.delete_unlabeled_expression(expression_ID[0])
+        ArchivedExpressionsTest.db.delete_unlabeled_expression_by_id(expression_ID[0])
         logger.info("TEST PASS: 'GET' '/database/archived_expressions'")
         
     def test_delete_archived_expression(self):

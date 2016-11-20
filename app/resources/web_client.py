@@ -73,7 +73,7 @@ class ValidateExpression(MethodView):
             logger.debug("Validating expression '{0}' for intent '{1}'".format(args['expression'], args['intent']))
             if intents_db.confirm_intent_exists(args['intent']):
                 expressions_db.add_expressions_to_intent(args['intent'], args['expression'])
-                expressions_db.delete_unlabeled_expression(args['id'])
+                expressions_db.delete_unlabeled_expression_by_id(args['id'])
                 return redirect(url_for('home'))
             else:
                 logger.debug("Intent '{0}' does not exist".format(args['intent']))
@@ -85,9 +85,9 @@ class ValidateExpression(MethodView):
             estimated_intent = expression[2]
             estimated_confidence = expression[3]
             expressions_db.add_archived_expression(args['expression'], estimated_intent, estimated_confidence)
-            expressions_db.delete_unlabeled_expression(args['id'])
+            expressions_db.delete_unlabeled_expression_by_id(args['id'])
             return redirect(url_for('home'))
         elif args['gridRadios'] == 'delete':
             logger.debug("Deleting expression '{0}' from unlabeled expressions table".format(args['expression'], args['intent']))
-            expressions_db.delete_unlabeled_expression(args['id'])
+            expressions_db.delete_unlabeled_expression_by_id(args['id'])
             return redirect(url_for('home'))

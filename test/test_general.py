@@ -255,7 +255,7 @@ class ExpressionsDatabaseTest(unittest.TestCase, CustomAssertions):
         results = db.add_unlabeled_expression('This is an unlabeled expression', 'guess-intent', .9900)
         self.assertListOfTuples(results, [int, str, str, float])
         expression_id = [tup[0] for tup in results if tup[1] == 'This is an unlabeled expression']
-        db.delete_unlabeled_expression(expression_id[0])
+        db.delete_unlabeled_expression_by_id(expression_id[0])
         db.release_database_connection()
         logger.info("TEST PASS: add_unlabeled_expression()")
 
@@ -265,7 +265,7 @@ class ExpressionsDatabaseTest(unittest.TestCase, CustomAssertions):
         results = db.add_archived_expression('This is an archived expression', 'guess-intent', .9900)
         self.assertListOfTuples(results, [int, str, str, float])
         expression_id = [tup[0] for tup in results if tup[1] == 'This is an archived expression']
-        db.delete_archived_expression(expression_id[0])
+        db.delete_archived_expression_by_id(expression_id[0])
         db.release_database_connection()
         logger.info("TEST PASS: add_archived_expressions()")
 
@@ -293,7 +293,7 @@ class ExpressionsDatabaseTest(unittest.TestCase, CustomAssertions):
         before_expression = [tup[1] for tup in before_results]
         self.assertIn(test_expression, before_expression)
         expression_id = [tup[0] for tup in before_results if tup[1] == test_expression]
-        after_results = db.delete_unlabeled_expression(expression_id[0])
+        after_results = db.delete_unlabeled_expression_by_id(expression_id[0])
         after_expression = [tup[1] for tup in after_results]
         self.assertNotIn((test_expression,), after_expression)
         logger.info("TEST PASS: delete_unlabeled_expressions()")
@@ -306,7 +306,7 @@ class ExpressionsDatabaseTest(unittest.TestCase, CustomAssertions):
         before_expression = [tup[1] for tup in before_results]
         self.assertIn(test_expression, before_expression)
         expression_id = [tup[0] for tup in before_results if tup[1] == test_expression]
-        after_results = db.delete_archived_expression(expression_id[0])
+        after_results = db.delete_archived_expression_by_id(expression_id[0])
         after_expression = [tup[1] for tup in after_results]
         self.assertNotIn((test_expression,), after_expression)
         logger.info("TEST PASS: delete_archived_expresssion()")
@@ -322,7 +322,7 @@ class ExpressionsDatabaseTest(unittest.TestCase, CustomAssertions):
         expression_id = [tup[0] for tup in results if tup[1] == test_expression]
         expression_exists = db.confirm_unlabeled_expression_exists(expression_id[0])
         self.assertEqual(True, expression_exists)
-        db.delete_unlabeled_expression(expression_id[0])
+        db.delete_unlabeled_expression_by_id(expression_id[0])
         expression_exists = db.confirm_unlabeled_expression_exists(expression_id[0])
         self.assertEqual(False, expression_exists)
         logger.info("TEST PASS: confirm_unlabeled_expression_exists()")
@@ -335,7 +335,7 @@ class ExpressionsDatabaseTest(unittest.TestCase, CustomAssertions):
         expression_id = [tup[0] for tup in results if tup[1] == test_expression]
         expression_exists = db.confirm_archived_expression_exists(expression_id[0])
         self.assertEqual(True, expression_exists)
-        db.delete_archived_expression(expression_id[0])
+        db.delete_archived_expression_by_id(expression_id[0])
         expression_exists = db.confirm_archived_expression_exists(expression_id[0])
         self.assertEqual(False, expression_exists)
         logger.info("TEST PASS: confirm_archived_expression_exists()")

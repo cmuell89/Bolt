@@ -10,6 +10,7 @@ Functions managing the prototype classifier.
 import string
 import logging
 import pickle
+import timeit
 from sklearn import svm, naive_bayes
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.pipeline import Pipeline
@@ -40,6 +41,7 @@ class ClassificationModelBuilder:
         Saves to the global dict CLASSIFIERS a pickled (serialized) fitted Scikit-learn model
         :param skl_classifier: type of classifier (svm, nb)
         """
+        logger.debug("Updating serialized classifier.")
         global CLASSIFIERS
         fitted_pipeline = self._train_classification_pipeline(None, None, skl_classifier)
         CLASSIFIERS['intent_classifier'] = pickle.dumps(fitted_pipeline)
@@ -52,6 +54,7 @@ class ClassificationModelBuilder:
         :param skl_classifier: string that indicates the type of classification algorithm to use (svm, nb)
         :return: fitted sci-kit learn pipeline object
         """
+        logger.debug("Training classification pipeline.")
         if skl_classifier is None:
             skl_classifier = 'svm'
         if pipeline is None:
@@ -152,18 +155,28 @@ class Classifier:
         :return: Returns of a dict that contains the top3 classification results (which includes their confidences),
                  the entity types and stopwords associated with the top (highest confidence) classification result
         """
+        start_time = timeit.default_timer()
         results = {}
         top_3 = []
         classes = self.pipeline.classes_.tolist()
         class_probabilities = self.pipeline.predict_proba([document]).tolist()
         confidence_metrics = list(zip(classes, class_probabilities[0]))
-        intents = sorted(confidence_metrics, key=lambda tup: tup[1], reverse=True)
+        intents_results = sorted(confidence_metrics, key=lambda tup: tup[1], reverse=True)
         for i in range(3):
-            tup = intents[i]
+            tup = intents_results[i]
             top_3.append({"intent": tup[0], "confidence": tup[1]})
-        # The dababase call returns a single tuple for which the list of entities and stopwords is the second element.
-        intent_entities = self.db.get_intent_entities(intents[0][0])[0][1]
-        intent_stopwords = self.db.get_intent_stopwords(intents[0][0])[0][1]
+        time = timeit.default_timer() - start_time
+        logger.debug("Time for classification: ")
+        logger.debug(time)
+        start_time = timeit.default_timer()
+        db_results = self.db.get_intent_stopwords_and_entities(intents_results[0][0])
+        # The dababase call returns a single tuple for which the list for which
+        #  stopwords is the second element and entities are the third.
+        intent_stopwords = db_results[0][1]
+        intent_entities = db_results[0][2]
+        time = timeit.default_timer() - start_time
+        logger.debug("Time for retrieving entities and stopwords: ")
+        logger.debug(time)
         results['intents'] = top_3
         results['entity_types'] = intent_entities
         results['stopwords'] = intent_stopwords

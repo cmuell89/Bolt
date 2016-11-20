@@ -91,7 +91,7 @@ class GazetteerAnnotator(AbstractAnnotator):
         if not annotation.annotations['entity_types']:
             raise AnnotatorValidationError("No entity types found in annotation: " + self.name)
         if self.name not in annotation.annotations['entity_types']:
-            raise AnnotatorValidationError("Annotator validation error for: " + self.name)
+            raise AnnotatorValidationError("Entity not found. No annotation performed for: " + self.name)
 
     def annotate(self, annotation):
         stopwords = annotation.annotations['stopwords']

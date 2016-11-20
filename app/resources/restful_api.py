@@ -25,6 +25,7 @@ Classes:
         get - Used by AWS Elastic Beanstalk service to monitor health. Returns 200.
 '''
 import logging
+from timeit import default_timer
 from flask import jsonify, Response, abort, g
 from flask_restful import Resource
 from webargs import validate
@@ -74,18 +75,25 @@ class Analyze(Resource):
         :param args: Incoming data from request containing the query and the access key.
         :return: JSON response with the results of the Analyzer on the query
         """
-
+        start_time = default_timer()
         analyzer = Analyzer()
         results = analyzer.run_analysis(args['query'], args['key'])
         estimated_intent = results['classification'][0]['intent']
         estimated_confidence = results['classification'][0]['confidence']
+        start_unlabeled_expression_time = default_timer()
         try:
             db = get_db('expressions')
             db.add_unlabeled_expression(args['query'], estimated_intent, estimated_confidence)
         except DatabaseError as e:
             logger.exception(e.value)
+        time = default_timer() - start_unlabeled_expression_time
+        logger.debug("Time to add unlabeled expression:")
+        logger.debug(time)
         resp = jsonify(results)
         resp.status_code = 200
+        analysis_time = default_timer() - start_time
+        logger.debug("Total POST method time: ")
+        logger.debug(analysis_time)
         return resp
         
         
@@ -305,7 +313,7 @@ class UnlabeledExpressions(Resource):
         """
         try:
             db = get_db('expressions')
-            db_results = db.delete_unlabeled_expression(args['id'])
+            db_results = db.delete_unlabeled_expression_by_id(args['id'])
             unlabeled_expressions = list(map(lambda x: {"id": x[0], "expression": x[1], "estimated_intent": x[2], "estimated_confidence":x[3]}, db_results))
             resp = jsonify(unlabeled_expressions=unlabeled_expressions)
             resp.status_code = 200
@@ -394,7 +402,7 @@ class ArchivedExpressions(Resource):
         """
         try:
             db = get_db('expressions')
-            db_results = db.delete_archived_expression(args['id'])
+            db_results = db.delete_archived_expression_by_id(args['id'])
             archived_expressions = list(map(lambda x: {"id": x[0], "expression": x[1], "estimated_intent": x[2], "estimated_confidence":x[3]}, db_results))
             resp = jsonify(archived_expressions = archived_expressions)
             resp.status_code = 200
