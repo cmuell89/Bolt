@@ -25,7 +25,6 @@ Classes:
         get - Used by AWS Elastic Beanstalk service to monitor health. Returns 200.
 '''
 import logging
-from timeit import default_timer
 from flask import jsonify, Response, abort, g
 from flask_restful import Resource
 from webargs import validate
@@ -41,8 +40,6 @@ from utils.exceptions import DatabaseError, DatabaseInputError
 logger = logging.getLogger('BOLT.api')
 
 
-# TODO Refactor with new analyzer
-
 def get_db(database):
     """
     Store database objects and its connections in the local context object g.
@@ -51,9 +48,11 @@ def get_db(database):
     """
     db = getattr(g, '_database', None)
     if db is None:
-        db = {'intents': IntentsDatabaseEngine(),
-              'expressions': ExpressionsDatabaseEngine()}
-        db = g._database = db
+        intents_db = IntentsDatabaseEngine()
+        expressions_db = ExpressionsDatabaseEngine()
+        database_dict = {'intents': intents_db,
+              'expressions': expressions_db}
+        g._database = db = database_dict
     return db[database]
 
 
@@ -75,25 +74,17 @@ class Analyze(Resource):
         :param args: Incoming data from request containing the query and the access key.
         :return: JSON response with the results of the Analyzer on the query
         """
-        start_time = default_timer()
         analyzer = Analyzer()
         results = analyzer.run_analysis(args['query'], args['key'])
         estimated_intent = results['classification'][0]['intent']
         estimated_confidence = results['classification'][0]['confidence']
-        start_unlabeled_expression_time = default_timer()
         try:
             db = get_db('expressions')
             db.add_unlabeled_expression(args['query'], estimated_intent, estimated_confidence)
         except DatabaseError as e:
             logger.exception(e.value)
-        time = default_timer() - start_unlabeled_expression_time
-        logger.debug("Time to add unlabeled expression:")
-        logger.debug(time)
         resp = jsonify(results)
         resp.status_code = 200
-        analysis_time = default_timer() - start_time
-        logger.debug("Total POST method time: ")
-        logger.debug(analysis_time)
         return resp
         
         

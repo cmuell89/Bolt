@@ -6,7 +6,6 @@ Created on Nov 3, 2016
 """
 import os
 import logging
-import timeit
 from nlp.clf.classification import ClassificationModelBuilder, ClassificationModelAccessor
 from nlp.annotation import ClassificationAnnotator, GazetteerAnnotator, Annotation
 from nlp.ner.gazetteer import GazetteerModelAccessor, GazetteerModelBuilder
@@ -63,7 +62,6 @@ class Analyzer:
         :return: dict of results
         """
         logger.info("Running analysis on query...")
-        start = timeit.default_timer()
         core_annotation = Annotation(query, key)
         pipeline = AnalysisPipeline()
         gazetteers = self.gaz_accessor.get_gazeteers(key)
@@ -73,14 +71,7 @@ class Analyzer:
         for gazetteer in gazetteers:
             gaz_annotator = GazetteerAnnotator(gazetteer, gazetteers[gazetteer])
             pipeline.add_annotator(gaz_annotator)
-        time = timeit.default_timer() - start
-        logger.debug("Time to build analysis pipeline: ")
-        logger.debug(time)
-        start = timeit.default_timer()
         core_annotation = pipeline.analyze(core_annotation)
-        time = timeit.default_timer() - start
-        logger.debug("Time to run analyze on pipeline: ")
-        logger.debug(time)
         return core_annotation.annotations['results']
 
 

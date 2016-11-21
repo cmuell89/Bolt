@@ -13,6 +13,8 @@ def close_connection(exception):
     if db is not None:
         for key, db_class_instance in db.items():
             db_class_instance.release_database_connection()
+
+
 """
 Web client routes.
 """
