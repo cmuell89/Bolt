@@ -15,7 +15,7 @@ from psycopg2.pool import ThreadedConnectionPool
 
 logger = logging.getLogger('BOLT.db')
 
-if os.environ.get('ENVIRONMENT') == 'dev':
+if os.environ.get('ENVIRONMENT') is 'prod':
     """ Connect to production database if in prod mode. """
     logger.debug('Created threaded database conenction pool for PRODUCTION environment.')
     pool = ThreadedConnectionPool(2,
