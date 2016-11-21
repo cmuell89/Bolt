@@ -17,7 +17,7 @@ logger = logging.getLogger('BOLT.db')
 
 if os.environ.get('ENVIRONMENT') == 'prod':
     """ Connect to production database if in prod mode. """
-    logger.debug('Created threaded database conenction pool for PRODUCTION environment.')
+    logger.debug('Created threaded database connection pool for PRODUCTION environment.')
     pool = ThreadedConnectionPool(2,
                                   20,
                                   database=os.environ.get('BOLT_DB_NAME'),

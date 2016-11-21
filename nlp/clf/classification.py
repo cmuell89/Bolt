@@ -143,9 +143,6 @@ class Classifier:
         self.pipeline = pipeline
         self.db = IntentsDatabaseEngine()
 
-    def __exit__(self):
-        self.db.release_database_connection()
-
     def classify(self, document):
         """
         Classifies the document and provides additional data based on those classification results
@@ -164,6 +161,7 @@ class Classifier:
             tup = intents_results[i]
             top_3.append({"intent": tup[0], "confidence": tup[1]})
         db_results = self.db.get_intent_stopwords_and_entities(intents_results[0][0])
+        self.db.release_database_connection()
         # The dababase call returns a single tuple for which the list for which
         # stopwords is the second element and entities are the third.
         intent_stopwords = db_results[0][1]

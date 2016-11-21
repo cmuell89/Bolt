@@ -3,12 +3,16 @@ from flask_restful import Api
 from .resources import restful_api, web_client
 import logging
 
+logger = logging.getLogger('BOLT.app')
+
 __all__ = ['application']
 
 application = app = Flask(__name__)
 
+
 @app.teardown_appcontext
 def close_connection(exception):
+    logger.debug('Tearing down app context')
     db = getattr(g, '_database', None)
     if db is not None:
         for key, db_class_instance in db.items():
