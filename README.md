@@ -18,34 +18,34 @@ Run eb init to configure the current Bolt version to deploy to the test environm
 
 Additionally, make sure to create the following file (ensure proper .yml format 2 space indents!):
 
-	Directory location: root_of_app/.ebextensions
-	
-	Filename: 01_environment.config
-	
-	Contents:
-	
-	option_settings:
-  	  - namespace: aws:elasticbeanstalk:application:environment
-        option_name: ENVIRONMENT
-        value: prod
-      - namespace: aws:elasticbeanstalk:application:environment
-        option_name: ACCESS_TOKEN
-        value: your_access_token
-      - namespace: aws:elasticbeanstalk:application:environment
-        option_name: RDS_DB_NAME
-        value: dbname
-      - namespace: aws:elasticbeanstalk:application:environment
-        option_name: RDS_HOSTNAME
-        value: dbHostEndpoint
-      - namespace: aws:elasticbeanstalk:application:environment
-        option_name: RDS_PORT
-        value: port
-      - namespace: aws:elasticbeanstalk:application:environment
-        option_name: RDS_USERNAME
-        value: username
-      - namespace: aws:elasticbeanstalk:application:environment
-        option_name: RDS_PASSWORD
-        value: password
+`Directory location: root_of_app/.ebextensions
+
+Filename: 01_environment.config
+
+Contents:
+
+option_settings:
+  - namespace: aws:elasticbeanstalk:application:environment
+    option_name: ENVIRONMENT
+    value: prod
+  - namespace: aws:elasticbeanstalk:application:environment
+    option_name: ACCESS_TOKEN
+    value: your_access_token
+  - namespace: aws:elasticbeanstalk:application:environment
+    option_name: RDS_DB_NAME
+    value: dbname
+  - namespace: aws:elasticbeanstalk:application:environment
+    option_name: RDS_HOSTNAME
+    value: dbHostEndpoint
+  - namespace: aws:elasticbeanstalk:application:environment
+    option_name: RDS_PORT
+    value: port
+  - namespace: aws:elasticbeanstalk:application:environment
+    option_name: RDS_USERNAME
+    value: username
+  - namespace: aws:elasticbeanstalk:application:environment
+    option_name: RDS_PASSWORD
+    value: password`
   
 
 #### Current Release Major Features 
