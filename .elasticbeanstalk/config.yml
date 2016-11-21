@@ -1,8 +1,8 @@
 branch-defaults:
   default:
-    environment: bolt
+    environment: bolt-2
   elastic-beanstalk:
-    environment: bolt
+    environment: bolt-2
 global:
   application_name: Bolt
   default_ec2_keyname: aws-eb
