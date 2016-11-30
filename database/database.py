@@ -218,7 +218,7 @@ class IntentsDatabaseEngine(CoreDatabase):
         """
         Retrives a list of stopwords for the given intent
         :param intent: name of intent
-        :return: list of stopwords
+        :return: a one element list of the tuple (intent, [stopwords], [entities])
         """
         # TODO NEEDS TEST!!!
         try:
@@ -244,7 +244,7 @@ class IntentsDatabaseEngine(CoreDatabase):
         """
         Retrives a list of stopwords for the given intent
         :param intent: name of intent
-        :return: list of stopwords
+        :return: list of length one of a tuple (intent, [stopwords])
         """
         try:
             self.cur.execute("SELECT id FROM nlp.intents "
@@ -270,7 +270,7 @@ class IntentsDatabaseEngine(CoreDatabase):
         Adds stopwords to an intent
         :param intent: name of intent
         :param stopwords: list stopwords or single stopword string
-        :return: list of intent stopwords
+        :return: list of length one of a tuple (intent, [stopwords])
         """
         try:
             self.cur.execute("SELECT id "
@@ -308,7 +308,7 @@ class IntentsDatabaseEngine(CoreDatabase):
         Deletes stopwords from intent.
         :param intent: name of intent
         :param stopwords: list of words to remove from stopwords list
-        :return: updated stopwords list for intent
+        :return: list of length one of a tuple (intent, [stopwords])
         """
         try:
             existing_stopwords = self.get_intent_stopwords(intent)[0][1]
@@ -336,7 +336,7 @@ class IntentsDatabaseEngine(CoreDatabase):
         """
         Gets the entities for the given intent
         :param intent: name of intent
-        :return: list of entities
+        :return: list of length of on a tuple (intent, [entities])
         """
         try:
             self.cur.execute("SELECT id "
@@ -363,7 +363,7 @@ class IntentsDatabaseEngine(CoreDatabase):
         Adds a entities to an intent
         :param intent: name of intent
         :param entities: list of entities or single string entity
-        :return: list of updated entities
+        :return: list of length of on a tuple (intent, [entities])
         """
         try:
             self.cur.execute("SELECT id FROM nlp.intents WHERE nlp.intents.intents = %s;", (intent,))
@@ -447,7 +447,7 @@ class ExpressionsDatabaseEngine(CoreDatabase):
                                  "ON nlp.intents.id = nlp.expressions.intent_id "
                                  "WHERE nlp.intents.intents = %s;", (intent,))
                 logger.debug("Retrieving all expressions for the intent: %s", intent)
-                list_of_expressions = list(map(lambda x: x[0], self.cur.fetchall()))
+                list_of_expressions = [x[0] for x in self.cur.fetchall()]
                 return list_of_expressions
             except psycopg2.Error as e:
                 self.conn.rollback()
@@ -469,7 +469,7 @@ class ExpressionsDatabaseEngine(CoreDatabase):
                              "INNER JOIN nlp.expressions "
                              "ON nlp.intents.id = nlp.expressions.intent_id;")
             logger.debug("Retrieving all intents and expressions.")
-            intents_and_expressions = list(map(lambda x: (x[0], x[1]), self.cur.fetchall()))
+            intents_and_expressions = [(x[0], x[1]) for x in self.cur.fetchall()]
             return intents_and_expressions
         except psycopg2.Error as e:
             self.conn.rollback()
@@ -479,29 +479,30 @@ class ExpressionsDatabaseEngine(CoreDatabase):
     def get_unlabeled_expressions(self):
         """
         Retrieves all unlabeled expressions
-        :return: list of unlabeled expressions
+        :return: list of tuples (id, expression, estimated_intent, estimated_confidence)
         """
         try:
             self.cur.execute("SELECT id, expressions, estimated_intent, estimated_confidence "
                              "FROM nlp.unlabeled_expressions")
             logger.debug("Retrieving all unlabeled expressions.")
-            unlabeled_expressions = list(map(lambda x: (x[0], x[1], x[2], x[3]), self.cur.fetchall()))
+            unlabeled_expressions = [(x[0], x[1], x[2], x[3]) for x in self.cur.fetchall()]
             return unlabeled_expressions
         except psycopg2.Error as e:
             self.conn.rollback()
             logger.exception(e.pgerror)
             raise DatabaseError(e.pgerror)
 
-    def get_unlabeled_expression_by_id(self, id):
+    def get_unlabeled_expression_by_id(self, id_):
         """
         Gets the unlabeled expression by id.
         :param id: primary key id
-        :return: returns the unlabeled expression if found or None if not found
+        :return: list of one tuple (id, expression, estimated_intent, estimated_confidence) if found
+                 or None if not found
         """
         try:
             self.cur.execute("SELECT id, expressions, estimated_intent, estimated_confidence "
                              "FROM nlp.unlabeled_expressions "
-                             "WHERE id = %s", (id,))
+                             "WHERE id = %s", (id_,))
             logger.debug("Retrieving unlabeled expression by id.")
             unlabeled_expression = (lambda x: (x[0], x[1], x[2], x[3]))(self.cur.fetchone())
             return unlabeled_expression
@@ -513,13 +514,13 @@ class ExpressionsDatabaseEngine(CoreDatabase):
     def get_archived_expressions(self):
         """
         Gets all archived expressions
-        :return: list of archived expressions
+        :return: list of one tuple (id, expression, estimated_intent, estimated_confidence)
         """
         try:
             self.cur.execute("SELECT id, expressions, estimated_intent, estimated_confidence "
                              "FROM nlp.archived_expressions")
             logger.debug("Retrieving all archived expressions.")
-            archived_expressions = list(map(lambda x: (x[0], x[1], x[2], x[3]), self.cur.fetchall()))
+            archived_expressions = [(x[0], x[1], x[2], x[3]) for x in self.cur.fetchall()]
             return archived_expressions
         except psycopg2.Error as e:
             self.conn.rollback()
@@ -539,21 +540,21 @@ class ExpressionsDatabaseEngine(CoreDatabase):
         try: 
             self.cur.execute("SELECT id FROM nlp.intents "
                              "WHERE nlp.intents.intents = %s;", (intent,))
-            intentID = self.cur.fetchone()
+            intent_id = self.cur.fetchone()
         except psycopg2.Error as e:
                 raise DatabaseError(e.pgerror)
-        if intentID is not None:
+        if intent_id is not None:
             try:
                 if len(expressions) > 0:
                     logger.debug("Adding expressions to intent: %s", intent)
                     if isinstance(expressions, str):
                         # expressions is actually a singular string argument.
                         self.cur.execute("INSERT INTO nlp.expressions (expressions, intent_id) "
-                                         "VALUES (%s, %s)", (expressions, intentID))
+                                         "VALUES (%s, %s)", (expressions, intent_id))
                     else:
                         for expression in expressions:
                             self.cur.execute("INSERT INTO nlp.expressions (expressions, intent_id) "
-                                             "VALUES (%s, %s)", (expression, intentID))
+                                             "VALUES (%s, %s)", (expression, intent_id))
                     self.conn.commit()
                     return self.get_intent_expressions(intent)
                 else:
@@ -653,7 +654,7 @@ class ExpressionsDatabaseEngine(CoreDatabase):
         Delete expressions from an intent
         :param intent: intent name
         :param expressions: list of expressions to be deleted
-        :return: updated lsit of expressions for intent
+        :return: updated list of expressions for intent
         """
         try:
             for expression in expressions:
