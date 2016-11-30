@@ -9,7 +9,7 @@ from nltk.corpus import stopwords
 from nltk.stem.porter import PorterStemmer
 from utils.string_cleaners import remove_apostrophe, normalize_whitespace, remove_question_mark, dash_to_single_space
 from database.database import ExternalDatabaseEngine
-from nlp.ner.trie import TrieBuilder, DictionaryBuilder, TrieNode
+from nlp.ner.trie import GramTrieBuilder, SimpleTrieBuilder, DictionaryBuilder, TrieNode
 
 logger = logging.getLogger('BOLT.gaz')
 
@@ -44,17 +44,20 @@ class GazetteerModelBuilder:
         :param entity_data: list of entity strings to use as entiy source.
         """
         global GAZETTEERS
-        trie_builder = TrieBuilder()
         if entity_data and isinstance(entity_data, list):
             entities = entity_data
         else:
             entities = self._get_entities_from_external_database(gazetteer_type, key)
         entities = [x for x in entities if x is not None]
         if len(entities) > 0:
-            new_trie = trie_builder.build_trie_from_dictionary(entities)
+            if gazetteer_type == 'product_name':
+                trie_builder = GramTrieBuilder()
+                new_trie = trie_builder.build_trie_from_dictionary(entities)
+            else:
+                trie_builder = SimpleTrieBuilder()
+                new_trie = trie_builder.build_simple_trie_from_dictionary(entities)
             new_gazetteer = Gazetteer(new_trie)
             if gazetteer_type not in GAZETTEERS:
-                logger.debug('Building new gazetteer model')
                 GAZETTEERS[gazetteer_type] = {}
                 GAZETTEERS[gazetteer_type][key] = new_gazetteer
             else:
@@ -67,7 +70,7 @@ class GazetteerModelBuilder:
         :param key: the key used to access the specific gazetteer hashed within the dictionary.
         """
         global GAZETTEERS
-        trie_builder = TrieBuilder()
+        trie_builder = GramTrieBuilder()
 
         logger.debug('Updating gazetteer model')
         if gazetteer_type in GAZETTEERS:
@@ -129,7 +132,7 @@ class Gazetteer:
     Gazetteer class creates objects that contain the search trie, dictionary builder stopwords and stemmer used to
     search queries.
     """
-    def __init__(self, trie=None):
+    def __init__(self, trie):
         self.trie = trie
         self.dict_builder = DictionaryBuilder()
         self.nltk_stopwords = stopwords.words('english')

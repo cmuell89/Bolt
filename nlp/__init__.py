@@ -7,8 +7,9 @@ Created on Nov 3, 2016
 import os
 import logging
 from nlp.clf.classification import ClassificationModelBuilder, ClassificationModelAccessor
-from nlp.annotation import ClassificationAnnotator, GazetteerAnnotator, Annotation
+from nlp.annotation import ClassificationAnnotator, GazetteerAnnotator, RegexAnnotator, Annotation
 from nlp.ner.gazetteer import GazetteerModelAccessor, GazetteerModelBuilder
+from nlp.ner.regexer import Regexer
 
 logger = logging.getLogger('BOLT.nlp')
 
@@ -17,7 +18,7 @@ gaz_builder = GazetteerModelBuilder()
 
 clf_builder.update_serialized_model()
 environment = os.environ.get('ENVIRONMENT')
-if environment == 'prod' or environment == 'dev':
+if environment == 'prod':
     gaz_builder.initialize_gazetteer_models()
 
 
@@ -66,11 +67,27 @@ class Analyzer:
         pipeline = AnalysisPipeline()
         gazetteers = self.gaz_accessor.get_gazeteers(key)
         clf = self.clf_accessor.get_classification_pipeline('intent_classifier')
+
+        """ Create the intent classifier Annotator 'clf' """
         clf_annotator = ClassificationAnnotator('clf', clf)
         pipeline.add_annotator(clf_annotator)
+
+        """ for each type of gazetteer create an GazetteerAnnotator """
         for gazetteer in gazetteers:
             gaz_annotator = GazetteerAnnotator(gazetteer, gazetteers[gazetteer])
             pipeline.add_annotator(gaz_annotator)
+
+        """ order name RegexAnnotator """
+        order_name_regexer = RegexAnnotator('order_name', Regexer([r'([A-Za-z]*|#)[0-9]+']))
+        pipeline.add_annotator(order_name_regexer)
+
+        """ out-of-state RegexAnnotator """
+        out_of_state_regexer = RegexAnnotator('out_of_state', Regexer([r'(out of state)',
+                                                                       r'(out-of-state)',
+                                                                       r'(((outside|out side)) of)',
+                                                                       r'(outside|out side)']))
+        pipeline.add_annotator(out_of_state_regexer)
+
         core_annotation = pipeline.analyze(core_annotation)
         return core_annotation.annotations['results']
 
@@ -100,7 +117,6 @@ class AnalysisPipeline:
         :return: Returns the annotation object
         """
         for annotator in self.sequence:
-
             annotation = annotator.validate_and_annotate(annotation)
         return annotation
       

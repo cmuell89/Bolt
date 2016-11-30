@@ -18,7 +18,7 @@ class Annotation:
         self.annotations = dict()
         self.annotations['original_text'] = original_text
         self.annotations['key'] = key
-        self.annotations['results'] = {}
+        self.annotations['results'] = {"classification": [], "entities": []}
     
     
 class AbstractAnnotator(metaclass=ABCMeta):
@@ -94,8 +94,44 @@ class GazetteerAnnotator(AbstractAnnotator):
             raise AnnotatorValidationError("Entity not found. No annotation performed for: " + self.name)
 
     def annotate(self, annotation):
+        """
+        Annotates the annotation object with the search results give the original text and the self.gazetteer gazetteer.
+        Appends the gazetteer result to the annotation.annotations['results']['entities] list
+        :param annotation: The annotation object to update
+        :return: Returns the updated annotation object
+        """
         stopwords = annotation.annotations['stopwords']
         text = annotation.annotations['original_text']
         result = self.gazetteer.search_query(text, stopwords, self.max_edit_distance)
-        annotation.annotations['results'][self.name] = result
+        annotation.annotations['results']['entities'].append({"name": self.name, "value": result})
+        return annotation
+
+
+class RegexAnnotator(AbstractAnnotator):
+    def __init__(self, name, regexer):
+        self.regexer = regexer
+        super().__init__(name)
+
+    def validate(self, annotation):
+        """
+        Valiates that the annotation.annotations dict contains entity types with the name equal to the self.name of the
+        current annotator.
+        :param annotation: Annotation object to be updated
+        :type annotation:
+        :return: Updated annotation object
+        """
+        if not annotation.annotations['entity_types']:
+            raise AnnotatorValidationError("No entity types found in annotation: " + self.name)
+        if self.name not in annotation.annotations['entity_types']:
+            raise AnnotatorValidationError("Entity not found. No annotation performed for: " + self.name)
+
+    def annotate(self, annotation):
+        """
+        Annotates the annotation object with the results of the Regexer object.
+        Appends the results to the annotation.annotations['results']['entities] list
+        :param annotation: The annotation object to update
+        :return: Returns the updated annotation object
+        """
+        matches = self.regexer.get_matches(annotation.annotations['original_text'])
+        annotation.annotations['results']['entities'].append({"name": self.name, "value": matches})
         return annotation
