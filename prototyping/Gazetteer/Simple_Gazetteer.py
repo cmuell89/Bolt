@@ -5,13 +5,12 @@ Created on Oct 14, 2016
 '''
 import re
 
-PRODUCTS = "../../resources/productList.txt";
+product_types = []
+with open('../../resources/product_types.json') as f:
+    for line in f:
+        product_types.append(line)
 
 
-f = open(PRODUCTS, "rt")
-product_names = []
-cleaned_product_names = []
-vocab = []
 
 """ Create vocab and product name lists"""
 for line in f:
