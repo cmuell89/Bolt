@@ -677,7 +677,7 @@ class ExpressionsDatabaseEngine(CoreDatabase):
         :return: Updated list of unlabeled expressions
         """
         try:
-            self.cur.execute("DELETE FROM unlabeled_expressions "
+            self.cur.execute("DELETE FROM nlp.unlabeled_expressions "
                              "WHERE nlp.unlabeled_expressions.id = %s", (id_,))
             self.conn.commit()
             logger.debug("Deleting unlabeled expression.")
@@ -694,7 +694,7 @@ class ExpressionsDatabaseEngine(CoreDatabase):
         :return: Updated list of archived expressions
         """
         try:
-            self.cur.execute("DELETE FROM archived_expressions "
+            self.cur.execute("DELETE FROM nlp.archived_expressions "
                              "WHERE nlp.archived_expressions.id = %s", (id_,))
             self.conn.commit()
             logger.debug("Deleting archived expression.")
