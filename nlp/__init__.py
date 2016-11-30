@@ -73,9 +73,10 @@ class Analyzer:
         pipeline.add_annotator(clf_annotator)
 
         """ for each type of gazetteer create an GazetteerAnnotator """
-        for gazetteer in gazetteers:
-            gaz_annotator = GazetteerAnnotator(gazetteer, gazetteers[gazetteer])
-            pipeline.add_annotator(gaz_annotator)
+        if gazetteers is not None:
+            for gazetteer in gazetteers:
+                gaz_annotator = GazetteerAnnotator(gazetteer, gazetteers[gazetteer])
+                pipeline.add_annotator(gaz_annotator)
 
         """ order name RegexAnnotator """
         order_name_regexer = RegexAnnotator('order_name', Regexer([r'([A-Za-z]*|#)[0-9]+']))

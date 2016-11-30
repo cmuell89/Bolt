@@ -121,10 +121,15 @@ class GazetteerModelAccessor:
         """
         global GAZETTEERS
         gazetteers = {}
-
-        for gazetteer in GAZETTEERS:
-                gazetteers[gazetteer] = GAZETTEERS[gazetteer][key]
-        return gazetteers
+        db = ExternalDatabaseEngine()
+        keys = db.get_keys()
+        db.release_database_connection()
+        if key not in keys:
+            return None
+        else:
+            for gazetteer in GAZETTEERS:
+                    gazetteers[gazetteer] = GAZETTEERS[gazetteer][key]
+            return gazetteers
 
 
 class Gazetteer:
