@@ -28,8 +28,8 @@ Store database object and its connections in the local context object g.
 
 def get_db(database):
     """
-
-    :param database:
+    Retrives a database engine object from g context of Flask's http request
+    :param database: string of the database type
     :return: The referenced database object given the type.
     """
     db = getattr(g, '_database', None)
@@ -45,13 +45,17 @@ class Home(MethodView):
     decorators = [basicAuth.login_required]
 
     def get(self):
+        """
+        Renders the index.html with an updated list of unlabeled expressions
+        :return: render_template function call on index.html
+        """
         db = get_db('expressions')
         unlabeled_expressions = db.get_unlabeled_expressions()
         return render_template('index.html', expressions=unlabeled_expressions)
 
 
 class ValidateExpression(MethodView):
-    
+
     decorators = [basicAuth.login_required]
     validate_urlencoded = partial(valid_application_type, 'application/x-www-form-urlencoded')
     validation_args = {
@@ -67,6 +71,11 @@ class ValidateExpression(MethodView):
     '''
     @use_args(validation_args)
     def post(self, args):
+        """
+        Validate route for unlabeled expressions displayed on index.html
+        :param args: parsed arguments from validation_args
+        :return: redirect to address of home in flask app (index.html)
+        """
         expressions_db = get_db('expressions')
         intents_db = get_db('intents')
         if args['gridRadios'] == 'validate':

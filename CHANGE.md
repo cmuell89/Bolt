@@ -4,18 +4,23 @@
 
 ##### Not Started:
 
+- [ ] Papertrails logging
 - [ ] Start prototyping 'Trait' parsing
-- [ ] Start prototyping datetime parsing
-	- In talks with maintainer of SpaCy
-	- User proposed regex based toy library
+- [ ] Develop annotator groups (sort of like mini pipelines)
 
 
 ##### In-Progress:
-- [X] COMMENT/DOCUMENTATION OVERHAUL => START STRONG, FINISH STRONG
+- [ ] COMMENT/DOCUMENTATION OVERHAUL => START STRONG, FINISH STRONG
+- [ ] Create test for get-stopwords-and-entities database method
 - [ ] Work on gazetteer specificity
-- [ ] Create ReGex annotor capability
-- [ ] Create location and geographical parsring
+- [x] Create ReGex annotor capability
+    - [x] Code
+    - [ ] Test
+- [ ] Create location and geographical parsing
     - Look into geograpy library
+- [ ] Start prototyping datetime parsing
+	- In talks with maintainer of SpaCy
+	- User proposed regex based toy library
     
 ##### Version Change Log:
 

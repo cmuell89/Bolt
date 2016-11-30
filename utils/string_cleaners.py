@@ -29,7 +29,7 @@ def normalize_whitespace(string):
 
 
 def dash_to_single_space(string):
-    string = string.replace(" - "," ")
+    string = string.replace(" - ", " ")
     return string
 
 
