@@ -93,15 +93,16 @@ class GazetteerModelBuilder:
 
         def entities_function_generator(entity_type, database):
             """
-            Contains a dict. key: entity type; value: function that returns entities by key
-            :param entity_type:
-            :return: function returning entities for given key for the entity type
+            Returns a callable method that will retrieve the entities for the given entity type.
+            Requires database that contains methods in the dict.
+            :param entity_type: type of entities to be retrieved
+            :param database: external database engine
+            :return: Callable that returns the entities for the given entity type
             """
-
-            drivers = {'product_name': database.get_product_names_by_key,
-                       'product_type': database.get_product_types_by_key,
-                       'vendor': database.get_vendors_by_key}
-            return drivers[entity_type]
+            entity_retrieval_function = {'product_name': database.get_product_names_by_key,
+                                         'product_type': database.get_product_types_by_key,
+                                         'vendor': database.get_vendors_by_key}
+            return entity_retrieval_function[entity_type]
 
         db_function = entities_function_generator(gazetteer_type, db)
         entities = db_function(key)
@@ -117,7 +118,7 @@ class GazetteerModelAccessor:
         """
         Get all gazetteers associated with a key, usually the bot key.
         :param key: The id that will differentiate entity lists in the database
-        :return: dict of gazetteers associated with the provided key
+        :return: dict of gazetteers associated with the provided key. Returns None if key is not in list of keys in db.
         """
         global GAZETTEERS
         gazetteers = {}
