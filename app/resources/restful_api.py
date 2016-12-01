@@ -64,7 +64,7 @@ class Analyze(Resource):
     analyze_args = {
         'content_type': fields.Str(required=True, load_from='Content-Type', location='headers', validate=validate_application_json),
         'query': fields.Str(required=True, validate=validate.Length(min=1)),
-        'key': fields.Str(required=True, validate=validate.Length(min=1))
+        'key': fields.Str(required=False, validate=validate.Length(min=1))
     }
     
     @use_args(analyze_args)
@@ -75,7 +75,8 @@ class Analyze(Resource):
         :return: JSON response with the results of the Analyzer on the query
         """
         analyzer = Analyzer()
-        results = analyzer.run_analysis(args['query'], args['key'])
+        key = args['key'] if 'key' in args.keys() else None
+        results = analyzer.run_analysis(args['query'], key)
         estimated_intent = results['classification'][0]['intent']
         estimated_confidence = results['classification'][0]['confidence']
         try:

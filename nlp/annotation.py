@@ -10,7 +10,7 @@ import logging
 
 class Annotation:
     """ Annotation object that is passed along a sequence of annotators """
-    def __init__(self, original_text, key):
+    def __init__(self, original_text, key=None):
         """
         :param original_text: the original text passed into the annotation object, unadulterated
         :param key: the bot id used to obtain references in hashes to obtain bot specific models

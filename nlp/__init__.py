@@ -54,7 +54,7 @@ class Analyzer:
         self.gaz_accessor = GazetteerModelAccessor()
         self.clf_accessor = ClassificationModelAccessor()
 
-    def run_analysis(self, query, key):
+    def run_analysis(self, query, key=None):
         """
         Builds an AnalysisPipeline objects and the set of Annotator objects to be used in the pipeline.
         Runs the analysis and retruns the 'results' value of the Annotation object's annotations dict.
