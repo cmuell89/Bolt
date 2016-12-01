@@ -194,7 +194,7 @@ class Expressions(Resource):
         :return: If 'all' returns dict with intent and empty expressions list, else dict of intent with new list of
                  expressions
         """
-        if args['all'] == True:
+        if 'all' in args.keys() and args['all'] == True:
             try:
                 db = get_db('expressions')
                 expressions = db.delete_all_intent_expressions(intent)
@@ -278,7 +278,9 @@ class UnlabeledExpressions(Resource):
         """
         try:
             db = get_db('expressions')
-            db_results = db.add_unlabeled_expression(args['expression'], args['estimated_intent'], args['estimated_confidence'])
+            estimated_intent = args['estimated_intent'] if 'estimated_intent' in args.keys() else None
+            estimated_confidence = args['estimated_confidence'] if 'estimated_confidence' in args.keys() else None
+            db_results = db.add_unlabeled_expression(args['expression'], estimated_intent, estimated_confidence)
             unlabeled_expressions = list(map(lambda x: {"id": x[0], "expression": x[1], "estimated_intent": x[2], "estimated_confidence":x[3]}, db_results))
             resp = jsonify(unlabeled_expressions=unlabeled_expressions)
             resp.status_code = 200
@@ -367,7 +369,9 @@ class ArchivedExpressions(Resource):
         """
         try:
             db = get_db('expressions')
-            db_results = db.add_archived_expression(args['expression'], args['estimated_intent'], args['estimated_confidence'])
+            estimated_intent = args['estimated_intent'] if 'estimated_intent' in args.keys() else None
+            estimated_confidence = args['estimated_confidence'] if 'estimated_confidence' in args.keys() else None
+            db_results = db.add_archived_expression(args['expression'], estimated_intent, estimated_confidence)
             archived_expressions = list(map(lambda x: {"id": x[0], "expression": x[1], "estimated_intent": x[2], "estimated_confidence":x[3]}, db_results))
             resp = jsonify(archived_expressions=archived_expressions)
             resp.status_code = 200
@@ -431,15 +435,12 @@ class Intents(Resource):
                      args['stopwords']: list of custom stopwords associated with intent and its expressions
         :return: JSON styled list of intents
         """
-        """
-
-        """
         try:
             db = get_db('intents')
             db.add_intent(args['intent'])
-            if args['entities']:
+            if 'entities' in args.keys() and args['entities']:
                 db.add_entities_to_intent(args['intent'], args['entities'])
-            if args['stopwords']:
+            if 'stopwords' in args.keys() and args['stopwords']:
                 db.add_stopwords_to_intent(args['intent'], args['stopwords'])
             intents = db.get_intents()
             resp = jsonify(intents=intents)
