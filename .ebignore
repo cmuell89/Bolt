@@ -30,6 +30,7 @@ var/
 /resources
 /docs
 /.settings
+/logs
 
 # virtualenv
 /bolt-env
