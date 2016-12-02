@@ -15,7 +15,6 @@ if os.path.isfile(os.path.join(os.path.dirname(__file__), '.env')):
 """
 LOGGING
 """
-# werkzeug_logger = logging.getLogger('werkzeug')
 logger = logging.getLogger('BOLT')
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
@@ -32,7 +31,6 @@ paperTrailsHandler = logging.handlers.SysLogHandler(address=(os.environ.get('PAP
                                                              , int(os.environ.get('PAPERTRAILS_PORT'))))
 paperTrailsHandler.setFormatter(formatter)
 logger.addHandler(paperTrailsHandler)
-# werkzeug_logger.addHandler(paperTrailsHandler)
 
 if os.environ.get('ENVIRONMENT') == 'dev':
     logger.setLevel(logging.DEBUG)
