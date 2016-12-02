@@ -4,14 +4,10 @@ Created on Jul 18, 2016
 @author: carl
 """
 import settings
-import logging
 import os
 from app import application
 
 application.secret_key = os.environ.get('SECRET_KEY')
-
-werkzeug_logger = logging.getLogger('werkzeug')
-werkzeug_logger.addHandler(settings.paperTrailsHandler)
 
 # run the app according to the ENVIRONMENT env variable.
 if __name__ == "__main__": 

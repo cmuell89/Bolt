@@ -32,6 +32,9 @@ paperTrailsHandler = logging.handlers.SysLogHandler(address=(os.environ.get('PAP
 paperTrailsHandler.setFormatter(formatter)
 logger.addHandler(paperTrailsHandler)
 
+werkzeug_logger = logging.getLogger('werkzeug')
+werkzeug_logger.addHandler(paperTrailsHandler)
+
 if os.environ.get('ENVIRONMENT') == 'dev':
     logger.setLevel(logging.DEBUG)
     logger.info("Running in development mode. Logging with level DEBUG")
