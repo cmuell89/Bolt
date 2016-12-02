@@ -2,12 +2,22 @@ from flask import Flask, jsonify, g
 from flask_restful import Api
 from .resources import restful_api, web_client
 import logging
+import settings
 
 logger = logging.getLogger('BOLT.app')
 
 __all__ = ['application']
 
 application = app = Flask(__name__)
+
+
+@app.before_first_request
+def setup_werkzeug_logging():
+    werkzeug_logger = logging.getLogger('werkzeug')
+    werkzeug_logger.handlers = []
+    werkzeug_logger.addHandler(settings.stdoutHandler)
+    werkzeug_logger.addHandler(settings.paperTrailsHandler)
+    werkzeug_logger.setLevel(logging.INFO)
 
 
 @app.teardown_appcontext
