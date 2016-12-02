@@ -11,15 +11,6 @@ __all__ = ['application']
 application = app = Flask(__name__)
 
 
-@app.before_first_request
-def setup_werkzeug_logging():
-    werkzeug_logger = logging.getLogger('werkzeug')
-    werkzeug_logger.handlers = []
-    werkzeug_logger.addHandler(settings.stdoutHandler)
-    werkzeug_logger.addHandler(settings.paperTrailsHandler)
-    werkzeug_logger.setLevel(logging.INFO)
-
-
 @app.teardown_appcontext
 def close_connection(exception):
     logger.debug('Tearing down app context')
