@@ -166,6 +166,7 @@ class DictionaryBuilder:
         entry = string_cleaners.remove_apostrophe(entry)
         entry = string_cleaners.remove_foward_slash(entry)
         entry = string_cleaners.remove_commas(entry)
+        entry = string_cleaners.remove_quotations(entry)
         return entry
 
 
