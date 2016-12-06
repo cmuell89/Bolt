@@ -6,6 +6,11 @@ class Regexer:
         self.regex_list = regex_list
 
     def get_matches(self, query):
+        """
+        Searches a query for regex matches against the passed in regex list
+        :param query: query to be searched
+        :return: the first match that occurs else None
+        """
         for pattern in self.regex_list:
             regex = re.compile(pattern)
             result = regex.search(query)
