@@ -7,7 +7,7 @@ Created on October 26, 2016
 import logging
 from nltk.corpus import stopwords
 from nltk.stem.porter import PorterStemmer
-from utils.string_cleaners import remove_apostrophe, normalize_whitespace, remove_question_mark, dash_to_single_space
+from utils.string_cleaners import remove_apostrophe, normalize_whitespace, remove_question_mark, dash_to_single_space, remove_foward_slash
 from database.database import ExternalDatabaseEngine
 from nlp.ner.trie import GramTrieBuilder, SimpleTrieBuilder, DictionaryBuilder, TrieNode
 
@@ -187,7 +187,7 @@ class Gazetteer:
             if len(tags) == 0 or not any(len(tag[0].split(' ')) > len(target.split(' ')) for tag in tags):
                 target_length = len(target.split(' '))
                 results = TrieNode.search(self.trie, target, max_edit_distance)
-                if len(results)>0:
+                if len(results) > 0:
                     """ Sort results by edit distance """
                     results = sorted(results, key=lambda result: result[1])
                     """ Append first result with best edit distance to tags list but not if length is shorter than target"""
@@ -230,4 +230,6 @@ class Gazetteer:
         query = normalize_whitespace(query)
         query = dash_to_single_space(query)
         query = remove_apostrophe(query)
+        query = remove_foward_slash(query)
+        query = remove_question_mark(query)
         return query
