@@ -32,6 +32,9 @@ var/
 /.settings
 /logs
 
+# .ebextentions
+04_papertrailapp.config
+
 # virtualenv
 /bolt-env
 
