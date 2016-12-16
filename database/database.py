@@ -658,7 +658,7 @@ class ExpressionsDatabaseEngine(CoreDatabase):
         """
         try:
             for expression in expressions:
-                self.cur.execute("DELETE FROM expressions "
+                self.cur.execute("DELETE FROM nlp.expressions "
                                  "WHERE nlp.expressions.intent_id = "
                                  "(SELECT id FROM nlp.intents WHERE nlp.intents.intents = %s) "
                                  "AND nlp.expressions.expressions = %s;", (intent, expression))
