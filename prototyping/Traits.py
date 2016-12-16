@@ -12,6 +12,7 @@ from nltk.corpus import stopwords
 from sklearn import naive_bayes
 from sklearn import svm
 from sklearn.base import TransformerMixin
+from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_extraction.stop_words import ENGLISH_STOP_WORDS
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.feature_selection import chi2, SelectKBest
@@ -19,11 +20,12 @@ from sklearn.calibration import CalibratedClassifierCV
 from sklearn.ensemble import VotingClassifier
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import accuracy_score
-from sklearn.pipeline import Pipeline
+from sklearn.pipeline import Pipeline, FeatureUnion
 from spacy.en import English
 import pickle
 import numpy as np
 import timeit
+import re
 
 # A custom stoplist
 STOPLIST = set(stopwords.words('english') + ["n't", "'s", "'m", "ca"] + list(ENGLISH_STOP_WORDS))
@@ -55,13 +57,13 @@ class CleanTextTransformer(TransformerMixin):
 def createTrainingDataFromJSON(fileAddress):
     file = open(fileAddress)
     data = json.load(file)
-    intents = data["intents"]
+    classes = data["classes"]
     docs = []
     labels = []
-    for intent in intents:
-        docs = docs + intent["expressions"]
-        for i in range(len(intent["expressions"])):
-            labels.append(intent["name"])
+    for cls in classes:
+        docs = docs + cls["expressions"]
+        for i in range(len(cls["expressions"])):
+            labels.append(cls["label"])
     return [docs, labels]
 
 
@@ -106,72 +108,26 @@ def tokenizeText(sample):
 
     return tokens
 
-
-def printNMostInformative(vectorizer, clf, N):
-    """Prints features with the highest coefficient values, per class"""
-    feature_names = vectorizer.get_feature_names()
-    coefs_with_fns = sorted(zip(clf.coef_[0], feature_names))
-    topClass1 = coefs_with_fns[:N]
-    topClass2 = coefs_with_fns[:-(N + 1):-1]
-    print("Class 1 best: ")
-    for feat in topClass1:
-        print(feat)
-    print("Class 2 best: ")
-    for feat in topClass2:
-        print(feat)
-
-
-# May only work with LinearSVC() classifier.
-def print_top10(vectorizer, clf, class_labels):
-    """Prints features with the highest coefficient values, per class"""
-    feature_names = vectorizer.get_feature_names()
-    print(feature_names)
-    for i, class_label in enumerate(class_labels):
-        top10 = np.argsort(clf.coef_[i])[-10:]
-        print("%s:" % (class_label))
-        print(" ".join((feature_names[j]) for j in top10), )
-        print()
+def regexCallable(regex_list):
+    for pattern in self.regex_list:
+        results = []
+        regex = re.compile(pattern)
+        result = regex.search(query)
+        if result is not None:
+            match = result.group(0)
+            results.append(match)
+    return results
 
 
 """
 DATA
     - Extract training data from intents.json and include a set of test data.
 """
-data = createTrainingDataFromJSON("../resources/intents.json");
+data = createTrainingDataFromJSON("../resources/is_plural.json");
 
 trainingData = data[0]
 labeledData = data[1]
 
-test = ["What are the best selling items this quarter?",
-        "Who is my top customer this month?",
-        "What items are on sale?",
-        "What is my best selling item this month?",
-        "Who are my top customers?",
-        "Get me the top selling items.",
-        "What is my best selling item?",
-        "Get me my most recent order.",
-        "get me all refunded orders from today",
-        "list the refunded orders from this month.",
-        "Show me all the one sale items today.",
-        "Who is my top customer?",
-        "Who was my top customer this month?",
-        "What is my best selling SM3?",
-        "get me order 2132"]
-labelsTest = ["plural",
-              "singular",
-              "plural",
-              "singular",
-              "",
-              "",
-              "",
-              "",
-              "",
-              "",
-              "",
-              "",
-              "",
-              "",
-              ""]
 """
 SETUP
     - the vectorizer, feature selector, and classifier definitions
@@ -182,46 +138,22 @@ SETUP
 
     NOTE: look into DictVectorizer to create new features and scipy.sparse.hstack to stack sparse feature matrices.
 """
-
-test_vectorizer = CountVectorizer()
-test_tfidf = TfidfTransformer()
-SGD_clf = SGDClassifier()
+# regex_vectorizer = CountVectorizer(analyzer=regexCallable[r"('s)"])
+vocabulary_vectorizer = CountVectorizer(vocabulary=["items","products"])
+ngram_vectorizer = CountVectorizer(analyzer='char_wb', ngram_range=(2, 5), min_df=1)
+vectorizer = CountVectorizer(tokenizer=tokenizeText, ngram_range=(1, 2))
+combined_vectorizer = FeatureUnion([("ngram", ngram_vectorizer), ("token", vectorizer), ("vocab", vocabulary_vectorizer)])
+tfidf = TfidfTransformer(norm='l2', use_idf=True)
 lsvc_clf = svm.LinearSVC()
 
-
-# Test parameters for this pipeline setup
-testPipe = Pipeline(
-    [('vectorizer', test_vectorizer), ('tfidf', test_tfidf), ('clf', SGD_clf)])
-
-# grid_search = GridSearchCV(testPipe, parameters, n_jobs=-1, verbose=1)
-# grid_search.fit(trainingData, labeledData)
-# print("Best score: %0.3f" % grid_search.best_score_)
-# print("Best parameters set:")
-# best_parameters = grid_search.best_estimator_.get_params()
-# for param_name in sorted(parameters.keys()):
-#     print("\t%s: %r" % (param_name, best_parameters[param_name]))
-
 # the final to clean, tokenize, vectorize, feature select and classifier determined by GridSearchCV above
-vectorizer = CountVectorizer(tokenizer=tokenizeText, ngram_range=(1, 2))
-tfidf = TfidfTransformer(norm='l2', use_idf=True)
-
 clf = CalibratedClassifierCV(lsvc_clf)
-pipe = Pipeline([('cleanText', CleanTextTransformer()), ('vectorizer', vectorizer), ('clf', clf)])
+pipe = Pipeline([('cleanText', CleanTextTransformer()), ('vectorizer', combined_vectorizer), ('tfidf', tfidf), ('clf', clf)])
 
 ################################################################################################################
 # train
 pipe.fit(trainingData, labeledData)
 classes = pipe.classes_.tolist()
-print(pipe.score(test, labelsTest))
-
-print()
-start_time = timeit.default_timer()
-s = pickle.dumps(pipe)
-print(timeit.default_timer() - start_time)
-print(sys.getsizeof(s) / 100000)
-start_time = timeit.default_timer()
-pipe2 = pickle.loads(s)
-print(timeit.default_timer() - start_time)
 
 # test
 string = 'some string'
@@ -233,37 +165,6 @@ while (string):
     confidence_metrics = list(zip(classes, class_probabilities[0]))
     results = sorted(confidence_metrics, key=lambda tup: tup[1], reverse=True)
     print()
-    for i in range(0, 5):
+    for i in range(0, 2):
         print(results[i])
     print()
-
-preds = pipe.predict(test)
-print("----------------------------------------------------------------------------------------------")
-print("results:")
-for (sample, pred) in zip(test, preds):
-    print(sample, ":", pred)
-print("accuracy:", accuracy_score(labelsTest, preds))
-
-print("----------------------------------------------------------------------------------------------")
-print("Top 10 features used to predict: ")
-# show the top features
-# printNMostInformative(vectorizer, clf, 10)
-print_top10(vectorizer, nb_clf, nb_clf.classes_)
-
-print("----------------------------------------------------------------------------------------------")
-print("The original data as it appeared to the classifier after tokenizing, lemmatizing, stoplisting, etc")
-# let's see what the pipeline was transforming the data into
-pipe = Pipeline([('cleanText', CleanTextTransformer()), ('vectorizer', vectorizer)])
-transform = pipe.fit_transform(trainingData, labeledData)
-
-# get the features that the vectorizer learned (its vocabulary)
-vocab = vectorizer.get_feature_names()
-
-# the values from the vectorizer transformed data (each item is a row,column index with value as # times occurring in the sample, stored as a sparse matrix)
-# for i in range(len(train)):
-#     s = ""
-#     indexIntoVocab = transform.indices[transform.indptr[i]:transform.indptr[i+1]]
-#     numOccurences = transform.data[transform.indptr[i]:transform.indptr[i+1]]
-#     for idx, num in zip(indexIntoVocab, numOccurences):
-#         s += str((vocab[idx], num))
-#     print("Sample {}: {}".format(i, s))

@@ -4,27 +4,37 @@
 
 ##### Not Started:
 
-- [ ] Papertrails logging
-- [ ] Start prototyping 'Trait' parsing
-- [ ] Develop annotator groups (sort of like mini pipelines)
-
-
-##### In-Progress:
-- [ ] COMMENT/DOCUMENTATION OVERHAUL => START STRONG, FINISH STRONG
-- [ ] Create test for get-stopwords-and-entities database method
-- [ ] Work on gazetteer specificity
-- [x] Create ReGex annotor capability
-    - [x] Code
-    - [ ] Test
-- [ ] Create location and geographical parsing
-    - Look into geograpy library
 - [ ] Start prototyping datetime parsing
 	- In talks with maintainer of SpaCy
 	- User proposed regex based toy library
-    
+	- Perhaps create a microserver to ping Duckling.
+- [ ] Create location and geographical parsing
+    - Look into geograpy library
+- [ ] Develop annotator groups (sort of like mini pipelines)
+- [ ] Create bot specific annotator capability
+- [ ] Store annotator information in database to avoid hardcoding parameters and data
+
+
+##### In-Progress:
+
+- [ ] Build test database to mimic production database for testing.
+- [ ] Create test for get-stopwords-and-entities database method
+- [ ] Restructure database to support entities table and connect to intents with OIDs.
+- [ ] Integrate trait parsing for plurality
+- [x] Create ReGex annotor capability
+    - [x] Code
+    - [ ] Test
+
 ##### Version Change Log:
 
+###### Version 0.4: Logging, 
+- [x] In app logging to Papertrails, transimission syslog of Apache to Papertrails 
+- [x] COMMENT/DOCUMENTATION OVERHAUL => START STRONG, FINISH STRONG
+- [x] Work on gazetteer specificity
+- [x] Start prototyping 'Trait' parsing 
+
 ###### Version 0.3: Major change for gazeteer and analysis pipeline
+
 - [x] Create gazetteer
 	- [x] code
 	- [x] test
