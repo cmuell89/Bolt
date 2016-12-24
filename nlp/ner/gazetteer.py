@@ -4,6 +4,7 @@ Created on October 26, 2016
 @author: Carl L. Mueller
 @copyright: Lightning in a Bot, Inc
 """
+import os
 import logging
 from nltk.corpus import stopwords
 from nltk.stem.porter import PorterStemmer
@@ -57,12 +58,13 @@ class GazetteerModelBuilder:
                 trie_builder = SimpleTrieBuilder()
                 new_trie = trie_builder.build_simple_trie_from_dictionary(entities)
             new_gazetteer = Gazetteer(new_trie)
+
             if gazetteer_type not in GAZETTEERS:
                 GAZETTEERS[gazetteer_type] = {}
                 GAZETTEERS[gazetteer_type][key] = new_gazetteer
             else:
                 GAZETTEERS[gazetteer_type][key] = new_gazetteer
-    
+
     def update_single_gazetteer_model(self, gazetteer_type, key, entity_data=None):
         """
         Updates a single gazetteer in the global dictionary GAZETTEERS
@@ -125,12 +127,12 @@ class GazetteerModelAccessor:
         db = ExternalDatabaseEngine()
         keys = db.get_keys()
         db.release_database_connection()
-        if key not in keys:
-            return None
-        else:
-            for gazetteer in GAZETTEERS:
-                    gazetteers[gazetteer] = GAZETTEERS[gazetteer][key]
-            return gazetteers
+        if os.environ.get('ENVIRONMENT') != 'test':
+            if key not in keys:
+                return None
+        for gazetteer in GAZETTEERS:
+            gazetteers[gazetteer] = GAZETTEERS[gazetteer][key]
+        return gazetteers
 
 
 class Gazetteer:

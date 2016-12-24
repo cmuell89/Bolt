@@ -18,7 +18,7 @@ gaz_builder = GazetteerModelBuilder()
 
 clf_builder.update_serialized_model()
 environment = os.environ.get('ENVIRONMENT')
-if environment == 'prod':
+if environment == 'prod' or environment == 'dev':
     gaz_builder.initialize_gazetteer_models()
 
 
