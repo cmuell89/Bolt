@@ -1,13 +1,45 @@
 # Bolt
 Web Server hosting Lightning in a Bot's NLP prototype system.
 
-### Python Environment
+### Local Python Environment
 The interpreter environment is a virtual environment running Python version 3.5 (3.4 on Amazon Linux EC2 isntance).
 
-### Build Requirements
-See requirements.txt for dependency requirements. 
-Be sure to install in your virtual environment via $ pip install -r requirements.txt.
+#### Local setup
+
+##### PostgreSQL
+Ensure you have postgresql setup accordingly.
+    - sudo apt install postgresql postgresql-client postgresql-contrib libpq-dev
+
+##### Development Dependencies
+Be sure to install the following development dependencies (Debian):
+    - sudo apt install libffi-dev
+    - sudo apt install python3-dev
+    - sudo apt install python-psycopg2
+    - sudo apt install libpq-dev
+
+##### Virtual Environment
+Setup up your viritual environment using your systems python3, at least python 3.4.
+    - sudo apt install virutalenv
+    - cd $local/bolt/directory
+    - virtualenv -p python3 bolt-env
+Activate using
+    - source $(TopLevelBoltDirectory)/bolt-env/bin/activate
+
+##### Python packages
+See requirements.txt for dependency requirements.
+Activate virtual environtment, then
+    - pip install -r requirements.txt.
 Additional dependencies may be required for individual packages required by Bolt.
+
+##### Language Models
+Make sure to activate virtual environment then install the following language models.
+    - python -m spacy.en.download
+Run nltk downloader
+    - python
+    - import nltk
+    - nltk.downloader()
+    - Follow instructions to download 'stopwords'
+
 
 ### Deploy Requirements
 Deploying onto Elastic Beanstalk requires the CLI tool eb (you can also use the more general aws CLI tool)
