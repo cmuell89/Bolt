@@ -27,7 +27,7 @@ if os.environ.get('ENVIRONMENT') == 'prod':
                                   port=os.environ.get('BOLT_DB_PORT'))
 else:
     """ Connect to local database if in test or dev mode. """
-    logger.debug('Created threaded database conenction pool for TEST/DEV environment.')
+    logger.debug('Created threaded database connection pool for TEST/DEV environment.')
     pool = ThreadedConnectionPool(2,
                                   20,
                                   database=os.environ.get('LOCAL_DB_NAME'),
@@ -40,7 +40,7 @@ else:
 class CoreDatabase:
     def __init__(self):
         try:
-            logger.debug("Retrieiving database connection from pool.")
+            logger.debug("Retrieving database connection from pool.")
             self.conn = pool.getconn()
             self.cur = self.conn.cursor()
         except psycopg2.Error as e:
@@ -57,7 +57,7 @@ class CoreDatabase:
 
 class ExternalDatabaseEngine(CoreDatabase):
     """
-    CoreDatabase extendning class that manages information retreival from materialized view of Shopify data.
+    CoreDatabase extending class that manages information retrieval from materialized view of Shopify data.
     """
     def __init__(self):
         CoreDatabase.__init__(self)
@@ -148,7 +148,7 @@ class IntentsDatabaseEngine(CoreDatabase):
         :return: list of intents
         """
         try:
-            self.cur.execute("SELECT intents FROM nlp.intents;")
+            self.cur.execute("SELECT intent_name FROM nlp.intents;")
             logger.debug("Retrieving all intents")
             list_of_intents = [x[0] for x in self.cur.fetchall()]
             return list_of_intents
@@ -201,9 +201,9 @@ class IntentsDatabaseEngine(CoreDatabase):
         :return: True if exists; else false
         """
         try:
-            self.cur.execute("SELECT intents "
+            self.cur.execute("SELECT intent_name "
                              "FROM nlp.intents "
-                             "WHERE intents = (%s)", (intent,))
+                             "WHERE intent_name = %s", (intent,))
             logger.debug("Confirming intent exists")
             result = self.cur.fetchone()
             if result is None:
@@ -308,11 +308,11 @@ class IntentsDatabaseEngine(CoreDatabase):
             raise DatabaseError(e.pgerror)
 
     def get_intent_entities(self, intent):
-        # TODO NEEDS TEST
         """
         Gets the entities for the given intent
         :param intent: name of intent
-        :return: list of length of on a tuple (intent, [entities])
+        :return: list of tuple (entity_name, entity_type, positive_expressions,
+                 negative_expressions, regular_expressions, keywords)
         """
         try:
             self.cur.execute("SELECT id "
@@ -325,7 +325,8 @@ class IntentsDatabaseEngine(CoreDatabase):
             try:
                 self.cur.execute("SELECT "
                                  "  entity_name, entity_type, "
-                                 "  positive_expressions, negative_expressions, regular_expressions "
+                                 "  positive_expressions, negative_expressions, "
+                                 "  regular_expressions, keywords "
                                  "FROM ( SELECT * FROM nlp.intents_entities"
                                  "       JOIN nlp.entities ON intents_entities.entity_id = entities.id"
                                  "       JOIN nlp.intents ON intents_entities.intent_id = intents.id"
@@ -345,7 +346,8 @@ class IntentsDatabaseEngine(CoreDatabase):
         Adds a entities to an intent
         :param intent: name of intent
         :param entities: list of entities or single string entity
-        :return: list of length of on a tuple (intent, [entities])
+        :return: list of tuples (entity_name, entity_type, positive_expressions,
+                 negative_expressions, regular_expressions, keywords)
         """
         entities_db_engine = EntitiesDatabaseEngine()
         try:
@@ -362,8 +364,7 @@ class IntentsDatabaseEngine(CoreDatabase):
                     for entity in entities:
                         if entities_db_engine.confirm_entity_exists(entity):
                             entity_result = entities_db_engine.get_entity(entity)
-                            if entity_result:
-                                entity_id = entity_result[0][0]
+                            entity_id = entity_result[0][0]
                             self.cur.execute("INSERT INTO nlp.intents_entities "
                                              "(intent_id, entity_id) "
                                              "VALUES (%s, %s)", (intent_id, entity_id))
@@ -384,18 +385,20 @@ class IntentsDatabaseEngine(CoreDatabase):
 
     def delete_entities_from_intent(self, intent, entities):
         # TODO NEEDS UPDATE
+        entities_db_engine = EntitiesDatabaseEngine()
         try:
-            existing_entities = self.get_intent_entities(intent)[0][1]
             if not isinstance(entities, list):
                 entities = [entities]
             if len(entities) > 0:
                 for entity in entities:
-                    if entity in existing_entities:
-                        existing_entities.remove(entity)
-                self.cur.execute("UPDATE nlp.intents "
-                                 "SET entities = %s "
-                                 "WHERE nlp.intents.intent_name = %s", (existing_entities, intent))
-                self.conn.commit()
+                    if entities_db_engine.confirm_entity_exists(entity):
+                        entity_result = entities_db_engine.get_entity(entity)
+                        entity_id = entity_result[0][0]
+                        self.cur.execute("DELETE FROM nlp.intents_entities "
+                                         "WHERE nlp.intents_entities.entity_id = %s",
+                                         (entity_id,))
+                    self.conn.commit()
+                    return self.get_intent_entities(intent)
                 return self.get_intent_entities(intent)
             else:
                 msg = "Method expects a non-null string or non-empty list of entities"
@@ -406,6 +409,7 @@ class IntentsDatabaseEngine(CoreDatabase):
             logger.exception(e.pgerror)
             raise DatabaseError(e.pgerror)
 
+
 class EntitiesDatabaseEngine(CoreDatabase):
     """
     Core database communication layer to manage Entities in database
@@ -414,69 +418,120 @@ class EntitiesDatabaseEngine(CoreDatabase):
         CoreDatabase.__init__(self)
 
     def get_entities(self):
-        self.cur.execute("SELECT * FROM nlp.entities")
-        return self.cur.fetchall()
+        try:
+            self.cur.execute("SELECT * FROM nlp.entities")
+            return self.cur.fetchall()
+        except psycopg2.Error as e:
+            self.conn.rollback()
+            logger.exception(e.pgerror)
+            raise DatabaseError(e.pgerror)
 
     def get_entity(self, entity):
-        self.cur.execute("SELECT * FROM nlp.entities "
-                         "WHERE entity_name = %s", (entity,))
-        return self.cur.fetchall()
+        try:
+            self.cur.execute("SELECT * FROM nlp.entities "
+                             "WHERE entity_name = %s", (entity,))
+            return self.cur.fetchall()
+        except psycopg2.Error as e:
+            self.conn.rollback()
+            logger.exception(e.pgerror)
+            raise DatabaseError(e.pgerror)
 
-    def add_entity(self, entity_name, entity_type, positive_expressions=None, negative_expressions=None, regular_expressions=None):
-        self.cur.execute("INSERT INTO nlp.entities "
-                         "(entity_name, entity_type, positive_expressions, negative_expressions, regular_expressions) "
-                         "VALUES (%s,%s,%s,%s,%s)", (entity_name, entity_type, positive_expressions, negative_expressions, regular_expressions,))
-        self.conn.commit()
+    def add_entity(self, entity_name, entity_type, positive_expressions=None,
+                   negative_expressions=None, regular_expressions=None, keywords=None):
+        try:
+            self.cur.execute("INSERT INTO nlp.entities "
+                             "(entity_name, entity_type, positive_expressions, "
+                             "negative_expressions, regular_expressions, keywords) "
+                             "VALUES (%s,%s,%s,%s,%s,%s)", (entity_name, entity_type, positive_expressions,
+                                                            negative_expressions, regular_expressions, keywords,))
+            self.conn.commit()
+            return self.get_entities()
+        except psycopg2.Error as e:
+            self.conn.rollback()
+            logger.exception(e.pgerror)
+            raise DatabaseError(e.pgerror)
 
     def update_entity(self, entity, **kwargs):
-        self.cur.execute("SELECT * FROM nlp.entities "
-                         "WHERE entity_name = %s", (entity,))
-        current_entity = self.cur.fetchall()[0]
-        """ Set all current values of the entity to be updated"""
-        entity_id = current_entity[0]
-        entity_name = current_entity[1]
-        entity_type = current_entity[2]
-        positive_expressions = current_entity[3]
-        negative_expressions = current_entity[4]
-        regular_expressions = current_entity[5]
-        for key, value in kwargs.items():
-            if key == 'entity_name':
-                entity_name = value
-            if key == 'entity_type':
-                entity_type = value
-            if key == 'positive_expressions':
-                positive_expressions = value
-            if key == 'negative_expressions':
-                negative_expressions = value
-            if key == 'regular_expressions':
-                regular_expressions = value
-        self.cur.execute("UPDATE nlp.entities "
-                         "SET entity_name = %s, "
-                         "    entity_type = %s, "
-                         "    positive_expressions = %s, "
-                         "    negative_expressions = %s, "
-                         "    regular_expressions = %s "
-                         "WHERE id = %s", (entity_name, entity_type, positive_expressions,
-                                           negative_expressions, regular_expressions, entity_id,))
-        self.conn.commit()
-        self.cur.execute("SELECT * FROM nlp.entities "
-                         "WHERE id = %s", (entity_id,))
-        return self.cur.fetchall()
+        try:
+            self.cur.execute("SELECT * FROM nlp.entities "
+                             "WHERE entity_name = %s", (entity,))
+            current_entity = self.cur.fetchall()[0]
+            """ Set all current values of the entity to be updated"""
+            entity_id = current_entity[0]
+            entity_name = current_entity[1]
+            entity_type = current_entity[2]
+            positive_expressions = current_entity[3]
+            negative_expressions = current_entity[4]
+            regular_expressions = current_entity[5]
+            keywords = current_entity[6]
+            for key, value in kwargs.items():
+                if key == 'entity_name':
+                    entity_name = value
+                if key == 'entity_type':
+                    entity_type = value
+                if key == 'positive_expressions':
+                    if isinstance(value, list):
+                        positive_expressions = value
+                    else:
+                        raise DatabaseInputError("List of strings required for positive_expressions")
+                if key == 'negative_expressions':
+                    if isinstance(value, list):
+                        negative_expressions = value
+                    else:
+                        raise DatabaseInputError("List of strings required for negative_expressions")
+                if key == 'regular_expressions':
+                    if isinstance(value, list):
+                        regular_expressions = value
+                    else:
+                        raise DatabaseInputError("List of strings required for regular_expressions")
+                if key == 'keywords':
+                    if isinstance(value, list):
+                        keywords = value
+                    else:
+                        raise DatabaseInputError("List of strings required for keywords")
+            self.cur.execute("UPDATE nlp.entities "
+                             "SET entity_name = %s, "
+                             "    entity_type = %s, "
+                             "    positive_expressions = %s, "
+                             "    negative_expressions = %s, "
+                             "    regular_expressions = %s, "
+                             "    keywords = %s "
+                             "WHERE id = %s", (entity_name, entity_type, positive_expressions,
+                                               negative_expressions, regular_expressions, keywords, entity_id,))
+            self.conn.commit()
+            self.cur.execute("SELECT * FROM nlp.entities "
+                             "WHERE id = %s", (entity_id,))
+            return self.cur.fetchall()
+        except psycopg2.Error as e:
+            self.conn.rollback()
+            logger.exception(e.pgerror)
+            raise DatabaseError(e.pgerror)
 
     def delete_entity(self, entity):
-        self.cur.execute("DELETE FROM nlp.entities "
-                         "WHERE nlp.entities.entity_name = %s", (entity,))
-        self.conn.commit()
-        return self.get_entities()
+        try:
+            self.cur.execute("DELETE FROM nlp.entities "
+                             "WHERE nlp.entities.entity_name = %s", (entity,))
+            self.conn.commit()
+            return self.get_entities()
+        except psycopg2.Error as e:
+            self.conn.rollback()
+            logger.exception(e.pgerror)
+            raise DatabaseError(e.pgerror)
 
     def confirm_entity_exists(self, entity):
-        self.cur.execute("SELECT * FROM nlp.entities "
-                         "WHERE entity_name = %s", (entity,))
-        results = self.cur.fetchall()
-        if len(results) > 0:
-            return True
-        else:
-            return False
+        try:
+            self.cur.execute("SELECT * FROM nlp.entities "
+                             "WHERE entity_name = %s", (entity,))
+            results = self.cur.fetchall()
+            if len(results) > 0:
+                return True
+            else:
+                return False
+        except psycopg2.Error as e:
+            self.conn.rollback()
+            logger.exception(e.pgerror)
+            raise DatabaseError(e.pgerror)
+
 
 class ExpressionsDatabaseEngine(CoreDatabase):
     """

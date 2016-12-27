@@ -14,7 +14,7 @@ import os
 from utils.custom_assertions import CustomAssertions
 from nlp.clf.classification import ClassificationModelBuilder, ClassificationModelAccessor, Classifier
 from nlp.ner.gazetteer import GazetteerModelBuilder, GazetteerModelAccessor, Gazetteer
-from database.database import ExpressionsDatabaseEngine, IntentsDatabaseEngine
+from database.database import ExpressionsDatabaseEngine, IntentsDatabaseEngine, EntitiesDatabaseEngine
 from builtins import int, str
 
 logger = logging.getLogger('BOLT.test')
@@ -24,77 +24,164 @@ class EntitiesDatabaseTest(unittest.TestCase, CustomAssertions):
 
     @classmethod
     def setUpClass(cls):
+        cls.entities_db = EntitiesDatabaseEngine()
+        cls.intents_db = IntentsDatabaseEngine()
+        cls.intents_db.add_intent('test_intent')
+        cls.entities_db.add_entity('test-entity', 'test-type', ['pos1', 'pos2'], ['neg1', 'neg2'], ['reg1', 'reg2'], ['key1', 'ket2'])
         logger.info("TEST SUITE: EntitiesDatabaseTest")
 
     @classmethod
     def tearDownClass(cls):
+        cls.entities_db.delete_entity('test-entity')
+        cls.intents_db.delete_intent('test_intent')
+        cls.entities_db.release_database_connection()
+        cls.intents_db.release_database_connection()
         logger.info("TEST SUITE PASS: EntitiesDatabaseTest\n")
 
     def test_get_intent_entities(self):
         logger.info("TEST: get_intent_entities()")
         db = IntentsDatabaseEngine()
-        # entities = db.get_intent_entities('get-best-selling-items')[0][1]
-        # self.assertIsInstance(entities, list)
-        # self.assertIn('product_name', entities)
+        results = db.get_intent_entities('get-best-selling-items')
+        self.assertIsInstance(results, list)
+        self.assertIsInstance(results[0], tuple)
+        entities = []
+        for result in results:
+            entities.append(result[0])
+        self.assertIn('product-name', entities)
         db.release_database_connection()
-        self.fail("Test needed.")
         logger.info("TEST PASS: get_intent_entities()")
 
     def test_add_entities_to_intent(self):
         logger.info("TEST: add_entities_to_intent()")
-        db = IntentsDatabaseEngine()
-        # db.add_intent('test_intent')
-        # test_entities = ['test_entity_one', 'test_entity_two']
-        # results = db.add_entities_to_intent('test_intent', test_entities)[0][1]
-        # self.assertIn('test_entity_one', results)
-        # self.assertIn('test_entity_two', results)
-        # second_result = db.add_entities_to_intent('test_intent', 'test_entity_three')[0][1]
-        # self.assertIn('test_entity_three', second_result)
-        # db.delete_intent('test_intent')
-        db.release_database_connection()
-        self.fail("Test needed.")
+        intents_db = IntentsDatabaseEngine()
+        entities_db = EntitiesDatabaseEngine()
+        entities_db.confirm_entity_exists('test-entity')
+        results = intents_db.add_entities_to_intent('test_intent', ['test-entity'])
+        self.assertIsInstance(results, list)
+        self.assertIsInstance(results[0], tuple)
+        entities = []
+        for result in results:
+            entities.append(result[0])
+        self.assertIn('test-entity', entities)
+        intents_db.delete_entities_from_intent('test_intent', ['test-entity'])
+        intents_db.release_database_connection()
+        entities_db.release_database_connection()
         logger.info("TEST PASS: add_entities_to_intent()")
 
     def test_delete_entities_from_intent(self):
         logger.info("TEST: delete_entities_from_intent()")
-        db = IntentsDatabaseEngine()
-        # db.add_intent('test_intent')
-        # test_entities = ['test_entity_one', 'test_entity_two', 'test_entity_three']
-        # db.add_entities_to_intent('test_intent', test_entities)
-        # results = db.delete_entities_from_intent('test_intent', ['test_entity_one', 'test_entity_two'])[0][1]
-        # self.assertNotIn('test_entity_one', results)
-        # self.assertNotIn('test_entity_two', results)
-        # second_results = db.delete_entities_from_intent('test_intent', 'test_entity_three')[0][1]
-        # self.assertEqual([], second_results)
-        # db.delete_intent('test_intent')
-        db.release_database_connection()
-        self.fail("Test needed.")
+        intents_db = IntentsDatabaseEngine()
+        entities_db = EntitiesDatabaseEngine()
+        entities_db.confirm_entity_exists('test-entity')
+        results = intents_db.add_entities_to_intent('test_intent', ['test-entity'])
+        self.assertIsInstance(results, list)
+        self.assertIsInstance(results[0], tuple)
+        results = intents_db.delete_entities_from_intent('test_intent', ['test-entity'])
+        entities = []
+        for result in results:
+            entities.append(result[0])
+        self.assertNotIn('test-entity', entities)
+        intents_db.release_database_connection()
+        entities_db.release_database_connection()
         logger.info("TEST PASS: delete_entities_from_intent()")
 
     def test_get_entities(self):
         logger.info("TEST: get_entities()")
-        self.fail("Test needed.")
+        db = EntitiesDatabaseEngine()
+        results = db.get_entities()
+        self.assertIsInstance(results, list)
+        self.assertIsInstance(results[0], tuple)
+        entities = []
+        for result in results:
+            entities.append(result[1])
+        self.assertIn('test-entity', entities)
+        for result in results:
+            if result[0] == 'test-entity':
+                self.assertEqual(result[1], 'test-type')
+                self.assertEqual(result[2], ['pos1', 'pos2'])
+                self.assertEqual(result[3], ['neg1', 'neg2'])
+                self.assertEqual(result[4], ['reg1', 'reg2'])
+                self.assertEqual(result[5], ['key1', 'ket2'])
+        db.release_database_connection()
         logger.info("TEST PASS: get_entities()")
 
+    def test_get_entity(self):
+        logger.info("TEST: get_entity()")
+        db = EntitiesDatabaseEngine()
+        result = db.get_entity('test-entity')[0]
+        self.assertEqual(result[1], 'test-entity')
+        self.assertEqual(result[2], 'test-type')
+        self.assertEqual(result[3], ['pos1', 'pos2'])
+        self.assertEqual(result[4], ['neg1', 'neg2'])
+        self.assertEqual(result[5], ['reg1', 'reg2'])
+        self.assertEqual(result[6], ['key1', 'ket2'])
+        db.release_database_connection()
+        logger.info("TEST PASS: get_entity()")
+
     def test_add_entity(self):
-        logger.info("TEST: add_entities")
-        self.fail("Test needed.")
+        logger.info("TEST: add_entity")
+        db = EntitiesDatabaseEngine()
+        results = db.add_entity('second-test-entity', 'test-type', ['pos1', 'pos2'], ['neg1', 'neg2'], ['reg1', 'reg2'], ['key1', 'ket2'])
+        self.assertIsInstance(results, list)
+        self.assertIsInstance(results[0], tuple)
+        entities = []
+        for result in results:
+            entities.append(result[1])
+        self.assertIn('second-test-entity', entities)
+        for result in results:
+            if result[0] == 'second-test-entity':
+                self.assertEqual(result[1], 'test-type')
+                self.assertEqual(result[2], ['pos1', 'pos2'])
+                self.assertEqual(result[3], ['neg1', 'neg2'])
+                self.assertEqual(result[4], ['reg1', 'reg2'])
+                self.assertEqual(result[5], ['key1', 'ket2'])
+        db.delete_entity('second-test-entity')
+        db.release_database_connection()
         logger.info("TEST PASS: add_entities()")
 
     def test_update_entity(self):
         logger.info("TEST: update_entity()")
-        self.fail("Test needed.")
+        db = EntitiesDatabaseEngine()
+        updates = {'entity_name': 'updated_name', 'entity_type': 'updated_type',
+                   'positive_expressions': ['pos1', 'pos2', 'pos3'], 'negative_expressions': ['neg1', 'neg2', 'neg3'],
+                   'regular_expressions': ['reg1', 'reg2', 'reg3'], 'keywords': ['key1', 'ket2', 'key3']}
+        db.add_entity('second-test-entity', 'test-type', ['pos1', 'pos2'], ['neg1', 'neg2'], ['reg1', 'reg2'],
+                      ['key1', 'ket2'])
+        result = db.update_entity('second-test-entity', **updates)[0]
+        self.assertEqual(result[1], 'updated_name')
+        self.assertEqual(result[2], 'updated_type')
+        self.assertEqual(result[3], ['pos1', 'pos2', 'pos3'])
+        self.assertEqual(result[4], ['neg1', 'neg2', 'neg3'])
+        self.assertEqual(result[5], ['reg1', 'reg2', 'reg3'])
+        self.assertEqual(result[6], ['key1', 'ket2', 'key3'])
+        db.delete_entity('updated_name')
+        db.release_database_connection()
         logger.info("TEST PASS: update_entity()")
 
     def test_delete_entity(self):
         logger.info("TEST: delete_entities_from_intent()")
-        self.fail("Test needed.")
+        db = EntitiesDatabaseEngine()
+        results = db.add_entity('second-test-entity', 'test-type', ['pos1', 'pos2'], ['neg1', 'neg2'], ['reg1', 'reg2'],
+                                ['key1', 'ket2'])
+        entities = []
+        for result in results:
+            entities.append(result[1])
+        self.assertIn('second-test-entity', entities)
+        results = db.delete_entity('second-test-entity')
+        entities = []
+        for result in results:
+            entities.append(result[1])
+        self.assertNotIn('second-test-entity', entities)
+        db.release_database_connection()
         logger.info("TEST PASS: delete_entities_from_intent()")
 
     def confirm_entity_exists(self):
         logger.info("TEST: delete_entities_from_intent()")
-        self.fail("Test needed.")
+        db = EntitiesDatabaseEngine()
+        self.assertTrue(db.confirm_entity_exists('test-entity'))
+        db.release_database_connection()
         logger.info("TEST PASS: delete_entities_from_intent()")
+
 
 class StopwordsDatabaseTest(unittest.TestCase, CustomAssertions):
     """
@@ -183,6 +270,7 @@ class IntentsDatabaseTest(unittest.TestCase, CustomAssertions):
         db.add_intent('soon-to-be-deleted')
         results = db.delete_intent('soon-to-be-deleted')
         self.assertNotIn(('soon-to-be-deleted',), results)
+        db.release_database_connection()
         logger.info("TEST PASS: delete_intent()")
 
     def test_confirm_intent_exists(self):
@@ -194,6 +282,7 @@ class IntentsDatabaseTest(unittest.TestCase, CustomAssertions):
         db.delete_intent('confirmation-intent')
         intent_exists = db.confirm_intent_exists('confirmation-intent')
         self.assertEqual(False, intent_exists)
+        db.release_database_connection()
         logger.info("TEST PASS: confirm_intent_exists()")
 
 
@@ -323,6 +412,7 @@ class ExpressionsDatabaseTest(unittest.TestCase, CustomAssertions):
         after_results = db.delete_unlabeled_expression_by_id(expression_id[0])
         after_expression = [tup[1] for tup in after_results]
         self.assertNotIn((test_expression,), after_expression)
+        db.release_database_connection()
         logger.info("TEST PASS: delete_unlabeled_expressions()")
 
     def test_delete_archived_expression(self):
@@ -336,6 +426,7 @@ class ExpressionsDatabaseTest(unittest.TestCase, CustomAssertions):
         after_results = db.delete_archived_expression_by_id(expression_id[0])
         after_expression = [tup[1] for tup in after_results]
         self.assertNotIn((test_expression,), after_expression)
+        db.release_database_connection()
         logger.info("TEST PASS: delete_archived_expresssion()")
 
     '''
@@ -352,6 +443,7 @@ class ExpressionsDatabaseTest(unittest.TestCase, CustomAssertions):
         db.delete_unlabeled_expression_by_id(expression_id[0])
         expression_exists = db.confirm_unlabeled_expression_exists(expression_id[0])
         self.assertEqual(False, expression_exists)
+        db.release_database_connection()
         logger.info("TEST PASS: confirm_unlabeled_expression_exists()")
 
     def test_confirm_archived_expression_exists(self):
@@ -365,6 +457,7 @@ class ExpressionsDatabaseTest(unittest.TestCase, CustomAssertions):
         db.delete_archived_expression_by_id(expression_id[0])
         expression_exists = db.confirm_archived_expression_exists(expression_id[0])
         self.assertEqual(False, expression_exists)
+        db.release_database_connection()
         logger.info("TEST PASS: confirm_archived_expression_exists()")
 
 
