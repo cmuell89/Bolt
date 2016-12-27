@@ -1,5 +1,13 @@
 import re
+import logging
 
+# REGEXERS = {}
+#
+# class RegexModelBuilder:
+#     """
+#     Builds Regexer objects of varying lists of regex types and assigns the name to the regex
+#     dict.
+#     """
 
 class Regexer:
     def __init__(self, regex_list):

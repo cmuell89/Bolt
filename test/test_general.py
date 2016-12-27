@@ -33,41 +33,68 @@ class EntitiesDatabaseTest(unittest.TestCase, CustomAssertions):
     def test_get_intent_entities(self):
         logger.info("TEST: get_intent_entities()")
         db = IntentsDatabaseEngine()
-        entities = db.get_intent_entities('get-best-selling-items')[0][1]
-        self.assertIsInstance(entities, list)
-        self.assertIn('product_name', entities)
+        # entities = db.get_intent_entities('get-best-selling-items')[0][1]
+        # self.assertIsInstance(entities, list)
+        # self.assertIn('product_name', entities)
         db.release_database_connection()
+        self.fail("Test needed.")
         logger.info("TEST PASS: get_intent_entities()")
 
     def test_add_entities_to_intent(self):
         logger.info("TEST: add_entities_to_intent()")
         db = IntentsDatabaseEngine()
-        db.add_intent('test_intent')
-        test_entities = ['test_entity_one', 'test_entity_two']
-        results = db.add_entities_to_intent('test_intent', test_entities)[0][1]
-        self.assertIn('test_entity_one', results)
-        self.assertIn('test_entity_two', results)
-        second_result = db.add_entities_to_intent('test_intent', 'test_entity_three')[0][1]
-        self.assertIn('test_entity_three', second_result)
-        db.delete_intent('test_intent')
+        # db.add_intent('test_intent')
+        # test_entities = ['test_entity_one', 'test_entity_two']
+        # results = db.add_entities_to_intent('test_intent', test_entities)[0][1]
+        # self.assertIn('test_entity_one', results)
+        # self.assertIn('test_entity_two', results)
+        # second_result = db.add_entities_to_intent('test_intent', 'test_entity_three')[0][1]
+        # self.assertIn('test_entity_three', second_result)
+        # db.delete_intent('test_intent')
         db.release_database_connection()
+        self.fail("Test needed.")
         logger.info("TEST PASS: add_entities_to_intent()")
 
     def test_delete_entities_from_intent(self):
         logger.info("TEST: delete_entities_from_intent()")
         db = IntentsDatabaseEngine()
-        db.add_intent('test_intent')
-        test_entities = ['test_entity_one', 'test_entity_two', 'test_entity_three']
-        db.add_entities_to_intent('test_intent', test_entities)
-        results = db.delete_entities_from_intent('test_intent', ['test_entity_one', 'test_entity_two'])[0][1]
-        self.assertNotIn('test_entity_one', results)
-        self.assertNotIn('test_entity_two', results)
-        second_results = db.delete_entities_from_intent('test_intent', 'test_entity_three')[0][1]
-        self.assertEqual([], second_results)
-        db.delete_intent('test_intent')
+        # db.add_intent('test_intent')
+        # test_entities = ['test_entity_one', 'test_entity_two', 'test_entity_three']
+        # db.add_entities_to_intent('test_intent', test_entities)
+        # results = db.delete_entities_from_intent('test_intent', ['test_entity_one', 'test_entity_two'])[0][1]
+        # self.assertNotIn('test_entity_one', results)
+        # self.assertNotIn('test_entity_two', results)
+        # second_results = db.delete_entities_from_intent('test_intent', 'test_entity_three')[0][1]
+        # self.assertEqual([], second_results)
+        # db.delete_intent('test_intent')
         db.release_database_connection()
+        self.fail("Test needed.")
         logger.info("TEST PASS: delete_entities_from_intent()")
 
+    def test_get_entities(self):
+        logger.info("TEST: get_entities()")
+        self.fail("Test needed.")
+        logger.info("TEST PASS: get_entities()")
+
+    def test_add_entity(self):
+        logger.info("TEST: add_entities")
+        self.fail("Test needed.")
+        logger.info("TEST PASS: add_entities()")
+
+    def test_update_entity(self):
+        logger.info("TEST: update_entity()")
+        self.fail("Test needed.")
+        logger.info("TEST PASS: update_entity()")
+
+    def test_delete_entity(self):
+        logger.info("TEST: delete_entities_from_intent()")
+        self.fail("Test needed.")
+        logger.info("TEST PASS: delete_entities_from_intent()")
+
+    def confirm_entity_exists(self):
+        logger.info("TEST: delete_entities_from_intent()")
+        self.fail("Test needed.")
+        logger.info("TEST PASS: delete_entities_from_intent()")
 
 class StopwordsDatabaseTest(unittest.TestCase, CustomAssertions):
     """

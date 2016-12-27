@@ -160,14 +160,21 @@ class Classifier:
         for i in range(3):
             tup = intents_results[i]
             top_3.append({"intent": tup[0], "confidence": tup[1]})
-        db_results = self.db.get_intent_stopwords_and_entities(intents_results[0][0])
+        intent_stopwords = self.db.get_intent_stopwords(intents_results[0][0])
+        intent_entities = self.db.get_intent_entities(intents_results[0][0])
         self.db.release_database_connection()
-        # The dababase call returns a single tuple for which the list for which
-        # stopwords is the second element and entities are the third.
-        intent_stopwords = db_results[0][1]
-        intent_entities = db_results[0][2]
+        entities = []
+        for result in intent_entities:
+            entity = {
+                "entity_name": result[1],
+                "entity_type": result[2],
+                "positive_expressions": result[3],
+                "negative_expressions": result[4],
+                "regular_expressions": result[5],
+            }
+            entities.append(entity)
         results['intents'] = top_3
-        results['entity_types'] = intent_entities
+        results['entity_types'] = entities
         results['stopwords'] = intent_stopwords
         return results
     

@@ -55,6 +55,7 @@ class Analyzer:
         self.clf_accessor = ClassificationModelAccessor()
 
     def run_analysis(self, query, key=None):
+        # TODO CREATE CLF_PIPELINE AND THEN ENTITY_PIPELINE
         """
         Builds an AnalysisPipeline objects and the set of Annotator objects to be used in the pipeline.
         Runs the analysis and retruns the 'results' value of the Annotation object's annotations dict.
@@ -64,32 +65,39 @@ class Analyzer:
         """
         logger.info("Running analysis on query...")
         core_annotation = Annotation(query, key)
-        pipeline = AnalysisPipeline()
-        gazetteers = self.gaz_accessor.get_gazeteers(key)
+        clf_pipeline = AnalysisPipeline()
+        entity_pipeline = AnalysisPipeline()
         clf = self.clf_accessor.get_classification_pipeline('intent_classifier')
 
         """ Create the intent classifier Annotator 'clf' """
         clf_annotator = ClassificationAnnotator('clf', clf)
-        pipeline.add_annotator(clf_annotator)
+        clf_pipeline.add_annotator(clf_annotator)
+        """ Run clf_pipeline to obtain intent classification """
+        core_annotation = clf_pipeline.analyze(core_annotation)
+        """ Create annotators based on entity types of intent classification """
+        top_intent = core_annotation.annotations['entity_types']
+
+        # TODO CREATE ENITITY PIPELINE USING DATABASE INFORMATION ON ENTITIES
 
         """ for each type of gazetteer create an GazetteerAnnotator """
+        gazetteers = self.gaz_accessor.get_gazeteers(key)
         if gazetteers is not None:
             for gazetteer in gazetteers:
                 gaz_annotator = GazetteerAnnotator(gazetteer, gazetteers[gazetteer])
-                pipeline.add_annotator(gaz_annotator)
+                entity_pipeline.add_annotator(gaz_annotator)
 
         """ order name RegexAnnotator """
         order_name_regexer = RegexAnnotator('order_name', Regexer([r'([A-Za-z]*|#)[0-9]+']))
-        pipeline.add_annotator(order_name_regexer)
+        entity_pipeline.add_annotator(order_name_regexer)
 
         """ out-of-state RegexAnnotator """
         out_of_state_regexer = RegexAnnotator('out_of_state', Regexer([r'(out of state)',
                                                                        r'(out-of-state)',
                                                                        r'(((outside|out side)) of)',
                                                                        r'(outside|out side)']))
-        pipeline.add_annotator(out_of_state_regexer)
+        entity_pipeline.add_annotator(out_of_state_regexer)
 
-        core_annotation = pipeline.analyze(core_annotation)
+        core_annotation = entity_pipeline.analyze(core_annotation)
         return core_annotation.annotations['results']
 
 

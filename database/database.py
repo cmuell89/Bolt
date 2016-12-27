@@ -164,7 +164,7 @@ class IntentsDatabaseEngine(CoreDatabase):
         :return: updated list of intents
         """
         try:
-            self.cur.execute("INSERT INTO nlp.intents (intents) VALUES (%s);", (intent,))
+            self.cur.execute("INSERT INTO nlp.intents (intent_name) VALUES (%s);", (intent,))
             self.conn.commit()
             logger.debug("Adding intent: %s", intent)
             return self.get_intents()
@@ -182,9 +182,10 @@ class IntentsDatabaseEngine(CoreDatabase):
         try:
             self.cur.execute("DELETE FROM nlp.expressions "
                              "WHERE nlp.expressions.intent_id = "
-                             "(SELECT id FROM nlp.intents WHERE nlp.intents.intents = %s);", (intent,))
+                             "(SELECT id FROM nlp.intents "
+                             "WHERE nlp.intents.intent_name = %s);", (intent,))
             self.cur.execute("DELETE FROM nlp.intents "
-                             "WHERE nlp.intents.intents = %s;", (intent,))
+                             "WHERE nlp.intents.intent_name = %s;", (intent,))
             self.conn.commit()
             logger.debug("Deleting intent: %s", intent)
             return self.get_intents()
@@ -214,32 +215,6 @@ class IntentsDatabaseEngine(CoreDatabase):
             logger.exception(e.pgerror)
             raise DatabaseError(e.pgerror)
 
-    def get_intent_stopwords_and_entities(self, intent):
-        """
-        Retrives a list of stopwords for the given intent
-        :param intent: name of intent
-        :return: a one element list of the tuple (intent, [stopwords], [entities])
-        """
-        # TODO NEEDS TEST!!!
-        try:
-            self.cur.execute("SELECT id FROM nlp.intents "
-                             "WHERE nlp.intents.intents = %s;", (intent,))
-            intent_id = self.cur.fetchone()
-        except psycopg2.Error as e:
-            raise DatabaseError(e.pgerror)
-        if intent_id is not None:
-            try:
-                self.cur.execute("SELECT intents, stopwords, entities "
-                                 "FROM nlp.intents "
-                                 "WHERE nlp.intents.intents = %s;", (intent,))
-                logger.debug("Retrieving intents and stopwords for the intent: %s", intent)
-                intents_and_stopwords = self.cur.fetchall()
-                return intents_and_stopwords
-            except psycopg2.Error as e:
-                self.conn.rollback()
-                logger.exception(e.pgerror)
-                raise DatabaseError(e.pgerror)
-
     def get_intent_stopwords(self, intent):
         """
         Retrives a list of stopwords for the given intent
@@ -248,7 +223,7 @@ class IntentsDatabaseEngine(CoreDatabase):
         """
         try:
             self.cur.execute("SELECT id FROM nlp.intents "
-                             "WHERE nlp.intents.intents = %s;", (intent,))
+                             "WHERE nlp.intents.intent_name = %s;", (intent,))
             intent_id = self.cur.fetchone()
         except psycopg2.Error as e:
             raise DatabaseError(e.pgerror)
@@ -256,7 +231,7 @@ class IntentsDatabaseEngine(CoreDatabase):
             try:
                 self.cur.execute("SELECT intents, stopwords "
                                  "FROM nlp.intents "
-                                 "WHERE nlp.intents.intents = %s;", (intent,))
+                                 "WHERE nlp.intents.intent_name = %s;", (intent,))
                 logger.debug("Retrieving stopwords for the intent: %s", intent)
                 intent_stopwords = self.cur.fetchall()
                 return intent_stopwords
@@ -275,7 +250,7 @@ class IntentsDatabaseEngine(CoreDatabase):
         try:
             self.cur.execute("SELECT id "
                              "FROM nlp.intents "
-                             "WHERE nlp.intents.intents = %s;", (intent,))
+                             "WHERE nlp.intents.intent_name = %s;", (intent,))
             intent_id = self.cur.fetchone()
         except psycopg2.Error as e:
             raise DatabaseError(e.pgerror)
@@ -320,7 +295,7 @@ class IntentsDatabaseEngine(CoreDatabase):
                         existing_stopwords.remove(stopword)
                 self.cur.execute("UPDATE nlp.intents "
                                  "SET stopwords = %s "
-                                 "WHERE intents.intents = %s", (existing_stopwords, intent))
+                                 "WHERE nlp.intents.intent_name = %s", (existing_stopwords, intent))
                 self.conn.commit()
                 return self.get_intent_stopwords(intent)
             else:
@@ -333,6 +308,7 @@ class IntentsDatabaseEngine(CoreDatabase):
             raise DatabaseError(e.pgerror)
 
     def get_intent_entities(self, intent):
+        # TODO NEEDS TEST
         """
         Gets the entities for the given intent
         :param intent: name of intent
@@ -341,15 +317,20 @@ class IntentsDatabaseEngine(CoreDatabase):
         try:
             self.cur.execute("SELECT id "
                              "FROM nlp.intents "
-                             "WHERE nlp.intents.intents = %s;", (intent,))
+                             "WHERE nlp.intents.intent_name = %s;", (intent,))
             intent_id = self.cur.fetchone()
         except psycopg2.Error as e:
             raise DatabaseError(e.pgerror)
         if intent_id is not None:
             try:
-                self.cur.execute("SELECT intents, entities "
-                                 "FROM nlp.intents "
-                                 "WHERE nlp.intents.intents = %s;", (intent,))
+                self.cur.execute("SELECT "
+                                 "  entity_name, entity_type, "
+                                 "  positive_expressions, negative_expressions, regular_expressions "
+                                 "FROM ( SELECT * FROM nlp.intents_entities"
+                                 "       JOIN nlp.entities ON intents_entities.entity_id = entities.id"
+                                 "       JOIN nlp.intents ON intents_entities.intent_id = intents.id"
+                                 "      WHERE intent_id = %s"
+                                 ") q ", (intent_id,))
                 logger.debug("Retrieving entity types for the intent: %s", intent)
                 intent_entities = self.cur.fetchall()
                 return intent_entities
@@ -359,14 +340,16 @@ class IntentsDatabaseEngine(CoreDatabase):
                 raise DatabaseError(e.pgerror)
 
     def add_entities_to_intent(self, intent, entities):
+        # TODO NEEDS TEST
         """
         Adds a entities to an intent
         :param intent: name of intent
         :param entities: list of entities or single string entity
         :return: list of length of on a tuple (intent, [entities])
         """
+        entities_db_engine = EntitiesDatabaseEngine()
         try:
-            self.cur.execute("SELECT id FROM nlp.intents WHERE nlp.intents.intents = %s;", (intent,))
+            self.cur.execute("SELECT id FROM nlp.intents WHERE nlp.intents.intent_name = %s;", (intent,))
             intent_id = self.cur.fetchone()
         except psycopg2.Error as e:
             raise DatabaseError(e.pgerror)
@@ -376,9 +359,14 @@ class IntentsDatabaseEngine(CoreDatabase):
                     entities = [entities]
                 if len(entities) > 0:
                     logger.debug("Adding entities to intent: %s", intent)
-                    self.cur.execute("UPDATE nlp.intents "
-                                     "SET entities = array_cat(nlp.intents.entities, %s) "
-                                     "WHERE nlp.intents.id = %s", (entities, intent_id,))
+                    for entity in entities:
+                        if entities_db_engine.confirm_entity_exists(entity):
+                            entity_result = entities_db_engine.get_entity(entity)
+                            if entity_result:
+                                entity_id = entity_result[0][0]
+                            self.cur.execute("INSERT INTO nlp.intents_entities "
+                                             "(intent_id, entity_id) "
+                                             "VALUES (%s, %s)", (intent_id, entity_id))
                     self.conn.commit()
                     return self.get_intent_entities(intent)
                 else:
@@ -395,17 +383,18 @@ class IntentsDatabaseEngine(CoreDatabase):
             raise DatabaseInputError(msg)
 
     def delete_entities_from_intent(self, intent, entities):
+        # TODO NEEDS UPDATE
         try:
-            exisiting_entities = self.get_intent_entities(intent)[0][1]
+            existing_entities = self.get_intent_entities(intent)[0][1]
             if not isinstance(entities, list):
                 entities = [entities]
             if len(entities) > 0:
                 for entity in entities:
-                    if entity in exisiting_entities:
-                        exisiting_entities.remove(entity)
+                    if entity in existing_entities:
+                        existing_entities.remove(entity)
                 self.cur.execute("UPDATE nlp.intents "
                                  "SET entities = %s "
-                                 "WHERE intents.intents = %s", (exisiting_entities, intent))
+                                 "WHERE nlp.intents.intent_name = %s", (existing_entities, intent))
                 self.conn.commit()
                 return self.get_intent_entities(intent)
             else:
@@ -417,6 +406,77 @@ class IntentsDatabaseEngine(CoreDatabase):
             logger.exception(e.pgerror)
             raise DatabaseError(e.pgerror)
 
+class EntitiesDatabaseEngine(CoreDatabase):
+    """
+    Core database communication layer to manage Entities in database
+    """
+    def __init__(self):
+        CoreDatabase.__init__(self)
+
+    def get_entities(self):
+        self.cur.execute("SELECT * FROM nlp.entities")
+        return self.cur.fetchall()
+
+    def get_entity(self, entity):
+        self.cur.execute("SELECT * FROM nlp.entities "
+                         "WHERE entity_name = %s", (entity,))
+        return self.cur.fetchall()
+
+    def add_entity(self, entity_name, entity_type, positive_expressions=None, negative_expressions=None, regular_expressions=None):
+        self.cur.execute("INSERT INTO nlp.entities "
+                         "(entity_name, entity_type, positive_expressions, negative_expressions, regular_expressions) "
+                         "VALUES (%s,%s,%s,%s,%s)", (entity_name, entity_type, positive_expressions, negative_expressions, regular_expressions,))
+        self.conn.commit()
+
+    def update_entity(self, entity, **kwargs):
+        self.cur.execute("SELECT * FROM nlp.entities "
+                         "WHERE entity_name = %s", (entity,))
+        current_entity = self.cur.fetchall()[0]
+        """ Set all current values of the entity to be updated"""
+        entity_id = current_entity[0]
+        entity_name = current_entity[1]
+        entity_type = current_entity[2]
+        positive_expressions = current_entity[3]
+        negative_expressions = current_entity[4]
+        regular_expressions = current_entity[5]
+        for key, value in kwargs.items():
+            if key == 'entity_name':
+                entity_name = value
+            if key == 'entity_type':
+                entity_type = value
+            if key == 'positive_expressions':
+                positive_expressions = value
+            if key == 'negative_expressions':
+                negative_expressions = value
+            if key == 'regular_expressions':
+                regular_expressions = value
+        self.cur.execute("UPDATE nlp.entities "
+                         "SET entity_name = %s, "
+                         "    entity_type = %s, "
+                         "    positive_expressions = %s, "
+                         "    negative_expressions = %s, "
+                         "    regular_expressions = %s "
+                         "WHERE id = %s", (entity_name, entity_type, positive_expressions,
+                                           negative_expressions, regular_expressions, entity_id,))
+        self.conn.commit()
+        self.cur.execute("SELECT * FROM nlp.entities "
+                         "WHERE id = %s", (entity_id,))
+        return self.cur.fetchall()
+
+    def delete_entity(self, entity):
+        self.cur.execute("DELETE FROM nlp.entities "
+                         "WHERE nlp.entities.entity_name = %s", (entity,))
+        self.conn.commit()
+        return self.get_entities()
+
+    def confirm_entity_exists(self, entity):
+        self.cur.execute("SELECT * FROM nlp.entities "
+                         "WHERE entity_name = %s", (entity,))
+        results = self.cur.fetchall()
+        if len(results) > 0:
+            return True
+        else:
+            return False
 
 class ExpressionsDatabaseEngine(CoreDatabase):
     """
@@ -435,7 +495,7 @@ class ExpressionsDatabaseEngine(CoreDatabase):
         :return: list of expressions
         """
         try: 
-            self.cur.execute("SELECT id FROM nlp.intents WHERE nlp.intents.intents = %s;", (intent,))
+            self.cur.execute("SELECT id FROM nlp.intents WHERE nlp.intents.intent_name = %s;", (intent,))
             intent_id = self.cur.fetchone()
         except psycopg2.Error as e:
                 raise DatabaseError(e.pgerror)
@@ -445,7 +505,7 @@ class ExpressionsDatabaseEngine(CoreDatabase):
                                  "FROM nlp.intents "
                                  "INNER JOIN nlp.expressions "
                                  "ON nlp.intents.id = nlp.expressions.intent_id "
-                                 "WHERE nlp.intents.intents = %s;", (intent,))
+                                 "WHERE nlp.intents.intent_name = %s;", (intent,))
                 logger.debug("Retrieving all expressions for the intent: %s", intent)
                 list_of_expressions = [x[0] for x in self.cur.fetchall()]
                 return list_of_expressions
@@ -464,7 +524,7 @@ class ExpressionsDatabaseEngine(CoreDatabase):
         :return: list of tuples (intent, expression)
         """
         try:
-            self.cur.execute("SELECT intents, expressions "
+            self.cur.execute("SELECT intent_name, expressions "
                              "FROM nlp.intents "
                              "INNER JOIN nlp.expressions "
                              "ON nlp.intents.id = nlp.expressions.intent_id;")
@@ -539,7 +599,7 @@ class ExpressionsDatabaseEngine(CoreDatabase):
         """
         try: 
             self.cur.execute("SELECT id FROM nlp.intents "
-                             "WHERE nlp.intents.intents = %s;", (intent,))
+                             "WHERE nlp.intents.intent_name = %s;", (intent,))
             intent_id = self.cur.fetchone()
         except psycopg2.Error as e:
                 raise DatabaseError(e.pgerror)
@@ -640,7 +700,7 @@ class ExpressionsDatabaseEngine(CoreDatabase):
         try:
             self.cur.execute("DELETE FROM nlp.expressions "
                              "WHERE nlp.expressions.intent_id = "
-                             "(SELECT id FROM nlp.intents WHERE nlp.intents.intents = %s);", (intent,))
+                             "(SELECT id FROM nlp.intents WHERE nlp.intents.intent_name = %s);", (intent,))
             self.conn.commit()
             logger.debug("Deleting all expressions from intent: %s", intent)
             return self.get_intent_expressions(intent)
@@ -660,7 +720,8 @@ class ExpressionsDatabaseEngine(CoreDatabase):
             for expression in expressions:
                 self.cur.execute("DELETE FROM nlp.expressions "
                                  "WHERE nlp.expressions.intent_id = "
-                                 "(SELECT id FROM nlp.intents WHERE nlp.intents.intents = %s) "
+                                 "(SELECT id FROM nlp.intents "
+                                 "WHERE nlp.intents.intent_name = %s) "
                                  "AND nlp.expressions.expressions = %s;", (intent, expression))
                 logger.debug("Deleting the expression: '%s' from intent: %s", expression, intent)
                 self.conn.commit()
