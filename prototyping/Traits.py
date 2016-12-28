@@ -108,15 +108,15 @@ def tokenizeText(sample):
 
     return tokens
 
-def regexCallable(regex_list):
-    for pattern in self.regex_list:
-        results = []
-        regex = re.compile(pattern)
-        result = regex.search(query)
-        if result is not None:
-            match = result.group(0)
-            results.append(match)
-    return results
+# def regexCallable(regex_list):
+#     for pattern in self.regex_list:
+#         results = []
+#         regex = re.compile(pattern)
+#         result = regex.search(query)
+#         if result is not None:
+#             match = result.group(0)
+#             results.append(match)
+#     return results
 
 
 """
@@ -139,7 +139,7 @@ SETUP
     NOTE: look into DictVectorizer to create new features and scipy.sparse.hstack to stack sparse feature matrices.
 """
 # regex_vectorizer = CountVectorizer(analyzer=regexCallable[r"('s)"])
-vocabulary_vectorizer = CountVectorizer(vocabulary=["items","products"])
+vocabulary_vectorizer = CountVectorizer(vocabulary=["items", "products"])
 ngram_vectorizer = CountVectorizer(analyzer='char_wb', ngram_range=(2, 5), min_df=1)
 vectorizer = CountVectorizer(tokenizer=tokenizeText, ngram_range=(1, 2))
 combined_vectorizer = FeatureUnion([("ngram", ngram_vectorizer), ("token", vectorizer), ("vocab", vocabulary_vectorizer)])

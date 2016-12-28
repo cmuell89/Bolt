@@ -341,7 +341,6 @@ class IntentsDatabaseEngine(CoreDatabase):
                 raise DatabaseError(e.pgerror)
 
     def add_entities_to_intent(self, intent, entities):
-        # TODO NEEDS TEST
         """
         Adds a entities to an intent
         :param intent: name of intent
@@ -384,7 +383,6 @@ class IntentsDatabaseEngine(CoreDatabase):
             raise DatabaseInputError(msg)
 
     def delete_entities_from_intent(self, intent, entities):
-        # TODO NEEDS UPDATE
         entities_db_engine = EntitiesDatabaseEngine()
         try:
             if not isinstance(entities, list):
@@ -418,6 +416,11 @@ class EntitiesDatabaseEngine(CoreDatabase):
         CoreDatabase.__init__(self)
 
     def get_entities(self):
+        """
+        Gets all the entities from the database.
+        :return: list of tuples (id, entity_name, entity_type, positive_expressions,
+                 negative_expressions, regular_expressions, keywords)
+        """
         try:
             self.cur.execute("SELECT * FROM nlp.entities")
             return self.cur.fetchall()
@@ -427,6 +430,11 @@ class EntitiesDatabaseEngine(CoreDatabase):
             raise DatabaseError(e.pgerror)
 
     def get_entity(self, entity):
+        """
+
+        :param entity:
+        :return:
+        """
         try:
             self.cur.execute("SELECT * FROM nlp.entities "
                              "WHERE entity_name = %s", (entity,))
@@ -438,6 +446,16 @@ class EntitiesDatabaseEngine(CoreDatabase):
 
     def add_entity(self, entity_name, entity_type, positive_expressions=None,
                    negative_expressions=None, regular_expressions=None, keywords=None):
+        """
+
+        :param entity_name:
+        :param entity_type:
+        :param positive_expressions:
+        :param negative_expressions:
+        :param regular_expressions:
+        :param keywords:
+        :return:
+        """
         try:
             self.cur.execute("INSERT INTO nlp.entities "
                              "(entity_name, entity_type, positive_expressions, "
@@ -452,6 +470,12 @@ class EntitiesDatabaseEngine(CoreDatabase):
             raise DatabaseError(e.pgerror)
 
     def update_entity(self, entity, **kwargs):
+        """
+
+        :param entity:
+        :param kwargs:
+        :return:
+        """
         try:
             self.cur.execute("SELECT * FROM nlp.entities "
                              "WHERE entity_name = %s", (entity,))
@@ -508,6 +532,11 @@ class EntitiesDatabaseEngine(CoreDatabase):
             raise DatabaseError(e.pgerror)
 
     def delete_entity(self, entity):
+        """
+
+        :param entity:
+        :return:
+        """
         try:
             self.cur.execute("DELETE FROM nlp.entities "
                              "WHERE nlp.entities.entity_name = %s", (entity,))
@@ -519,6 +548,11 @@ class EntitiesDatabaseEngine(CoreDatabase):
             raise DatabaseError(e.pgerror)
 
     def confirm_entity_exists(self, entity):
+        """
+
+        :param entity:
+        :return:
+        """
         try:
             self.cur.execute("SELECT * FROM nlp.entities "
                              "WHERE entity_name = %s", (entity,))

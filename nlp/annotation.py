@@ -53,7 +53,7 @@ class AbstractAnnotator(metaclass=ABCMeta):
         pass
 
 
-class ClassificationAnnotator(AbstractAnnotator):
+class IntentClassificationAnnotator(AbstractAnnotator):
     def __init__(self, name, classifier):
         self.classifier = classifier
         super().__init__(name)
@@ -74,6 +74,25 @@ class ClassificationAnnotator(AbstractAnnotator):
         return annotation
 
 
+class BinaryClassificationAnnotator(AbstractAnnotator):
+    def __init__(self, name, classifier):
+        self.classifier = classifier
+        super().__init__(name)
+
+    def validate(self, annotation):
+        pass
+
+    def annotate(self, annotation):
+        """
+        Runs the classifier.classify method on the original text and updates the Annotation object with the results.
+        :param annotation: Annotation object to be updated
+        :return: Updated annotation object
+        """
+        result = self.classifier.classify(annotation.annotations['original_text'])
+        annotation.annotations['results']['entities'].append({"name": self.name, "value": result})
+        return annotation
+
+
 class GazetteerAnnotator(AbstractAnnotator):
     def __init__(self, name, gazetteer, max_edit_distance=2):
         self.max_edit_distance = max_edit_distance
@@ -90,8 +109,8 @@ class GazetteerAnnotator(AbstractAnnotator):
         """
         if not annotation.annotations['entity_types']:
             raise AnnotatorValidationError("No entity types found in annotation: " + self.name)
-        if self.name not in annotation.annotations['entity_types']:
-            raise AnnotatorValidationError("Entity not found. No annotation performed for: " + self.name)
+        # if self.name not in annotation.annotations['entity_types']:
+        #     raise AnnotatorValidationError("Entity not found. No annotation performed for: " + self.name)
 
     def annotate(self, annotation):
         """
@@ -122,8 +141,8 @@ class RegexAnnotator(AbstractAnnotator):
         """
         if not annotation.annotations['entity_types']:
             raise AnnotatorValidationError("No entity types found in annotation: " + self.name)
-        if self.name not in annotation.annotations['entity_types']:
-            raise AnnotatorValidationError("Entity not found. No annotation performed for: " + self.name)
+        # if self.name not in annotation.annotations['entity_types']:
+        #     raise AnnotatorValidationError("Entity not found. No annotation performed for: " + self.name)
 
     def annotate(self, annotation):
         """

@@ -10,13 +10,15 @@ Functions managing the prototype classifier.
 import string
 import logging
 import pickle
+from functools import partial
+from abc import abstractmethod, ABCMeta
 from sklearn import svm, naive_bayes
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.pipeline import Pipeline
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
+from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.calibration import CalibratedClassifierCV
 from models.spacy_model import load_spacy
 from transformers.clean_text_transformer import CleanTextTransformer
-from database.database import IntentsDatabaseEngine
+from database.database import IntentsDatabaseEngine, EntitiesDatabaseEngine
 from utils import io
 from utils.string_cleaners import normalize_whitespace
 
@@ -28,24 +30,44 @@ logger = logging.getLogger('BOLT.clf')
 SYMBOLS = " ".join(string.punctuation).split(" ") + ["-----", "---", "...", "“", "”", "'ve"]
 
 # Dict referencing pickled classifiers.
-CLASSIFIERS = {}
+CLASSIFIERS = {'multiclass': {}, 'binary': {}}
 
 
 class ClassificationModelBuilder:
     """
     Builds classification models stored in the global dict CLASSIFIERS
     """
-    def update_serialized_model(self, skl_classifier=None):
+    def update_serialized_model(self, skl_classifier=None, multiclass=True, binary=True):
         """
         Saves to the global dict CLASSIFIERS a pickled (serialized) fitted Scikit-learn model
-        :param skl_classifier: type of classifier (svm, nb)
+        :param skl_classifier: type of classifier used for intent classification (svm, nb)
+        :param multiclass: true/false on whether to update multiclass classifiers stored in CLASSIFIERS
+        :param multiclass: true/false on whether to update binary classifiers stored in CLASSIFIERS
         """
+        db = EntitiesDatabaseEngine()
+        results = db.get_entities()
+        binary_classifier_entities = []
+        for result in results:
+            if result[2] == 'binary':
+                binary_classifier_entities.append(result)
+
         logger.debug("Updating serialized classifier.")
         global CLASSIFIERS
-        fitted_pipeline = self._train_classification_pipeline(None, None, skl_classifier)
-        CLASSIFIERS['intent_classifier'] = pickle.dumps(fitted_pipeline)
-    
-    def _train_classification_pipeline(self, pipeline=None, training_data=None, skl_classifier=None):
+        """ Update global"""
+
+        if multiclass:
+            """ Build, train, and save intent classification pipeline """
+            fitted_intent_classification_pipeline = self._train_intent_classification_pipeline(None, None, skl_classifier)
+            CLASSIFIERS['multiclass']['intent_classifier'] = pickle.dumps(fitted_intent_classification_pipeline)
+
+        if binary:
+            """ Build, train, and save binary classification pipelines """
+            for binary_entity in binary_classifier_entities:
+                pipeline = self._build_binary_classification_pipeline(binary_entity[6])
+                fitted_binary_classification_pipeline = self._train_binary_classfication_pipeline(pipeline, binary_entity[3], binary_entity[4])
+                CLASSIFIERS['binary'][binary_entity[1]] = pickle.dumps(fitted_binary_classification_pipeline)
+
+    def _train_intent_classification_pipeline(self, pipeline=None, training_data=None, skl_classifier=None):
         """
         Trains the Scikit-Learn Pipeline object via the fit methods and the provided or default training data
         :param pipeline: Scikit-Learn Pipeline object
@@ -57,17 +79,32 @@ class ClassificationModelBuilder:
         if skl_classifier is None:
             skl_classifier = 'svm'
         if pipeline is None:
-            pipeline = self._build_classification_pipeline(skl_classifier)
+            pipeline = self._build_intent_classification_pipeline(skl_classifier)
         if training_data is None:
-            training_set, training_labels = io.create_data_for_pipeline_from_database()
+            training_set, training_labels = io.create_data_for_intent_pipeline_from_database()
             logger.debug("Using data from DB for training")
         else:
             training_set = training_data[0]
             training_labels = training_data[1]
         logger.debug("Fitting sklearn pipeline to data")
         return pipeline.fit(training_set, training_labels)
+
+    def _train_binary_classfication_pipeline(self, pipeline, positive_expressions, negative_expressions):
+        logger.debug("Training binary classifier")
+        training_set = []
+        training_labels = []
+        if len(positive_expressions) > 0 and len(negative_expressions) > 0:
+            for exp in positive_expressions:
+                training_set.append(exp)
+                training_labels.append('true')
+            for exp in negative_expressions:
+                training_set.append(exp)
+                training_labels.append('false')
+            return pipeline.fit(training_set, training_labels)
+        else:
+            raise Exception()
     
-    def _build_classification_pipeline(self, skl_classifier=None):
+    def _build_intent_classification_pipeline(self, skl_classifier=None):
         """
         Function that builds a sklearn pipeline.
         Currently the estimators used in this build function are hard-coded
@@ -91,8 +128,32 @@ class ClassificationModelBuilder:
             clf = naive_bayes.MultinomialNB()
         calibrated_clf = CalibratedClassifierCV(clf)
         return Pipeline([('cleanText', CleanTextTransformer()), ('vectorizer', vectorizer), ('clf', calibrated_clf)])
-    
-    def _tokenize_text(self, sample):
+
+    def _build_binary_classification_pipeline(self, keywords):
+        """
+        Function build the an sklearn pipeline for binary classification.
+        :param keywords:
+        :return:
+        """
+        """ Sci-kit learn vectorizors are combined toegether using FeatureUnion """
+        vocabulary_vectorizer = CountVectorizer(vocabulary=keywords)
+        ngram_vectorizer = CountVectorizer(analyzer='char_wb', ngram_range=(2, 5), min_df=1)
+        tokenize_text = partial(self._tokenize_text, lemmatize=True)
+        vectorizer = CountVectorizer(tokenizer=tokenize_text, ngram_range=(1, 2))
+        combined_vectorizer = FeatureUnion([("ngram", ngram_vectorizer),
+                                            ("token", vectorizer),
+                                            ("vocab", vocabulary_vectorizer)])
+
+        """ Feature Selectioin performed using term frequency inverse document frequency (TFIDF) procedure """
+        tfidf = TfidfTransformer(norm='l2', use_idf=True)
+
+        """ Linear SCV classifier type calibrated to obtain confidence results """
+        linearSVC_clf = svm.LinearSVC()
+        calibrated_clf = CalibratedClassifierCV(linearSVC_clf)
+        return Pipeline([('cleanText', CleanTextTransformer()), ('vectorizer', combined_vectorizer), ('tfidf', tfidf),
+                         ('clf', calibrated_clf)])
+
+    def _tokenize_text(self, sample, lemmatize=True):
         """
         Function that tokenizes, lemmatizes, removes potential stopwords/stop-symbols, and cleans whitespace.
         Lemmas may be useful only for intent classification but not other types of functionality (traits like plurality etc,.)
@@ -103,10 +164,11 @@ class ClassificationModelBuilder:
         tokens = spacy_nlp(sample)
             
         # lemmatize
-        lemmas = []
-        for tok in tokens:
-            lemmas.append(tok.lemma_.lower().strip() if tok.lemma_ != "-PRON-" else tok.lower_)
-        tokens = lemmas
+        if lemmatize:
+            lemmas = []
+            for tok in tokens:
+                lemmas.append(tok.lemma_.lower().strip() if tok.lemma_ != "-PRON-" else tok.lower_)
+            tokens = lemmas
         
         # stoplist the tokens (seems to worsen model performance, likely because our training data is speicifc and imperative
         # tokens = [tok for tok in tokens if tok not in STOPLIST]
@@ -123,31 +185,63 @@ class ClassificationModelAccessor:
     """
     Class providing methods to access classification models
     """
-    def get_classification_pipeline(self, classifier_type):
+    def get_classification_pipeline(self, classifier_type, classifier_name):
         """
         Loads the pickled classifier from the global CLASSIFIERS dict and returns a Classifier object
-        :param classifier_type:
+        :param classifier_type: multiclass/binary the type of classifer to access from CLASSIFIERS
+        :param classifier_name: name of classifier to access from CLASSIFIERS
         :return: the Classifier object build from the pickled object from the CLASSIFIERS global dict
         """
         global CLASSIFIERS
-        pipeline = pickle.loads(CLASSIFIERS[classifier_type])
-        classifier = Classifier(pipeline)
-        return classifier
+        pipeline = pickle.loads(CLASSIFIERS[classifier_type][classifier_name])
+        if classifier_name == 'intent_classifier':
+            return IntentClassifier(pipeline)
+        if classifier_type == 'binary':
+            return BinaryClassifier(pipeline)
 
 
-class Classifier:
-    """
-    Class instances returned from ClassificationBuilder to be used the the analysis and update modules to manage NLP
-    """
+class AbstractClassifier(metaclass=ABCMeta):
     def __init__(self, pipeline):
         self.pipeline = pipeline
+
+    @abstractmethod
+    def classify(self, document):
+        pass
+
+
+class BinaryClassifier(AbstractClassifier):
+    """
+    Class that implements AbstractClassifier and builds a object that provides binary classification results
+    """
+    def __init__(self, pipeline):
         self.db = IntentsDatabaseEngine()
+        super().__init__(pipeline)
+
+    def classify(self, document):
+        """
+        Classifies the document with a binary classification results including the strength of the confidence.
+        :param document: document to be classified
+        :return: returns a list of classification results including confidence metrics
+        """
+        classes = self.pipeline.classes_.tolist()
+        class_probabilities = self.pipeline.predict_proba([document]).tolist()
+        confidence_metrics = list(zip(classes, class_probabilities[0]))
+        classification_results = sorted(confidence_metrics, key=lambda tup: tup[1], reverse=True)
+        return classification_results
+
+
+class IntentClassifier(AbstractClassifier):
+    """
+    Class that implements  returned from ClassificationBuilder to be used the the analysis and update modules to manage NLP
+    """
+    def __init__(self, pipeline):
+        self.db = IntentsDatabaseEngine()
+        super().__init__(pipeline)
 
     def classify(self, document):
         """
         Classifies the document and provides additional data based on those classification results
-        :param document:
-        :type document:
+        :param document: document to be classified
         :return: Returns of a dict that contains the top3 classification results (which includes their confidences),
                  the entity types and stopwords associated with the top (highest confidence) classification result
         """
@@ -166,11 +260,9 @@ class Classifier:
         entities = []
         for result in intent_entities:
             entity = {
-                "entity_name": result[1],
-                "entity_type": result[2],
-                "positive_expressions": result[3],
-                "negative_expressions": result[4],
-                "regular_expressions": result[5],
+                "entity_name": result[0],
+                "entity_type": result[1],
+                "regular_expressions": result[4]
             }
             entities.append(entity)
         results['intents'] = top_3

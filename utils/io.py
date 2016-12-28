@@ -37,7 +37,7 @@ def create_data_for_pipeline_from_file(file_address):
         print("IO error: ", e)
 
 
-def create_data_for_pipeline_from_database():
+def create_data_for_intent_pipeline_from_database():
     """
     Function that returns an array of array of training data stored in Bolt's postgreSQL database.
 
