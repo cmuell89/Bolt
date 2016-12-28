@@ -7,6 +7,7 @@ from abc import abstractmethod, ABCMeta
 from utils.exceptions import AnnotatorValidationError
 import logging
 
+# TODO Fix
 
 class Annotation:
     """ Annotation object that is passed along a sequence of annotators """
@@ -153,4 +154,37 @@ class RegexAnnotator(AbstractAnnotator):
         """
         matches = self.regexer.get_matches(annotation.annotations['original_text'])
         annotation.annotations['results']['entities'].append({"name": self.name, "value": matches})
+        return annotation
+
+class BinaryRegexAnnotator(AbstractAnnotator):
+    def __init__(self, name, regexer):
+        self.regexer = regexer
+        super().__init__(name)
+
+    def validate(self, annotation):
+        """
+        Valiates that the annotation.annotations dict contains entity types with the name equal to the self.name of the
+        current annotator.
+        :param annotation: Annotation object to be updated
+        :type annotation:
+        :return: Updated annotation object
+        """
+        if not annotation.annotations['entity_types']:
+            raise AnnotatorValidationError("No entity types found in annotation: " + self.name)
+        # if self.name not in annotation.annotations['entity_types']:
+        #     raise AnnotatorValidationError("Entity not found. No annotation performed for: " + self.name)
+
+    def annotate(self, annotation):
+        """
+        Annotates the annotation object with the results of the Regexer object.
+        Appends the results to the annotation.annotations['results']['entities] list
+        :param annotation: The annotation object to update
+        :return: Returns the updated annotation object
+        """
+        match = self.regexer.get_matches(annotation.annotations['original_text'])
+        if match:
+            result = True
+        else:
+            result = False
+        annotation.annotations['results']['entities'].append({"name": self.name, "value": result})
         return annotation

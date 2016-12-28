@@ -8,7 +8,7 @@ import os
 import logging
 from nlp.clf.classification import ClassificationModelBuilder, ClassificationModelAccessor
 from nlp.annotation import IntentClassificationAnnotator, BinaryClassificationAnnotator,\
-                           GazetteerAnnotator, RegexAnnotator, Annotation
+                           GazetteerAnnotator, RegexAnnotator, BinaryRegexAnnotator, Annotation
 from nlp.ner.gazetteer import GazetteerModelAccessor, GazetteerModelBuilder
 from nlp.ner.regexer import Regexer
 
@@ -22,7 +22,6 @@ environment = os.environ.get('ENVIRONMENT')
 if environment == 'prod' or environment == 'dev':
     gaz_builder.initialize_gazetteer_models()
 
-# TODO: Convert all entities to useing underscore. This will affect gazetteer files.
 
 class Updater:
     """
@@ -57,7 +56,6 @@ class Analyzer:
         self.clf_accessor = ClassificationModelAccessor()
 
     def run_analysis(self, query, key=None):
-        # TODO CREATE CLF_PIPELINE AND THEN ENTITY_PIPELINE
         """
         Builds an AnalysisPipeline objects and the set of Annotator objects to be used in the pipeline.
         Runs the analysis and retruns the 'results' value of the Annotation object's annotations dict.
@@ -92,7 +90,7 @@ class Analyzer:
         gazetteers = self.gaz_accessor.get_gazeteers(key)
         if gazetteers is not None:
             for entity in entities:
-                if entity['entity_type'] == 'gazetteer' or entity['entity_type'] == 'simple-gazetteer':
+                if entity['entity_type'] == 'gazetteer' or entity['entity_type'] == 'simple_gazetteer':
                     logger.debug("Creating GazetterAnnotator for: ", entity)
                     gaz_annotator = GazetteerAnnotator(entity['entity_name'], gazetteers[entity['entity_name']])
                     entity_pipeline.add_annotator(gaz_annotator)
@@ -102,6 +100,13 @@ class Analyzer:
             if entity['entity_type'] == 'regex':
                 logger.debug("Creating RegexAnnotator for: ", entity)
                 regex_annotator = RegexAnnotator(entity['entity_name'], Regexer(entity['regular_expressions']))
+                entity_pipeline.add_annotator(regex_annotator)
+
+        """ Create a BinaryRegexAnnotator for each regex entity type"""
+        for entity in entities:
+            if entity['entity_type'] == 'binary_regex':
+                logger.debug("Creating BinaryRegexAnnotator for: ", entity)
+                regex_annotator = BinaryRegexAnnotator(entity['entity_name'], Regexer(entity['regular_expressions']))
                 entity_pipeline.add_annotator(regex_annotator)
 
         core_annotation = entity_pipeline.analyze(core_annotation)

@@ -28,7 +28,7 @@ class GazetteerModelBuilder:
         """
         logger.info('Building GAZETTEERS global dict.')
         global GAZETTEERS
-        gazetteer_types = ['product-name', 'product-type', 'vendor']
+        gazetteer_types = ['product_name', 'product_type', 'vendor']
         db = ExternalDatabaseEngine()
         keys = db.get_keys()
         db.release_database_connection()
@@ -51,7 +51,7 @@ class GazetteerModelBuilder:
             entities = self._get_entities_from_external_database(gazetteer_type, key)
         entities = [x for x in entities if x is not None]
         if len(entities) > 0:
-            if gazetteer_type == 'product-name':
+            if gazetteer_type == 'product_name':
                 trie_builder = GramTrieBuilder()
                 new_trie = trie_builder.build_trie_from_dictionary(entities)
             else:
@@ -101,8 +101,8 @@ class GazetteerModelBuilder:
             :param database: external database engine
             :return: Callable that returns the entities for the given entity type
             """
-            entity_retrieval_function = {'product-name': database.get_product_names_by_key,
-                                         'product-type': database.get_product_types_by_key,
+            entity_retrieval_function = {'product_name': database.get_product_names_by_key,
+                                         'product_type': database.get_product_types_by_key,
                                          'vendor': database.get_vendors_by_key}
             return entity_retrieval_function[entity_type]
 
