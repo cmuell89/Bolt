@@ -127,12 +127,13 @@ class GazetteerModelAccessor:
         db = ExternalDatabaseEngine()
         keys = db.get_keys()
         db.release_database_connection()
-        if os.environ.get('ENVIRONMENT') != 'test':
-            if key not in keys:
-                return None
-        for gazetteer in GAZETTEERS:
-            gazetteers[gazetteer] = GAZETTEERS[gazetteer][key]
-        return gazetteers
+        if key not in keys:
+            return None
+        else:
+            for gazetteer in GAZETTEERS:
+                if key in GAZETTEERS[gazetteer].keys():
+                    gazetteers[gazetteer] = GAZETTEERS[gazetteer][key]
+            return gazetteers
 
 
 class Gazetteer:
