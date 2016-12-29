@@ -30,14 +30,14 @@ logger = logging.getLogger('BOLT.clf')
 SYMBOLS = " ".join(string.punctuation).split(" ") + ["-----", "---", "...", "“", "”", "'ve"]
 
 # Dict referencing pickled classifiers.
-CLASSIFIERS = {'multiclass': {}, 'binary': {}}
+CLASSIFIERS = {'multiclass': {}, 'binary_classifier': {}}
 
 
 class ClassificationModelBuilder:
     """
     Builds classification models stored in the global dict CLASSIFIERS
     """
-    def update_serialized_model(self, skl_classifier=None, multiclass=True, binary=True):
+    def initialize_classification_models(self, multiclass=False, binary_classifier=False):
         """
         Saves to the global dict CLASSIFIERS a pickled (serialized) fitted Scikit-learn model
         :param skl_classifier: type of classifier used for intent classification (svm, nb)
@@ -48,24 +48,44 @@ class ClassificationModelBuilder:
         results = db.get_entities()
         binary_classifier_entities = []
         for result in results:
-            if result[2] == 'binary':
+            if result[2] == 'binary_classifier':
                 binary_classifier_entities.append(result)
 
         logger.debug("Updating serialized classifier.")
         global CLASSIFIERS
-        """ Update global"""
+        """ Update globally stored classifier models"""
 
         if multiclass:
             """ Build, train, and save intent classification pipeline """
-            fitted_intent_classification_pipeline = self._train_intent_classification_pipeline(None, None, skl_classifier)
+            logger.debug("INITIALIZING: all multiclass classifiers.")
+            # TODO Work on default classifier algorithm choice. Perhaps remove choice entirely.
+            fitted_intent_classification_pipeline = self._train_intent_classification_pipeline(None, None, None)
             CLASSIFIERS['multiclass']['intent_classifier'] = pickle.dumps(fitted_intent_classification_pipeline)
 
-        if binary:
+        if binary_classifier:
             """ Build, train, and save binary classification pipelines """
+            logger.debug("INITIALIZING: all binary classifiers.")
             for binary_entity in binary_classifier_entities:
+                logger.debug("Building binary classifier for: {0}".format(binary_entity[1]))
                 pipeline = self._build_binary_classification_pipeline(binary_entity[6])
                 fitted_binary_classification_pipeline = self._train_binary_classfication_pipeline(pipeline, binary_entity[3], binary_entity[4])
-                CLASSIFIERS['binary'][binary_entity[1]] = pickle.dumps(fitted_binary_classification_pipeline)
+                CLASSIFIERS['binary_classifier'][binary_entity[1]] = pickle.dumps(fitted_binary_classification_pipeline)
+
+    def update_classification_model(self, classifier_type, classifier_name):
+        if classifier_type == 'multiclass':
+            fitted_intent_classification_pipeline = self._train_intent_classification_pipeline(None, None, None)
+            CLASSIFIERS['multiclass']['intent_classifier'] = pickle.dumps(fitted_intent_classification_pipeline)
+
+        if classifier_type == 'binary_classifier':
+            db = EntitiesDatabaseEngine()
+            entity_info = db.get_entity(classifier_name)[0]
+            pipeline = self._build_binary_classification_pipeline(entity_info[6])
+            fitted_binary_classification_pipeline = self._train_binary_classfication_pipeline(pipeline,
+                                                                                              entity_info[3],
+                                                                                              entity_info[4])
+            CLASSIFIERS['binary_classifier'][entity_info[1]] = pickle.dumps(
+                        fitted_binary_classification_pipeline)
+
 
     def _train_intent_classification_pipeline(self, pipeline=None, training_data=None, skl_classifier=None):
         """
@@ -193,12 +213,14 @@ class ClassificationModelAccessor:
         :return: the Classifier object build from the pickled object from the CLASSIFIERS global dict
         """
         global CLASSIFIERS
-        pipeline = pickle.loads(CLASSIFIERS[classifier_type][classifier_name])
-        if classifier_name == 'intent_classifier':
-            return IntentClassifier(pipeline)
-        if classifier_type == 'binary':
-            return BinaryClassifier(pipeline)
-
+        if classifier_type in CLASSIFIERS.keys() and classifier_name in CLASSIFIERS[classifier_type].keys():
+            pipeline = pickle.loads(CLASSIFIERS[classifier_type][classifier_name])
+            if classifier_name == 'intent_classifier':
+                return IntentClassifier(pipeline)
+            if classifier_type == 'binary_classifier':
+                return BinaryClassifier(pipeline)
+        else:
+            return None
 
 class AbstractClassifier(metaclass=ABCMeta):
     def __init__(self, pipeline):

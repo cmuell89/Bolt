@@ -17,7 +17,7 @@ logger = logging.getLogger('BOLT.nlp')
 clf_builder = ClassificationModelBuilder()
 gaz_builder = GazetteerModelBuilder()
 
-clf_builder.update_serialized_model('svm', multiclass='true', binary='true')
+clf_builder.initialize_classification_models(multiclass=True, binary_classifier=True)
 environment = os.environ.get('ENVIRONMENT')
 if environment == 'prod' or environment == 'dev':
     gaz_builder.initialize_gazetteer_models()
@@ -31,20 +31,35 @@ class Updater:
         self.gaz_builder = GazetteerModelBuilder()
         self.clf_builder = ClassificationModelBuilder()
     
-    def update_classifier(self, skl_classifier, **kwargs):
+    def update_classifiers(self, multiclass=True, binary_classifier=False):
         """
         Updates the classifier passed in as a parameter
         :param skl_classifier: type of classifier to be trained/updated; 'svm' or 'nb'
         """
-        self.clf_builder.update_serialized_model(skl_classifier, **kwargs)
-        
-    def update_gazetteer(self, gazetteer_type=None, key=None):
+        self.clf_builder.initialize_classification_models(multiclass, binary_classifier)
+
+
+    def update_single_classifier(self, classifier_type, classifier_name):
         """
-        Updates a gazetteer model for the given gazetteer_type and key idenfier
-        :param gazetteer_type: type of gazetteer
+
+        :param classifier_type:
+        :param classifier_name:
+        :return:
+        """
+        self.clf_builder.update_classification_model(classifier_type, classifier_name)
+
+    def update_all_gazetteers(self):
+        """
+        Updates all gazetteer models by rebuilding all
+        """
+        self.gaz_builder.initialize_gazetteer_models()
+
+    def update_gazetteers_by_key(self, key=None):
+        """
+        Updates a gazetteer models for the given key idenfier
         :param key: unique identification key for the gazetteer type; usually bot key
         """
-        self.gaz_builder.update_single_gazetteer_model(gazetteer_type, key)
+        self.gaz_builder.update_gazetteer_models_by_key(key)
 
 
 class Analyzer:
@@ -79,10 +94,9 @@ class Analyzer:
 
         """ Access the binary classifier for the appropriate entity types and create BinaryClassifierAnnotator"""
         for entity in entities:
-            if entity['entity_type'] == 'binary':
-                logger.debug("Creating BinaryClassificationAnnotator for: ")
-                logger.debug(entity['entity_name'])
-                clf = self.clf_accessor.get_classification_pipeline('binary', entity['entity_name'])
+            if entity['entity_type'] == 'binary_classifier':
+                logger.debug("Creating BinaryClassificationAnnotator for: {0}".format(entity['entity_name']))
+                clf = self.clf_accessor.get_classification_pipeline('binary_classifier', entity['entity_name'])
                 binary_clf_annotator = BinaryClassificationAnnotator(entity['entity_name'], clf)
                 entity_pipeline.add_annotator(binary_clf_annotator)
 
@@ -91,21 +105,21 @@ class Analyzer:
         if gazetteers is not None:
             for entity in entities:
                 if entity['entity_type'] == 'gazetteer' or entity['entity_type'] == 'simple_gazetteer':
-                    logger.debug("Creating GazetterAnnotator for: ", entity)
+                    logger.debug("Creating GazetteerAnnotator for: {0}".format(entity['entity_name']))
                     gaz_annotator = GazetteerAnnotator(entity['entity_name'], gazetteers[entity['entity_name']])
                     entity_pipeline.add_annotator(gaz_annotator)
 
         """ Create a RegexAnnotator for each regex entity type"""
         for entity in entities:
             if entity['entity_type'] == 'regex':
-                logger.debug("Creating RegexAnnotator for: ", entity)
+                logger.debug("Creating RegexAnnotator for: {0}".format(entity['entity_name']))
                 regex_annotator = RegexAnnotator(entity['entity_name'], Regexer(entity['regular_expressions']))
                 entity_pipeline.add_annotator(regex_annotator)
 
         """ Create a BinaryRegexAnnotator for each regex entity type"""
         for entity in entities:
             if entity['entity_type'] == 'binary_regex':
-                logger.debug("Creating BinaryRegexAnnotator for: ", entity)
+                logger.debug("Creating BinaryRegexAnnotator for: {0}".format(entity['entity_name']))
                 regex_annotator = BinaryRegexAnnotator(entity['entity_name'], Regexer(entity['regular_expressions']))
                 entity_pipeline.add_annotator(regex_annotator)
 

@@ -60,7 +60,8 @@ class IntentClassificationAnnotator(AbstractAnnotator):
         super().__init__(name)
     
     def validate(self, annotation):
-        pass
+        if self.classifier is None:
+            raise AnnotatorValidationError("Classifier is None type!")
         
     def annotate(self, annotation):
         """
@@ -81,7 +82,8 @@ class BinaryClassificationAnnotator(AbstractAnnotator):
         super().__init__(name)
 
     def validate(self, annotation):
-        pass
+        if self.classifier is None:
+            raise AnnotatorValidationError("Classifier is None type!")
 
     def annotate(self, annotation):
         """
@@ -90,7 +92,12 @@ class BinaryClassificationAnnotator(AbstractAnnotator):
         :return: Updated annotation object
         """
         result = self.classifier.classify(annotation.annotations['original_text'])
-        annotation.annotations['results']['entities'].append({"name": self.name, "value": result})
+        if result[0][0] == 'true':
+            value = True
+        else:
+            value = False
+        confidence = result[0][1]
+        annotation.annotations['results']['entities'].append({"name": self.name, "value": value, "confidence": confidence})
         return annotation
 
 
@@ -155,6 +162,7 @@ class RegexAnnotator(AbstractAnnotator):
         matches = self.regexer.get_matches(annotation.annotations['original_text'])
         annotation.annotations['results']['entities'].append({"name": self.name, "value": matches})
         return annotation
+
 
 class BinaryRegexAnnotator(AbstractAnnotator):
     def __init__(self, name, regexer):

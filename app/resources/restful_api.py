@@ -32,7 +32,11 @@ from webargs.flaskparser import use_args, parser
 from marshmallow import fields
 from functools import partial
 from app.authorization import tokenAuth
-from app.validators import valid_application_type, list_of_strings
+from app.validators import valid_application_type,\
+                           list_of_strings,\
+                           validate_binary_classifier_parameters,\
+                           validate_multiclass_parameters,\
+                           validate_gazetteer_parameters
 from database.database import IntentsDatabaseEngine, ExpressionsDatabaseEngine
 from nlp import Analyzer, Updater
 from utils.exceptions import DatabaseError, DatabaseInputError
@@ -87,33 +91,58 @@ class Analyze(Resource):
         resp = jsonify(results)
         resp.status_code = 200
         return resp
-        
-        
+
+
 class Train(Resource):
-    
+
     decorators = [tokenAuth.login_required]
     validate_application_json = partial(valid_application_type, 'application/json')
     
     train_args = {
-        'content_type': fields.Str(required=True, load_from='Content-Type', location='headers', validate=validate_application_json)
+        'content_type': fields.Str(required=True, load_from='Content-Type', location='headers', validate=validate_application_json),
+        'all': fields.Bool(required=True),
+        'multiclass': fields.Dict(required=False, validate=validate_multiclass_parameters),
+        'binary_classifier': fields.Dict(required=False, validate=validate_binary_classifier_parameters),
+        'gazetteer': fields.Dict(required=False, validate=validate_gazetteer_parameters)
     }
     
     @use_args(train_args)
-    def get(self, args, classifier):
+    def post(self, args):
         """
-        Trains the existing classification models used by Classifier objects.
-        :param classifier: Classifier type (nb, svm)
+
+
         :return:
         """
-        if classifier not in ('svm', 'nb'):
-            classifier = 'svm'
-            response_message = "Classifier defaulting to " + classifier + " due to malformed variable URL."
-        else:
-            response_message = "Classifier successfully trained: " + classifier
         updater = Updater()
-        updater.update_classifier(classifier)
-        resp = jsonify(message=response_message)
-        resp.status_code = 200
+
+        if args['all']:
+            updater.update_all_gazetteers()
+            updater.update_all_classifiers()
+            resp = jsonify(message="All multiclass, binary_classifier, and gazetteer models updated")
+            return resp
+        response = ""
+        if 'multiclass' in args.keys():
+            if args['multiclass']['all']:
+                updater.update_classifiers(multiclass=True, binary_classifier=False)
+                response += "All multiclass classifier models have been updated.\n"
+            else:
+                updater.update_single_classifier('multiclass', 'intents_classifier')
+                response += "The multiclass intents_classifier model has been updated.\n"
+        if 'binary_classifier' in args.keys():
+            if args['binary_classifier']['all']:
+                updater.update_classifiers(multiclass=False, binary_classifier=True)
+                response += "All binary classifier models have been updated.\n"
+            else:
+                updater.update_single_classifier('binary_classifier', args['binary_classifier']['name'])
+                response += "The binary classifier '{0}' model has been updated.\n".format(args['binary_classifier']['name'])
+        if 'gazetteer' in args.keys():
+            if args['gazetteer']['all']:
+                updater.update_all_gazetteers()
+                response += "All gazetteer models have been updated.\n"
+            else:
+                updater.update_gazetteers_by_key(args['gazetteer']['key'])
+                response += "All gazetteer models have been updated for the key '{0}'.\n".format(args['gazetteer']['key'])
+        resp = jsonify(message=response)
         return resp
 
 

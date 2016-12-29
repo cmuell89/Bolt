@@ -500,7 +500,7 @@ class ClassifierTest(unittest.TestCase):
         logger.debug("TEST: classify()")
         builder = ClassificationModelBuilder()
         accesor = ClassificationModelAccessor()
-        builder.update_serialized_model()
+        builder.initialize_classification_models()
         clf = accesor.get_classification_pipeline('intent_classifier')
         self.assertEqual(Classifier, type(clf))
         result = clf.classify("What is the best selling item of all time?")

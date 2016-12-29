@@ -1,5 +1,5 @@
 from webargs import ValidationError
-from database.database import ExternalDatabaseEngine
+
 """
 Header Validators
 """
@@ -28,3 +28,42 @@ def list_of_strings(list):
         return True
     else:
         raise ValidationError("List provided to route is malformed. Must be an non-empty array of string values each with length > 1.", 400)
+
+
+def validate_binary_classifier_parameters(parameters):
+    if isinstance(parameters, dict):
+        if 'all' not in parameters.keys():
+            raise ValidationError("Parameters must have 'all' key!", 400)
+        elif parameters['all'] not in [True, False, 'true', 'false', 1, 0]:
+            raise ValidationError("The 'all' parameter must be a valid boolean", 400)
+        elif parameters['all'] in [False, 'false', 0]:
+            if 'name' not in parameters.keys():
+                raise ValidationError("Parameters must have 'name' key if not training all binary_classifiers!", 400)
+    else:
+        raise ValidationError("Must be a valid JSON/dict object", 400)
+
+
+def validate_multiclass_parameters(parameters):
+    if isinstance(parameters, dict):
+        if 'all' not in parameters.keys():
+            raise ValidationError("Parameters must have 'all' key!", 400)
+        elif parameters['all'] not in [True, False, 'true', 'false', 1, 0]:
+            raise ValidationError("The 'all' parameter must be a valid boolean", 400)
+        elif parameters['all'] in [False, 'false', 0]:
+            if 'name' not in parameters.keys():
+                raise ValidationError("Parameters must have 'name' key if not training all binary_classifiers!", 400)
+    else:
+        raise ValidationError("Must be a valid JSON/dict object", 400)
+
+
+def validate_gazetteer_parameters(parameters):
+    if isinstance(parameters, dict):
+        if 'all' not in parameters.keys():
+            raise ValidationError("'gazetteer' must have 'all' key!", 400)
+        elif parameters['all'] not in [True, False, 'true', 'false', 1, 0]:
+            raise ValidationError("The 'all' parameter must be a valid boolean", 400)
+        elif parameters['all'] in [False, 'false', 0]:
+            if 'key' not in parameters.keys():
+                raise ValidationError("Parameters must have 'key' key if not training all binary_classifiers!", 400)
+    else:
+        raise ValidationError("Must be a valid JSON/dict object", 400)

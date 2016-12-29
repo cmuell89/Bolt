@@ -65,24 +65,16 @@ class GazetteerModelBuilder:
             else:
                 GAZETTEERS[gazetteer_type][key] = new_gazetteer
 
-    def update_single_gazetteer_model(self, gazetteer_type, key, entity_data=None):
+    def update_gazetteer_models_by_key(self, key):
         """
-        Updates a single gazetteer in the global dictionary GAZETTEERS
-        :param gazetteer_type:  the type of gazetteer. Example: product_name, product_type, vendor etc,.
+        Updates a all gazetteer types in the global dictionary GAZETTEERS for the given key.
         :param key: the key used to access the specific gazetteer hashed within the dictionary.
         """
         global GAZETTEERS
-        trie_builder = GramTrieBuilder()
 
-        logger.debug('Updating gazetteer model')
-        if gazetteer_type in GAZETTEERS:
-            if entity_data and isinstance(entity_data, list):
-                entities = entity_data
-            else:
-                entities = self._get_entities_from_external_database(gazetteer_type, key)
-            new_trie = trie_builder.build_trie_from_dictionary(entities)
-            new_gazetteer = Gazetteer(new_trie)
-            GAZETTEERS[gazetteer_type][key] = new_gazetteer
+        logger.debug("Updating gazetteer models for key '{0}'".format(key))
+        for gazetteer_type in GAZETTEERS.keys():
+            self.create_new_gazetteer_model(gazetteer_type, key)
 
     def _get_entities_from_external_database(self, gazetteer_type, key):
         """

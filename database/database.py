@@ -429,15 +429,16 @@ class EntitiesDatabaseEngine(CoreDatabase):
             logger.exception(e.pgerror)
             raise DatabaseError(e.pgerror)
 
-    def get_entity(self, entity):
+    def get_entity(self, entity_name):
         """
-
-        :param entity:
-        :return:
+        Returns the entity of the given name.
+        :param entity_name: name of entity to retrieve
+        :return:list of tuples (id, entity_name, entity_type, positive_expressions,
+                 negative_expressions, regular_expressions, keywords)
         """
         try:
             self.cur.execute("SELECT * FROM nlp.entities "
-                             "WHERE entity_name = %s", (entity,))
+                             "WHERE entity_name = %s", (entity_name,))
             return self.cur.fetchall()
         except psycopg2.Error as e:
             self.conn.rollback()
