@@ -72,7 +72,7 @@ class GazetteerModelBuilder:
         """
         global GAZETTEERS
 
-        logger.debug("Updating gazetteer models for key '{0}'".format(key))
+        logger.debug("Updating gazetteer models for key: {0}".format(key))
         for gazetteer_type in GAZETTEERS.keys():
             self.create_new_gazetteer_model(gazetteer_type, key)
 

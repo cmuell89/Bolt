@@ -229,7 +229,7 @@ class IntentsDatabaseEngine(CoreDatabase):
             raise DatabaseError(e.pgerror)
         if intent_id is not None:
             try:
-                self.cur.execute("SELECT intents, stopwords "
+                self.cur.execute("SELECT stopwords "
                                  "FROM nlp.intents "
                                  "WHERE nlp.intents.intent_name = %s;", (intent,))
                 logger.debug("Retrieving stopwords for the intent: %s", intent)

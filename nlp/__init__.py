@@ -38,7 +38,6 @@ class Updater:
         """
         self.clf_builder.initialize_classification_models(multiclass, binary_classifier)
 
-
     def update_single_classifier(self, classifier_type, classifier_name):
         """
 
@@ -84,44 +83,45 @@ class Analyzer:
         entity_pipeline = AnalysisPipeline()
         clf = self.clf_accessor.get_classification_pipeline('multiclass', 'intent_classifier')
 
-        """ Create the intent classifier Annotator 'clf' """
+        """ Create the IntentClassificationAnnotator using the pipeline 'clf' """
         clf_annotator = IntentClassificationAnnotator('clf', clf)
         clf_pipeline.add_annotator(clf_annotator)
         """ Run clf_pipeline to obtain intent classification """
         core_annotation = clf_pipeline.analyze(core_annotation)
+        logger.debug(core_annotation)
         """ Create annotators based on entity types of intent classification """
         entities = core_annotation.annotations['entity_types']
+        """ Obtain gazetteers associated with the given key """
+        gazetteers = self.gaz_accessor.get_gazeteers(key)
 
-        """ Access the binary classifier for the appropriate entity types and create BinaryClassifierAnnotator"""
+        logger.debug("Core annotation intents: {0}".format(core_annotation.annotations['results']['classification']))
+        logger.debug("Core annotation entities: {0}".format(core_annotation.annotations['entity_types']))
+        logger.debug("Core annotation stopwords: {0}".format(core_annotation.annotations['stopwords']))
+
+        """ Iterate over entities and create an the appropriate Annotator based on the entity_type """
         for entity in entities:
+            """ Access the binary classifier for the appropriate entity types and create BinaryClassifierAnnotator"""
             if entity['entity_type'] == 'binary_classifier':
                 logger.debug("Creating BinaryClassificationAnnotator for: {0}".format(entity['entity_name']))
                 clf = self.clf_accessor.get_classification_pipeline('binary_classifier', entity['entity_name'])
                 binary_clf_annotator = BinaryClassificationAnnotator(entity['entity_name'], clf)
                 entity_pipeline.add_annotator(binary_clf_annotator)
-
-        """ Access the gazetteer for the appropriate entity types and create an GazetteerAnnotator """
-        gazetteers = self.gaz_accessor.get_gazeteers(key)
-        if gazetteers is not None:
-            for entity in entities:
-                if entity['entity_type'] == 'gazetteer' or entity['entity_type'] == 'simple_gazetteer':
-                    logger.debug("Creating GazetteerAnnotator for: {0}".format(entity['entity_name']))
-                    gaz_annotator = GazetteerAnnotator(entity['entity_name'], gazetteers[entity['entity_name']])
-                    entity_pipeline.add_annotator(gaz_annotator)
-
-        """ Create a RegexAnnotator for each regex entity type"""
-        for entity in entities:
+            """ Create a RegexAnnotator for each regex entity type"""
             if entity['entity_type'] == 'regex':
                 logger.debug("Creating RegexAnnotator for: {0}".format(entity['entity_name']))
                 regex_annotator = RegexAnnotator(entity['entity_name'], Regexer(entity['regular_expressions']))
                 entity_pipeline.add_annotator(regex_annotator)
-
-        """ Create a BinaryRegexAnnotator for each regex entity type"""
-        for entity in entities:
+            """ Create a BinaryRegexAnnotator for each regex entity type"""
             if entity['entity_type'] == 'binary_regex':
                 logger.debug("Creating BinaryRegexAnnotator for: {0}".format(entity['entity_name']))
                 regex_annotator = BinaryRegexAnnotator(entity['entity_name'], Regexer(entity['regular_expressions']))
                 entity_pipeline.add_annotator(regex_annotator)
+            """ Access the gazetteer for the appropriate entity types and create an GazetteerAnnotator """
+            if entity['entity_type'] == 'gazetteer' or entity['entity_type'] == 'simple_gazetteer':
+                if gazetteers is not None:
+                    logger.debug("Creating GazetteerAnnotator for: {0}".format(entity['entity_name']))
+                    gaz_annotator = GazetteerAnnotator(entity['entity_name'], gazetteers[entity['entity_name']])
+                    entity_pipeline.add_annotator(gaz_annotator)
 
         core_annotation = entity_pipeline.analyze(core_annotation)
         return core_annotation.annotations['results']

@@ -113,36 +113,30 @@ class Train(Resource):
 
         :return:
         """
+        # TODO Surround with try catch statements
         updater = Updater()
 
         if args['all']:
             updater.update_all_gazetteers()
-            updater.update_all_classifiers()
+            updater.update_classifiers(multiclass=True, binary_classifier=True)
             resp = jsonify(message="All multiclass, binary_classifier, and gazetteer models updated")
             return resp
-        response = ""
         if 'multiclass' in args.keys():
             if args['multiclass']['all']:
                 updater.update_classifiers(multiclass=True, binary_classifier=False)
-                response += "All multiclass classifier models have been updated.\n"
             else:
                 updater.update_single_classifier('multiclass', 'intents_classifier')
-                response += "The multiclass intents_classifier model has been updated.\n"
         if 'binary_classifier' in args.keys():
             if args['binary_classifier']['all']:
                 updater.update_classifiers(multiclass=False, binary_classifier=True)
-                response += "All binary classifier models have been updated.\n"
             else:
                 updater.update_single_classifier('binary_classifier', args['binary_classifier']['name'])
-                response += "The binary classifier '{0}' model has been updated.\n".format(args['binary_classifier']['name'])
         if 'gazetteer' in args.keys():
             if args['gazetteer']['all']:
                 updater.update_all_gazetteers()
-                response += "All gazetteer models have been updated.\n"
             else:
                 updater.update_gazetteers_by_key(args['gazetteer']['key'])
-                response += "All gazetteer models have been updated for the key '{0}'.\n".format(args['gazetteer']['key'])
-        resp = jsonify(message=response)
+        resp = jsonify(message="Success")
         return resp
 
 

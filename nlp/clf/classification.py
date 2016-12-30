@@ -222,6 +222,7 @@ class ClassificationModelAccessor:
         else:
             return None
 
+
 class AbstractClassifier(metaclass=ABCMeta):
     def __init__(self, pipeline):
         self.pipeline = pipeline
@@ -276,8 +277,10 @@ class IntentClassifier(AbstractClassifier):
         for i in range(3):
             tup = intents_results[i]
             top_3.append({"intent": tup[0], "confidence": tup[1]})
-        intent_stopwords = self.db.get_intent_stopwords(intents_results[0][0])
-        intent_entities = self.db.get_intent_entities(intents_results[0][0])
+        top_intent_name = intents_results[0][0]
+        stopwords_db_results = self.db.get_intent_stopwords(top_intent_name)
+        intent_stopwords = stopwords_db_results[0][1]
+        intent_entities = self.db.get_intent_entities(top_intent_name)
         self.db.release_database_connection()
         entities = []
         for result in intent_entities:
