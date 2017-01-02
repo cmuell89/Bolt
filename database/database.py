@@ -229,7 +229,7 @@ class IntentsDatabaseEngine(CoreDatabase):
             raise DatabaseError(e.pgerror)
         if intent_id is not None:
             try:
-                self.cur.execute("SELECT stopwords "
+                self.cur.execute("SELECT intent_name, stopwords "
                                  "FROM nlp.intents "
                                  "WHERE nlp.intents.intent_name = %s;", (intent,))
                 logger.debug("Retrieving stopwords for the intent: %s", intent)
@@ -472,7 +472,7 @@ class EntitiesDatabaseEngine(CoreDatabase):
 
     def update_entity(self, entity, **kwargs):
         """
-
+        Updates entities
         :param entity:
         :param kwargs:
         :return:
@@ -534,9 +534,10 @@ class EntitiesDatabaseEngine(CoreDatabase):
 
     def delete_entity(self, entity):
         """
-
-        :param entity:
-        :return:
+        Delete entity from database
+        :param entity: string name of entity
+        :return: list of tuples (id, entity_name, entity_type, positive_expressions,
+                 negative_expressions, regular_expressions, keywords)
         """
         try:
             self.cur.execute("DELETE FROM nlp.entities "
@@ -550,9 +551,9 @@ class EntitiesDatabaseEngine(CoreDatabase):
 
     def confirm_entity_exists(self, entity):
         """
-
-        :param entity:
-        :return:
+        Confirm whether or not an entity exists.
+        :param entity: string name of entity
+        :return: boolean
         """
         try:
             self.cur.execute("SELECT * FROM nlp.entities "
@@ -566,6 +567,74 @@ class EntitiesDatabaseEngine(CoreDatabase):
             self.conn.rollback()
             logger.exception(e.pgerror)
             raise DatabaseError(e.pgerror)
+
+    def get_binary_entity_expressions(self, entity_name):
+        try:
+            self.cur.execute("SELECT id FROM nlp.entities WHERE nlp.entities.entity_name = %s;", (entity_name,))
+            entity_id = self.cur.fetchone()
+        except psycopg2.Error as e:
+            raise DatabaseError(e.pgerror)
+        if entity_id is not None:
+            try:
+                self.cur.execute("SELECT nlp.expressions.id, nlp.expressions.expressions, nlp.expressions_entities.boolean_value "
+                                 "FROM nlp.expressions_entities "
+                                 "JOIN nlp.expressions ON nlp.expressions_entities.expression_id = nlp.expressions.id "
+                                 "JOIN nlp.entities ON nlp.expressions_entities.entity_id = nlp.entities.id "
+                                 "WHERE entity_id = %s", (entity_id,))
+                return self.cur.fetchall()
+            except psycopg2.Error as e:
+                self.conn.rollback()
+                logger.exception(e.pgerror)
+                raise DatabaseError(e.pgerror)
+        else:
+            msg = "Method expects valid/existing entity_name as argument"
+            logger.exception(msg)
+            raise DatabaseInputError(msg)
+
+    def delete_binary_entity_from_expression(self, expression_id, entity_name):
+        try:
+            self.cur.execute("SELECT id FROM nlp.entities WHERE nlp.entities.entity_name = %s;", (entity_name,))
+            entity_id = self.cur.fetchone()
+        except psycopg2.Error as e:
+            raise DatabaseError(e.pgerror)
+        except psycopg2.Error as e:
+            raise DatabaseError(e.pgerror)
+        if entity_id is not None:
+            try:
+                self.cur.execute("DELETE FROM nlp.expressions_entities "
+                                 "WHERE entity_id = %s "
+                                 "AND expression_id = %s", (entity_id, expression_id))
+                return self.get_binary_entity_expressions()
+            except psycopg2.Error as e:
+                self.conn.rollback()
+                logger.exception(e.pgerror)
+                raise DatabaseError(e.pgerror)
+        else:
+            msg = "Method expects valid/existing entity_name as argument"
+            logger.exception(msg)
+            raise DatabaseInputError(msg)
+
+    def add_binary_entity_to_expression(self, expression_id, entity_name, boolean_value):
+        try:
+            self.cur.execute("SELECT id FROM nlp.entities WHERE nlp.entities.entity_name = %s;", (entity_name,))
+            entity_id = self.cur.fetchone()
+        except psycopg2.Error as e:
+            raise DatabaseError(e.pgerror)
+        except psycopg2.Error as e:
+            raise DatabaseError(e.pgerror)
+        if entity_id is not None:
+            try:
+                self.cur.execute("INSERT INTO nlp.expressions_entities (expression_id, entity_id, boolean_value) "
+                                 "VALUES (%s, %s, %s)", (expression_id, entity_id, boolean_value))
+                return self.get_binary_entity_expressions()
+            except psycopg2.Error as e:
+                self.conn.rollback()
+                logger.exception(e.pgerror)
+                raise DatabaseError(e.pgerror)
+        else:
+            msg = "Method expects valid/existing entity_name as argument"
+            logger.exception(msg)
+            raise DatabaseInputError(msg)
 
 
 class ExpressionsDatabaseEngine(CoreDatabase):
