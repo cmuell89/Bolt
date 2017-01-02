@@ -12,7 +12,7 @@ import logging
 import json
 import os
 from utils.custom_assertions import CustomAssertions
-from nlp.clf.classification import ClassificationModelBuilder, ClassificationModelAccessor, Classifier
+from nlp.clf.classification import ClassificationModelBuilder, ClassificationModelAccessor, IntentClassifier, BinaryClassifier
 from nlp.ner.gazetteer import GazetteerModelBuilder, GazetteerModelAccessor, Gazetteer
 from database.database import ExpressionsDatabaseEngine, IntentsDatabaseEngine, EntitiesDatabaseEngine
 from builtins import int, str
@@ -41,13 +41,13 @@ class EntitiesDatabaseTest(unittest.TestCase, CustomAssertions):
     def test_get_intent_entities(self):
         logger.info("TEST: get_intent_entities()")
         db = IntentsDatabaseEngine()
-        results = db.get_intent_entities('get-best-selling-items')
+        results = db.get_intent_entities('get_best_selling_items')
         self.assertIsInstance(results, list)
         self.assertIsInstance(results[0], tuple)
         entities = []
         for result in results:
             entities.append(result[0])
-        self.assertIn('product-name', entities)
+        self.assertIn('product_name', entities)
         db.release_database_connection()
         logger.info("TEST PASS: get_intent_entities()")
 
@@ -175,13 +175,21 @@ class EntitiesDatabaseTest(unittest.TestCase, CustomAssertions):
         db.release_database_connection()
         logger.info("TEST PASS: delete_entities_from_intent()")
 
-    def confirm_entity_exists(self):
+    def test_confirm_entity_exists(self):
         logger.info("TEST: delete_entities_from_intent()")
         db = EntitiesDatabaseEngine()
         self.assertTrue(db.confirm_entity_exists('test-entity'))
         db.release_database_connection()
         logger.info("TEST PASS: delete_entities_from_intent()")
 
+    def test_get_binary_entity_expressions(self):
+        self.fail("test needed")
+
+    def test_delete_binary_entity_from_expression(self):
+        self.fail("test needed")
+
+    def test_add_binary_entity_to_expression(self):
+        self.fail("test needed")
 
 class StopwordsDatabaseTest(unittest.TestCase, CustomAssertions):
     """
@@ -199,7 +207,7 @@ class StopwordsDatabaseTest(unittest.TestCase, CustomAssertions):
     def test_get_intent_stopwords(self):
         logger.info("TEST START: get_intent_stopwords()")
         db = IntentsDatabaseEngine()
-        stopwords = db.get_intent_stopwords('get-best-selling-items')[0][1]
+        stopwords = db.get_intent_stopwords('get_best_selling_items')[0][1]
         self.assertIsInstance(stopwords, list)
         self.assertIn('selling', stopwords)
         db.release_database_connection()
@@ -312,7 +320,7 @@ class ExpressionsDatabaseTest(unittest.TestCase, CustomAssertions):
     def test_get_intent_expressions(self):
         logger.debug("TEST: get_intent_expressions()")
         db = ExpressionsDatabaseEngine()
-        intent_expressions = db.get_intent_expressions('get-order')
+        intent_expressions = db.get_intent_expressions('get_order')
         self.assertListOfString(intent_expressions)
         db.release_database_connection()
         logger.info("TEST PASS: get_intent_expressions()")
@@ -482,17 +490,32 @@ class ClassifierTest(unittest.TestCase):
         self.assertListEqual(test, actual)
         logger.info("TEST PASS: _tokenize_text()")
 
-    def test_build_classification_pipeline(self):
+    def test_build_binary_classification_pipeline(self):
         logger.debug("TEST: build_classification_pipeline")
         builder = ClassificationModelBuilder()
-        pipeline = builder._build_classification_pipeline()
+        pipeline = builder._build_binary_classification_pipeline(['key1','key2'])
         self.assertIsInstance(pipeline, sklearn.pipeline.Pipeline)
         logger.info("TEST PASS: build_classification_pipeline")
 
-    def test_train_classification_pipeline(self):
+    def test_build_intent_classification_pipeline(self):
+        logger.debug("TEST: build_classification_pipeline")
+        builder = ClassificationModelBuilder()
+        pipeline = builder._build_intent_classification_pipeline()
+        self.assertIsInstance(pipeline, sklearn.pipeline.Pipeline)
+        logger.info("TEST PASS: build_classification_pipeline")
+
+    def test_train_binary_classification_pipeline(self):
         logger.debug("TEST: _train_classification_pipeline")
         builder = ClassificationModelBuilder()
-        pipeline = builder._train_classification_pipeline()
+        pipeline = builder._build_binary_classification_pipeline(['key1, key2'])
+        pipeline = builder._train_binary_classification_pipeline(pipeline, ['pos1', 'pos2', 'pos3'], ['neg1', 'neg2', 'neg3'])
+        self.assertIsInstance(pipeline, sklearn.pipeline.Pipeline)
+        logger.info("TEST PASS: _train_classification_pipeline")
+
+    def test_train_intent_classification_pipeline(self):
+        logger.debug("TEST: _train_classification_pipeline")
+        builder = ClassificationModelBuilder()
+        pipeline = builder._train_intent_classification_pipeline()
         self.assertIsInstance(pipeline, sklearn.pipeline.Pipeline)
         logger.info("TEST PASS: _train_classification_pipeline")
 
@@ -501,11 +524,17 @@ class ClassifierTest(unittest.TestCase):
         builder = ClassificationModelBuilder()
         accesor = ClassificationModelAccessor()
         builder.initialize_classification_models()
-        clf = accesor.get_classification_pipeline('intent_classifier')
-        self.assertEqual(Classifier, type(clf))
+        """ multiclass """
+        clf = accesor.get_classification_pipeline('multiclass', 'intent_classifier')
+        self.assertEqual(IntentClassifier, type(clf))
         result = clf.classify("What is the best selling item of all time?")
         self.assertIsInstance(result, dict)
-        self.assertEqual("get-best-selling-items", result['intents'][0]['intent'])
+        self.assertEqual("get_best_selling_items", result['intents'][0]['intent'])
+        """ binary_classifier """
+        clf = accesor.get_classification_pipeline('binary_classifier', 'is_plural')
+        self.assertEqual(BinaryClassifier, type(clf))
+        result = clf.classify("Who were my top customers?")
+        self.assertEqual("true", result[0][0])
         logger.info("TEST PASS: classify()")
 
 
@@ -517,6 +546,7 @@ class GazetteerTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         logger.info("TEST SUITE: GazetteerTest")
+        cls.key = '8b10af10-011b-11e6-896c-6924b93e8186'
 
     @classmethod
     def tearDownClass(cls):
@@ -529,27 +559,22 @@ class GazetteerTest(unittest.TestCase):
             entities = json_data['test_entities']
             builder = GazetteerModelBuilder()
             accessor = GazetteerModelAccessor()
-            builder.create_new_gazetteer_model('example_type', 'test-key', entities)
-            gazetteers = accessor.get_gazeteers('test-key')
-            test_gazetteer = gazetteers['example_type']
+            builder.create_new_gazetteer_model('product_name', GazetteerTest.key, entities)
+            gazetteers = accessor.get_gazeteers(GazetteerTest.key)
+            test_gazetteer = gazetteers['product_name']
             self.assertIsInstance(test_gazetteer, Gazetteer)
-            results = test_gazetteer.search_query('entity1')
-            self.assertEqual('entity1', results)
         logger.info("TEST PASS: create_new_gazetteer_model()")
 
-    def test_update_single_gazetteer_model(self):
+    def test_gazetteer_model_by_key(self):
         logger.debug("TEST: create_new_gazetteer_model()")
         with open(os.path.join(os.path.dirname(__file__), '../resources/entities_for_testing.json')) as file_:
             json_data = json.load(file_)
             entities = json_data['test_entities']
-            update_entities = json_data['test_update_entities']
             builder = GazetteerModelBuilder()
             accessor = GazetteerModelAccessor()
-            builder.create_new_gazetteer_model('example_type', 'test-key', entities)
-            builder.update_single_gazetteer_model('example_type', 'test-key', update_entities)
-            gazetteers = accessor.get_gazeteers('test-key')
-            test_gazetteer = gazetteers['example_type']
+            builder.create_new_gazetteer_model('product_name', GazetteerTest.key, entities)
+            builder.update_gazetteer_models_by_key(GazetteerTest.key)
+            gazetteers = accessor.get_gazeteers(GazetteerTest.key)
+            test_gazetteer = gazetteers['product_name']
             self.assertIsInstance(test_gazetteer, Gazetteer)
-            results = test_gazetteer.search_query('entity5')
-            self.assertEqual('entity5', results)
         logger.info("TEST PASS: create_new_gazetteer_model()")
