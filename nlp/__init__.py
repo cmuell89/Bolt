@@ -11,6 +11,7 @@ from nlp.annotation import IntentClassificationAnnotator, BinaryClassificationAn
                            GazetteerAnnotator, RegexAnnotator, BinaryRegexAnnotator, Annotation
 from nlp.ner.gazetteer import GazetteerModelAccessor, GazetteerModelBuilder
 from nlp.ner.regexer import Regexer
+from utils.exceptions import ClassificationModelError, GazetteerModelError, AnalyzerError, UpdaterError
 
 logger = logging.getLogger('BOLT.nlp')
 
@@ -35,30 +36,54 @@ class Updater:
         """
         Updates the classifier passed in as a parameter
         :param skl_classifier: type of classifier to be trained/updated; 'svm' or 'nb'
+        :return response: Successful message.
         """
-        self.clf_builder.initialize_classification_models(multiclass, binary_classifier)
+        try:
+            self.clf_builder.initialize_classification_models(multiclass, binary_classifier)
+            response = ""
+            if multiclass:
+                response += "Multiclass classifiers updated."
+            if binary_classifier:
+                response += "Binary_classifiers updated"
+            return response
+        except ClassificationModelError as error:
+            raise UpdaterError(error.value)
 
     def update_single_classifier(self, classifier_type, classifier_name):
         """
-
-        :param classifier_type:
-        :param classifier_name:
-        :return:
+        Updates a single classifier by type and name.
+        :param classifier_type: The classifier type.
+        :param classifier_name: The classifier name.
+        :return: Successful message.
         """
-        self.clf_builder.update_classification_model(classifier_type, classifier_name)
+        try:
+            self.clf_builder.update_classification_model(classifier_type, classifier_name)
+            return "The classifier {0} of type {1} updated.".format(classifier_name, classifier_type)
+        except ClassificationModelError as error:
+            raise UpdaterError(error.value)
 
     def update_all_gazetteers(self):
         """
         Updates all gazetteer models by rebuilding all
+        :return: Successful message.
         """
-        self.gaz_builder.initialize_gazetteer_models()
+        try:
+            self.gaz_builder.initialize_gazetteer_models()
+            return "All gazetteers have been updated."
+        except GazetteerModelError as error:
+            raise UpdaterError(error.value)
 
     def update_gazetteers_by_key(self, key=None):
         """
         Updates a gazetteer models for the given key idenfier
         :param key: unique identification key for the gazetteer type; usually bot key
+        :return: Successful message.
         """
-        self.gaz_builder.update_gazetteer_models_by_key(key)
+        try:
+            self.gaz_builder.update_gazetteer_models_by_key(key)
+            return "Gazetteers for the key {0} updated".format(key)
+        except GazetteerModelError as error:
+            raise UpdaterError(error.value)
 
 
 class Analyzer:
@@ -88,9 +113,12 @@ class Analyzer:
         clf_pipeline.add_annotator(clf_annotator)
         """ Run clf_pipeline to obtain intent classification """
         core_annotation = clf_pipeline.analyze(core_annotation)
-        logger.debug(core_annotation)
+        """ Ensure classification results exists, otherwise raise AnalyzerError """
+        if core_annotation.annotations['results']['classification'] is []:
+            raise AnalyzerError("No intent classification results.")
         """ Create annotators based on entity types of intent classification """
         entities = core_annotation.annotations['entity_types']
+
         """ Obtain gazetteers associated with the given key """
         gazetteers = self.gaz_accessor.get_gazeteers(key)
 

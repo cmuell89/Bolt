@@ -4,10 +4,9 @@ Created on Nov 2, 2016
 @author: Carl Mueller
 """
 from abc import abstractmethod, ABCMeta
-from utils.exceptions import AnnotatorValidationError
+from utils.exceptions import AnnotatorValidationError, AnnotatorAnnotateError, ClassificationModelError
 import logging
 
-# TODO Fix
 
 class Annotation:
     """ Annotation object that is passed along a sequence of annotators """
@@ -43,7 +42,10 @@ class AbstractAnnotator(metaclass=ABCMeta):
         except AnnotatorValidationError as e:
             self.logger.debug(e.value)
             return annotation
-    
+        except AnnotatorAnnotateError as e:
+            self.logger.debug(e.value)
+            return annotation
+
     @abstractmethod
     def validate(self):
         """ Raises a Validation Error if requirements are not meant """
@@ -69,12 +71,16 @@ class IntentClassificationAnnotator(AbstractAnnotator):
         :param annotation: Annotation object to be updated
         :return: Updated annotation object
         """
-        classification_results = self.classifier.classify(annotation.annotations['original_text'])
-        annotation.annotations['stopwords'] = classification_results['stopwords']
-        annotation.annotations['entity_types'] = classification_results['entity_types']
-        annotation.annotations['results']['classification'] = classification_results['intents']
-        return annotation
-
+        try:
+            classification_results = self.classifier.classify(annotation.annotations['original_text'])
+            annotation.annotations['stopwords'] = classification_results['stopwords']
+            annotation.annotations['entity_types'] = classification_results['entity_types']
+            annotation.annotations['results']['classification'] = classification_results['intents']
+            return annotation
+        except ClassificationModelError as error:
+            raise AnnotatorAnnotateError(error.value)
+        except KeyError as error:
+            raise AnnotatorAnnotateError(error.value)
 
 class BinaryClassificationAnnotator(AbstractAnnotator):
     def __init__(self, name, classifier):
@@ -91,15 +97,17 @@ class BinaryClassificationAnnotator(AbstractAnnotator):
         :param annotation: Annotation object to be updated
         :return: Updated annotation object
         """
-        result = self.classifier.classify(annotation.annotations['original_text'])
-        if result[0][0] == 'true':
-            value = True
-        else:
-            value = False
-        confidence = result[0][1]
-        annotation.annotations['results']['entities'].append({"name": self.name, "value": value, "confidence": confidence})
-        return annotation
-
+        try:
+            result = self.classifier.classify(annotation.annotations['original_text'])
+            if result[0][0] == 'true':
+                value = True
+            else:
+                value = False
+            confidence = result[0][1]
+            annotation.annotations['results']['entities'].append({"name": self.name, "value": value, "confidence": confidence})
+            return annotation
+        except ClassificationModelError as error:
+            raise AnnotatorAnnotateError(error.value)
 
 class GazetteerAnnotator(AbstractAnnotator):
     def __init__(self, name, gazetteer, max_edit_distance=2):
@@ -117,8 +125,10 @@ class GazetteerAnnotator(AbstractAnnotator):
         """
         if not annotation.annotations['entity_types']:
             raise AnnotatorValidationError("No entity types found in annotation: " + self.name)
-        # if self.name not in annotation.annotations['entity_types']:
-        #     raise AnnotatorValidationError("Entity not found. No annotation performed for: " + self.name)
+        if self.max_edit_distance < 0:
+            raise AnnotatorValidationError("Edit distance must be greater than 0")
+        if self.gazetteer is None:
+            raise AnnotatorValidationError("Gazetteer object in None type!")
 
     def annotate(self, annotation):
         """
@@ -144,13 +154,12 @@ class RegexAnnotator(AbstractAnnotator):
         Valiates that the annotation.annotations dict contains entity types with the name equal to the self.name of the
         current annotator.
         :param annotation: Annotation object to be updated
-        :type annotation:
         :return: Updated annotation object
         """
         if not annotation.annotations['entity_types']:
             raise AnnotatorValidationError("No entity types found in annotation: " + self.name)
-        # if self.name not in annotation.annotations['entity_types']:
-        #     raise AnnotatorValidationError("Entity not found. No annotation performed for: " + self.name)
+        if self.regexer is None:
+            raise AnnotatorValidationError("Regexer is None type")
 
     def annotate(self, annotation):
         """
@@ -174,17 +183,17 @@ class BinaryRegexAnnotator(AbstractAnnotator):
         Valiates that the annotation.annotations dict contains entity types with the name equal to the self.name of the
         current annotator.
         :param annotation: Annotation object to be updated
-        :type annotation:
         :return: Updated annotation object
         """
         if not annotation.annotations['entity_types']:
             raise AnnotatorValidationError("No entity types found in annotation: " + self.name)
-        # if self.name not in annotation.annotations['entity_types']:
-        #     raise AnnotatorValidationError("Entity not found. No annotation performed for: " + self.name)
+        if self.regexer is None:
+            raise AnnotatorValidationError("Regexer is None type")
 
     def annotate(self, annotation):
         """
-        Annotates the annotation object with the results of the Regexer object.
+        Annotates the annotation object with the results of the Regexer object based on an existing match. If match
+        exists, the results are true, else false.
         Appends the results to the annotation.annotations['results']['entities] list
         :param annotation: The annotation object to update
         :return: Returns the updated annotation object

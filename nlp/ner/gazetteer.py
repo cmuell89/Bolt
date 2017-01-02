@@ -9,6 +9,7 @@ import logging
 from nltk.corpus import stopwords
 from nltk.stem.porter import PorterStemmer
 from utils.string_cleaners import remove_apostrophe, normalize_whitespace, remove_question_mark, dash_to_single_space, remove_foward_slash
+from utils.exceptions import DatabaseError, DatabaseInputError, GazetteerModelError
 from database.database import ExternalDatabaseEngine
 from nlp.ner.trie import GramTrieBuilder, SimpleTrieBuilder, DictionaryBuilder, TrieNode
 
@@ -26,16 +27,19 @@ class GazetteerModelBuilder:
         Builds from scratch the entire GAZETTEERS dict
 
         """
-        logger.info('Building GAZETTEERS global dict.')
-        global GAZETTEERS
-        gazetteer_types = ['product_name', 'product_type', 'vendor']
-        db = ExternalDatabaseEngine()
-        keys = db.get_keys()
-        db.release_database_connection()
-        for key in keys:
-            for gaz_type in gazetteer_types:
-                self.create_new_gazetteer_model(gaz_type, key)
-        logger.info('Completed building GAZETTEERS global dict.')
+        try:
+            logger.info('Building GAZETTEERS global dict.')
+            global GAZETTEERS
+            gazetteer_types = ['product_name', 'product_type', 'vendor']
+            db = ExternalDatabaseEngine()
+            keys = db.get_keys()
+            db.release_database_connection()
+            for key in keys:
+                for gaz_type in gazetteer_types:
+                    self.create_new_gazetteer_model(gaz_type, key)
+            logger.info('Completed building GAZETTEERS global dict.')
+        except DatabaseError as error:
+            raise GazetteerModelError(error.value)
 
     def create_new_gazetteer_model(self, gazetteer_type, key, entity_data=None):
         """
@@ -97,11 +101,15 @@ class GazetteerModelBuilder:
                                          'product_type': database.get_product_types_by_key,
                                          'vendor': database.get_vendors_by_key}
             return entity_retrieval_function[entity_type]
-
-        db_function = entities_function_generator(gazetteer_type, db)
-        entities = db_function(key)
-        db.release_database_connection()
-        return entities
+        try:
+            db_function = entities_function_generator(gazetteer_type, db)
+            entities = db_function(key)
+            db.release_database_connection()
+            return entities
+        except DatabaseError as error:
+            raise GazetteerModelError(error.value)
+        except DatabaseInputError as error:
+            raise GazetteerModelError(error.value)
 
 
 class GazetteerModelAccessor:
@@ -114,18 +122,21 @@ class GazetteerModelAccessor:
         :param key: The id that will differentiate entity lists in the database
         :return: dict of gazetteers associated with the provided key. Returns None if key is not in list of keys in db.
         """
-        global GAZETTEERS
-        gazetteers = {}
-        db = ExternalDatabaseEngine()
-        keys = db.get_keys()
-        db.release_database_connection()
-        if key not in keys:
-            return None
-        else:
-            for gazetteer in GAZETTEERS:
-                if key in GAZETTEERS[gazetteer].keys():
-                    gazetteers[gazetteer] = GAZETTEERS[gazetteer][key]
-            return gazetteers
+        try:
+            global GAZETTEERS
+            gazetteers = {}
+            db = ExternalDatabaseEngine()
+            keys = db.get_keys()
+            db.release_database_connection()
+            if key not in keys:
+                return None
+            else:
+                for gazetteer in GAZETTEERS:
+                    if key in GAZETTEERS[gazetteer].keys():
+                        gazetteers[gazetteer] = GAZETTEERS[gazetteer][key]
+                return gazetteers
+        except DatabaseError as error:
+            raise GazetteerModelError(error.value)
 
 
 class Gazetteer:

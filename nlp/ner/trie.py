@@ -119,7 +119,7 @@ class DictionaryBuilder:
         vocab = []
         for entry in dictionary:
             words = entry.split(' ')
-            if stemmed == True:
+            if stemmed:
                 stemmer = PorterStemmer()
                 words = [stemmer.stem(word) for word in words]
             vocab.extend(words)
