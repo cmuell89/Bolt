@@ -20,7 +20,7 @@
 - [x] Expanding Train class set of endpoints to train classifiers and gazetteers piecemeal.
     - [x] Code
     - [ ] Test
-- [ ] Add m:n table for epxresions and entities to link binary entities to their expressions
+- [ ] Add m:n table for expressions and entities to link binary entities to their expressions
 
 ##### Version Change Log:
 

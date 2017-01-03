@@ -70,7 +70,8 @@ class ClassificationModelBuilder:
             for binary_entity in binary_classifier_entities:
                 logger.debug("Building binary classifier for: {0}".format(binary_entity[1]))
                 pipeline = self._build_binary_classification_pipeline(binary_entity[6])
-                fitted_binary_classification_pipeline = self._train_binary_classification_pipeline(pipeline, binary_entity[3], binary_entity[4])
+                docs, labels = io.create_data_for_binary_classifier_from_database(binary_entity[1])
+                fitted_binary_classification_pipeline = self._train_binary_classification_pipeline(pipeline, docs, labels)
                 CLASSIFIERS['binary_classifier'][binary_entity[1]] = pickle.dumps(fitted_binary_classification_pipeline)
 
     def update_classification_model(self, classifier_type, classifier_name):
@@ -82,12 +83,10 @@ class ClassificationModelBuilder:
             db = EntitiesDatabaseEngine()
             entity_info = db.get_entity(classifier_name)[0]
             pipeline = self._build_binary_classification_pipeline(entity_info[6])
-            fitted_binary_classification_pipeline = self._train_binary_classification_pipeline(pipeline,
-                                                                                               entity_info[3],
-                                                                                               entity_info[4])
+            docs, labels = io.create_data_for_binary_classifier_from_database(classifier_name)
+            fitted_binary_classification_pipeline = self._train_binary_classification_pipeline(pipeline, docs, labels)
             CLASSIFIERS['binary_classifier'][entity_info[1]] = pickle.dumps(
                         fitted_binary_classification_pipeline)
-
 
     def _train_intent_classification_pipeline(self, pipeline=None, training_data=None, skl_classifier=None):
         """
@@ -114,20 +113,11 @@ class ClassificationModelBuilder:
         except exceptions.FitFailedWarning as error:
             raise ClassificationModelError(repr(error))
 
-    def _train_binary_classification_pipeline(self, pipeline, positive_expressions, negative_expressions):
+    def _train_binary_classification_pipeline(self, pipeline, docs, labels):
         try:
             logger.debug("Training binary classifier")
-            training_set = []
-            training_labels = []
-            if len(positive_expressions) > 0 and len(negative_expressions) > 0:
-                for exp in positive_expressions:
-                    training_set.append(exp)
-                    training_labels.append('true')
-                for exp in negative_expressions:
-                    training_set.append(exp)
-                    training_labels.append('false')
-                pipeline = pipeline.fit(training_set, training_labels)
-                return pipeline
+            pipeline = pipeline.fit(docs, labels)
+            return pipeline
         except exceptions.FitFailedWarning as error:
             raise ClassificationModelError(repr(error))
         except ValueError as error:

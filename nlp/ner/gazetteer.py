@@ -170,6 +170,8 @@ class Gazetteer:
         query = [w for w in query.split(' ') if w.lower() not in custom_stopwords]
         query_grams = self.dict_builder.ngrammer(query, 2, len(query)+1)
         query_grams = sorted(query_grams, key=lambda word: len(word), reverse=True)
+        logger.debug("Query grams")
+        logger.debug(query_grams)
         tag = self._get_query_gram_tag(query_grams, max_edit_distance)
         """ Resort to single word searching if none of the query grams returns a tag """
         if tag is None:
@@ -214,7 +216,9 @@ class Gazetteer:
         :return: Found tags, if any
         """
         potential_single_words = set()
-        query = [x for x in query if x.lower() not in self.nltk_stopwords or custom_stopwords]
+        custom_stopwords = self._clean_stopwords(custom_stopwords)
+        nltk_stopwords = self._clean_stopwords(self.nltk_stopwords)
+        query = [x for x in query if x.lower() not in nltk_stopwords or custom_stopwords]
         for word in query:
             stemmed_word = self.stemmer.stem(word)
             results = TrieNode.search(self.trie, stemmed_word, 1)
@@ -226,6 +230,14 @@ class Gazetteer:
             return tags[0][0]
         else:
             return None
+
+    def _clean_stopwords(self, word_list):
+        processed_list = []
+        for word in word_list:
+            processed_list.append(word)
+            cleaned_word = self._clean_query(word)
+            processed_list.append(cleaned_word)
+        return processed_list
 
     def _clean_query(self, query):
         """
