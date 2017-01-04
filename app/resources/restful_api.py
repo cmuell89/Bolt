@@ -197,7 +197,8 @@ class Expressions(Resource):
         """
         try:
             db = get_db('expressions')
-            expressions = db.add_expressions_to_intent(intent, args['expressions'])
+            db_results = db.add_expressions_to_intent(intent, args['expressions'])
+            expressions = [x[1] for x in db_results]
             resp = jsonify(intent=intent, expressions=expressions)
             resp.status_code = 200
             return resp
@@ -224,7 +225,8 @@ class Expressions(Resource):
 
         try:
             db = get_db('expressions')
-            expressions = db.get_intent_expressions(intent)
+            db_results = db.get_intent_expressions(intent)
+            expressions = [x[1] for x in db_results]
             resp = jsonify(intent=intent, expressions=expressions)
             resp.status_code = 200
             return resp
@@ -256,7 +258,8 @@ class Expressions(Resource):
         if 'all' in args.keys() and args['all'] == True:
             try:
                 db = get_db('expressions')
-                expressions = db.delete_all_intent_expressions(intent)
+                db_results = db.delete_all_intent_expressions(intent)
+                expressions = [x[1] for x in db_results]
                 resp = jsonify(intent=intent, expressions=expressions)
                 return resp
             except DatabaseError as error:
@@ -270,8 +273,9 @@ class Expressions(Resource):
         elif args['expressions']:
             try:
                 db = get_db('expressions')
-                expressions = db.delete_expressions_from_intent(intent, args['expressions'])
-                resp = jsonify(intent=intent,expressions=expressions, deleted_expressions=args['expressions'])
+                db_results = db.delete_expressions_from_intent(intent, args['expressions'])
+                expressions = [x[1] for x in db_results]
+                resp = jsonify(intent=intent, expressions=expressions, deleted_expressions=args['expressions'])
                 return resp
             except DatabaseError as error:
                 resp = jsonify(error=error.value)
