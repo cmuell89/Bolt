@@ -19,9 +19,7 @@ clf_builder = ClassificationModelBuilder()
 gaz_builder = GazetteerModelBuilder()
 
 clf_builder.initialize_classification_models(multiclass=True, binary_classifier=True)
-environment = os.environ.get('ENVIRONMENT')
-if environment == 'prod' or environment == 'dev':
-    gaz_builder.initialize_gazetteer_models()
+gaz_builder.initialize_gazetteer_models()
 
 
 class Updater:

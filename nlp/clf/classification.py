@@ -48,6 +48,7 @@ class ClassificationModelBuilder:
         """
         db = EntitiesDatabaseEngine()
         results = db.get_entities()
+        db.release_database_connection()
         binary_classifier_entities = []
         for result in results:
             if result[2] == 'binary_classifier':
@@ -69,7 +70,7 @@ class ClassificationModelBuilder:
             logger.debug("INITIALIZING: all binary classifiers.")
             for binary_entity in binary_classifier_entities:
                 logger.debug("Building binary classifier for: {0}".format(binary_entity[1]))
-                pipeline = self._build_binary_classification_pipeline(binary_entity[6])
+                pipeline = self._build_binary_classification_pipeline(binary_entity[4])
                 docs, labels = io.create_data_for_binary_classifier_from_database(binary_entity[1])
                 fitted_binary_classification_pipeline = self._train_binary_classification_pipeline(pipeline, docs, labels)
                 CLASSIFIERS['binary_classifier'][binary_entity[1]] = pickle.dumps(fitted_binary_classification_pipeline)
@@ -82,7 +83,8 @@ class ClassificationModelBuilder:
         if classifier_type == 'binary_classifier':
             db = EntitiesDatabaseEngine()
             entity_info = db.get_entity(classifier_name)[0]
-            pipeline = self._build_binary_classification_pipeline(entity_info[6])
+            db.release_database_connection()
+            pipeline = self._build_binary_classification_pipeline(entity_info[4])
             docs, labels = io.create_data_for_binary_classifier_from_database(classifier_name)
             fitted_binary_classification_pipeline = self._train_binary_classification_pipeline(pipeline, docs, labels)
             CLASSIFIERS['binary_classifier'][entity_info[1]] = pickle.dumps(
@@ -242,7 +244,6 @@ class BinaryClassifier(AbstractClassifier):
     Class that implements AbstractClassifier and builds a object that provides binary classification results
     """
     def __init__(self, pipeline):
-        self.db = IntentsDatabaseEngine()
         super().__init__(pipeline)
 
     def classify(self, document):
@@ -294,9 +295,9 @@ class IntentClassifier(AbstractClassifier):
             entities = []
             for result in intent_entities:
                 entity = {
-                    "entity_name": result[0],
-                    "entity_type": result[1],
-                    "regular_expressions": result[4]
+                    "entity_name": result[1],
+                    "entity_type": result[2],
+                    "regular_expressions": result[3]
                 }
                 entities.append(entity)
             results['intents'] = top_3
