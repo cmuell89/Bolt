@@ -16,5 +16,5 @@ if __name__ == "__main__":
                         debug=True, use_reloader=False)
     elif os.environ.get('ENVIRONMENT') == 'test':
         application.run(debug=False, use_reloader=False)
-    elif os.environ.get('ENVIRONMENT') == 'prod':
+    elif os.environ.get('ENVIRONMENT') == 'prod_test':
         application.run()
