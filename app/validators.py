@@ -31,6 +31,10 @@ def list_of_strings(list):
 
 
 def validate_binary_classifier_parameters(parameters):
+    """
+    Validate parameters required to update the binary classifier models. Raises ValidationError if criteria not met.
+    :param parameters: parameters passed in via as data of request
+    """
     if isinstance(parameters, dict):
         if 'all' not in parameters.keys():
             raise ValidationError("Parameters must have 'all' key!", 400)
@@ -44,6 +48,10 @@ def validate_binary_classifier_parameters(parameters):
 
 
 def validate_multiclass_parameters(parameters):
+    """
+    Validate parameters required to update the multiclass classifier models. Raises ValidationError if criteria not met.
+    :param parameters: parameters passed in via as data of request
+    """
     if isinstance(parameters, dict):
         if 'all' not in parameters.keys():
             raise ValidationError("Parameters must have 'all' key!", 400)
@@ -57,6 +65,10 @@ def validate_multiclass_parameters(parameters):
 
 
 def validate_gazetteer_parameters(parameters):
+    """
+    Validate parameters required to update the  gazetteer models. Raises ValidationError if criteria not met.
+    :param parameters: parameters passed in via as data of request
+    """
     if isinstance(parameters, dict):
         if 'all' not in parameters.keys():
             raise ValidationError("'gazetteer' must have 'all' key!", 400)

@@ -82,6 +82,7 @@ class IntentClassificationAnnotator(AbstractAnnotator):
         except KeyError as error:
             raise AnnotatorAnnotateError(error.value)
 
+
 class BinaryClassificationAnnotator(AbstractAnnotator):
     def __init__(self, name, classifier):
         self.classifier = classifier
@@ -108,6 +109,7 @@ class BinaryClassificationAnnotator(AbstractAnnotator):
             return annotation
         except ClassificationModelError as error:
             raise AnnotatorAnnotateError(error.value)
+
 
 class GazetteerAnnotator(AbstractAnnotator):
     def __init__(self, name, gazetteer, max_edit_distance=2):

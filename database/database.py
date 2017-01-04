@@ -143,6 +143,7 @@ class IntentsDatabaseEngine(CoreDatabase):
     """
     def __init__(self):
         CoreDatabase.__init__(self)
+        logger.debug("Search path default: {0}".format(nlp_schema))
         self.cur.execute("SET search_path TO " + nlp_schema)
 
     def get_intents(self):
@@ -220,7 +221,7 @@ class IntentsDatabaseEngine(CoreDatabase):
 
     def get_intent_stopwords(self, intent):
         """
-        Retrives a list of stopwords for the given intent
+        Retrieves a list of stopwords for the given intent
         :param intent: name of intent
         :return: list of length one of a tuple (intent, [stopwords])
         """
@@ -349,8 +350,7 @@ class IntentsDatabaseEngine(CoreDatabase):
         Adds a entities to an intent
         :param intent: name of intent
         :param entities: list of entities or single string entity
-        :return: list of tuples (id, entity_name, entity_type, positive_expressions,
-                 negative_expressions, regular_expressions, keywords)
+        :return: list of tuples (id, entity_name, entity_type, regular_expressions, keywords)
         """
         entities_db_engine = EntitiesDatabaseEngine()
         try:
@@ -392,8 +392,7 @@ class IntentsDatabaseEngine(CoreDatabase):
         Deletes entity/entities from an intent
         :param intent: intent to delete from
         :param entities: list || single entity id to delete from intent
-        :return: list of tuple (id, entity_name, entity_type, positive_expressions,
-                 negative_expressions, regular_expressions, keywords)
+        :return: list of tuple (id, entity_name, entity_type, regular_expressions, keywords)
         """
         entities_db_engine = EntitiesDatabaseEngine()
         try:
@@ -425,12 +424,13 @@ class EntitiesDatabaseEngine(CoreDatabase):
     """
     def __init__(self):
         CoreDatabase.__init__(self)
+        logger.debug("Search path default: {0}".format(nlp_schema))
         self.cur.execute("SET search_path TO " + nlp_schema)
 
     def get_entities(self):
         """
         Gets all the entities from the database.
-        :return: list of tuples (id, entity_name, entity_type, regular_expressions, keywords)
+        :return: list of tuples [(id, entity_name, entity_type, regular_expressions, keywords), ...]
         """
         try:
             self.cur.execute("SELECT * FROM entities")
@@ -444,7 +444,7 @@ class EntitiesDatabaseEngine(CoreDatabase):
         """
         Returns the entity of the given name.
         :param entity_name: name of entity to retrieve
-        :return:list of tuples (id, entity_name, entity_type, regular_expressions, keywords)
+        :return: list of tuples of length 1 [(id, entity_name, entity_type, regular_expressions, keywords)]
         """
         try:
             self.cur.execute("SELECT * FROM entities "
@@ -457,12 +457,12 @@ class EntitiesDatabaseEngine(CoreDatabase):
 
     def add_entity(self, entity_name, entity_type, regular_expressions=None, keywords=None):
         """
-
-        :param entity_name:
-        :param entity_type:
-        :param regular_expressions:
-        :param keywords:
-        :return:
+        Adds a new entity to the database
+        :param entity_name: Name of entity
+        :param entity_type: Type of entity
+        :param regular_expressions: List of regular expressions used for Regexer based entity annotatrs
+        :param keywords: List of primary keywords used for binary classifier features.
+        :return: list of tuples [(id, entity_name, entity_type, regular_expressions, keywords), ...]
         """
         try:
             self.cur.execute("INSERT INTO entities "
@@ -475,16 +475,16 @@ class EntitiesDatabaseEngine(CoreDatabase):
             logger.exception(e.pgerror)
             raise DatabaseError(e.pgerror)
 
-    def update_entity(self, entity, **kwargs):
+    def update_entity(self, entity_name, **kwargs):
         """
         Updates entities
-        :param entity:
-        :param kwargs:
-        :return:
+        :param entity_name: Name of entity
+        :param kwargs: Key-word arguments for updated the entity
+        :return: list of tuples of length 1 [(id, entity_name, entity_type, regular_expressions, keywords)]
         """
         try:
             self.cur.execute("SELECT * FROM entities "
-                             "WHERE entity_name = %s", (entity,))
+                             "WHERE entity_name = %s", (entity_name,))
             current_entity = self.cur.fetchall()[0]
             """ Set all current values of the entity to be updated"""
             entity_id = current_entity[0]
@@ -522,15 +522,15 @@ class EntitiesDatabaseEngine(CoreDatabase):
             logger.exception(e.pgerror)
             raise DatabaseError(e.pgerror)
 
-    def delete_entity(self, entity):
+    def delete_entity(self, entity_name):
         """
         Delete entity from database
-        :param entity: string name of entity
-        :return: list of tuples (id, entity_name, entity_type, regular_expressions, keywords)
+        :param entity_name: string name of entity
+        :return: list of tuples [(id, entity_name, entity_type, regular_expressions, keywords), ...]
         """
         try:
             self.cur.execute("DELETE FROM entities "
-                             "WHERE entities.entity_name = %s", (entity,))
+                             "WHERE entities.entity_name = %s", (entity_name,))
             self.conn.commit()
             return self.get_entities()
         except psycopg2.Error as e:
@@ -538,15 +538,15 @@ class EntitiesDatabaseEngine(CoreDatabase):
             logger.exception(e.pgerror)
             raise DatabaseError(e.pgerror)
 
-    def confirm_entity_exists(self, entity):
+    def confirm_entity_exists(self, entity_name):
         """
         Confirm whether or not an entity exists.
-        :param entity: string name of entity
+        :param entity_name: string name of entity
         :return: boolean
         """
         try:
             self.cur.execute("SELECT * FROM entities "
-                             "WHERE entity_name = %s", (entity,))
+                             "WHERE entity_name = %s", (entity_name,))
             results = self.cur.fetchall()
             if len(results) > 0:
                 return True
@@ -558,6 +558,11 @@ class EntitiesDatabaseEngine(CoreDatabase):
             raise DatabaseError(e.pgerror)
 
     def get_binary_entity_expressions(self, entity_name):
+        """
+        Get the binary entity expressions associated with the provided entity
+        :param entity_name: Name of the entity
+        :return: List of tuples [(expression_id, expression, boolean), ...]
+        """
         try:
             self.cur.execute("SELECT id FROM entities WHERE entities.entity_name = %s;", (entity_name,))
             result = self.cur.fetchone()
@@ -582,6 +587,12 @@ class EntitiesDatabaseEngine(CoreDatabase):
             raise DatabaseInputError(msg)
 
     def delete_binary_entity_from_expression(self, expression_id, entity_name):
+        """
+        Deletes the m:n reference linking a binary classifier entity to a validated expression
+        :param expression_id: The expression primary key
+        :param entity_name: The entity name
+        :return: List of tuples [(expression_id, expression, boolean), ...]
+        """
         try:
             self.cur.execute("SELECT id FROM entities WHERE entities.entity_name = %s;", (entity_name,))
             result = self.cur.fetchone()
@@ -606,6 +617,13 @@ class EntitiesDatabaseEngine(CoreDatabase):
             raise DatabaseInputError(msg)
 
     def add_binary_entity_to_expression(self, expression_id, entity_name, boolean_value):
+        """
+        Adds an m:n reference linking a binary classifier entity to a validated expression
+        :param expression_id: The expression primary key
+        :param entity_name: The entity name
+        :param boolean_value: True/false value
+        :return: List of tuples [(expression_id, expression, boolean), ...]
+        """
         try:
             self.cur.execute("SELECT id FROM entities WHERE entities.entity_name = %s;", (entity_name,))
             result = self.cur.fetchone()

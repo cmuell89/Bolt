@@ -60,7 +60,14 @@ Elastic Beanstalk first!
 
 #### Blue Green Deployment
 
-TODO: Write how to do this on Elastic Beanstalk
+1. Enter current environment.
+2. Clone environment labeling it as blue or green (will depend on previous release)
+3. Enter NEW environment
+4. Deploy new app version to NEW environment.
+5. Test, test, test
+6. Swap environment URLs from old environment.
+7. Delete old environment (or shutdown via EC2 console)
+
 
 #### Deployment steps
 To configure the current Bolt version to deploy to the test environment, run:
@@ -112,8 +119,8 @@ Contents:
     - Sequences of annotator objects altering a annotation object with NLP results
 - Caching of SpaCy model
 - Routes
-	- /classification/analyze => returns intent classification and product name matches of a given expression
-	- /classification/train => trains the classifier again (hopefully after new expressions were added
+	- /nlp/analyze => returns intent classification and product name matches of a given expression
+	- /nlp/train => trains the classifier again (hopefully after new expressions were added
 	- /database/expressions/<string:intent>
 		- post => add expression/s to the intent passed in the url
 		- get => get expressions for the intent passed in the url
