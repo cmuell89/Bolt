@@ -4,7 +4,7 @@ Created on Nov 2, 2016
 @author: Carl Mueller
 """
 from abc import abstractmethod, ABCMeta
-from utils.exceptions import AnnotatorValidationError
+from utils.exceptions import AnnotatorValidationError, AnnotatorAnnotateError, ClassificationModelError
 import logging
 
 
@@ -42,7 +42,10 @@ class AbstractAnnotator(metaclass=ABCMeta):
         except AnnotatorValidationError as e:
             self.logger.debug(e.value)
             return annotation
-    
+        except AnnotatorAnnotateError as e:
+            self.logger.debug(e.value)
+            return annotation
+
     @abstractmethod
     def validate(self):
         """ Raises a Validation Error if requirements are not meant """
@@ -53,13 +56,14 @@ class AbstractAnnotator(metaclass=ABCMeta):
         pass
 
 
-class ClassificationAnnotator(AbstractAnnotator):
+class IntentClassificationAnnotator(AbstractAnnotator):
     def __init__(self, name, classifier):
         self.classifier = classifier
         super().__init__(name)
     
     def validate(self, annotation):
-        pass
+        if self.classifier is None:
+            raise AnnotatorValidationError("Classifier is None type!")
         
     def annotate(self, annotation):
         """
@@ -67,11 +71,44 @@ class ClassificationAnnotator(AbstractAnnotator):
         :param annotation: Annotation object to be updated
         :return: Updated annotation object
         """
-        classification_results = self.classifier.classify(annotation.annotations['original_text'])
-        annotation.annotations['stopwords'] = classification_results['stopwords']
-        annotation.annotations['entity_types'] = classification_results['entity_types']
-        annotation.annotations['results']['classification'] = classification_results['intents']
-        return annotation
+        try:
+            classification_results = self.classifier.classify(annotation.annotations['original_text'])
+            annotation.annotations['stopwords'] = classification_results['stopwords']
+            annotation.annotations['entity_types'] = classification_results['entity_types']
+            annotation.annotations['results']['classification'] = classification_results['intents']
+            return annotation
+        except ClassificationModelError as error:
+            raise AnnotatorAnnotateError(error.value)
+        except KeyError as error:
+            raise AnnotatorAnnotateError(error.value)
+
+
+class BinaryClassificationAnnotator(AbstractAnnotator):
+    def __init__(self, name, classifier):
+        self.classifier = classifier
+        super().__init__(name)
+
+    def validate(self, annotation):
+        if self.classifier is None:
+            raise AnnotatorValidationError("Classifier is None type!")
+
+    def annotate(self, annotation):
+        """
+        Runs the classifier.classify method on the original text and updates the Annotation object with the results.
+        :param annotation: Annotation object to be updated
+        :return: Updated annotation object
+        """
+        try:
+            result = self.classifier.classify(annotation.annotations['original_text'])
+            if result[0][0] == 'true':
+                value = True
+            else:
+                value = False
+            confidence = result[0][1]
+            annotation.annotations['results']['entities'].append({"name": self.name, "value": value, "confidence": confidence})
+            return annotation
+        except ClassificationModelError as error:
+            raise AnnotatorAnnotateError(error.value)
 
 
 class GazetteerAnnotator(AbstractAnnotator):
@@ -90,8 +127,10 @@ class GazetteerAnnotator(AbstractAnnotator):
         """
         if not annotation.annotations['entity_types']:
             raise AnnotatorValidationError("No entity types found in annotation: " + self.name)
-        if self.name not in annotation.annotations['entity_types']:
-            raise AnnotatorValidationError("Entity not found. No annotation performed for: " + self.name)
+        if self.max_edit_distance < 0:
+            raise AnnotatorValidationError("Edit distance must be greater than 0")
+        if self.gazetteer is None:
+            raise AnnotatorValidationError("Gazetteer object in None type!")
 
     def annotate(self, annotation):
         """
@@ -117,13 +156,12 @@ class RegexAnnotator(AbstractAnnotator):
         Valiates that the annotation.annotations dict contains entity types with the name equal to the self.name of the
         current annotator.
         :param annotation: Annotation object to be updated
-        :type annotation:
         :return: Updated annotation object
         """
         if not annotation.annotations['entity_types']:
             raise AnnotatorValidationError("No entity types found in annotation: " + self.name)
-        if self.name not in annotation.annotations['entity_types']:
-            raise AnnotatorValidationError("Entity not found. No annotation performed for: " + self.name)
+        if self.regexer is None:
+            raise AnnotatorValidationError("Regexer is None type")
 
     def annotate(self, annotation):
         """
@@ -134,4 +172,38 @@ class RegexAnnotator(AbstractAnnotator):
         """
         matches = self.regexer.get_matches(annotation.annotations['original_text'])
         annotation.annotations['results']['entities'].append({"name": self.name, "value": matches})
+        return annotation
+
+
+class BinaryRegexAnnotator(AbstractAnnotator):
+    def __init__(self, name, regexer):
+        self.regexer = regexer
+        super().__init__(name)
+
+    def validate(self, annotation):
+        """
+        Valiates that the annotation.annotations dict contains entity types with the name equal to the self.name of the
+        current annotator.
+        :param annotation: Annotation object to be updated
+        :return: Updated annotation object
+        """
+        if not annotation.annotations['entity_types']:
+            raise AnnotatorValidationError("No entity types found in annotation: " + self.name)
+        if self.regexer is None:
+            raise AnnotatorValidationError("Regexer is None type")
+
+    def annotate(self, annotation):
+        """
+        Annotates the annotation object with the results of the Regexer object based on an existing match. If match
+        exists, the results are true, else false.
+        Appends the results to the annotation.annotations['results']['entities] list
+        :param annotation: The annotation object to update
+        :return: Returns the updated annotation object
+        """
+        match = self.regexer.get_matches(annotation.annotations['original_text'])
+        if match:
+            result = True
+        else:
+            result = False
+        annotation.annotations['results']['entities'].append({"name": self.name, "value": result})
         return annotation

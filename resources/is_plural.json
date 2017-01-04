@@ -1,0 +1,52 @@
+{
+  "classes": [
+    {
+      "label": "plural",
+      "expressions": [
+        "who were my top 10 customers last year?",
+        "who were my top five customers last month?",
+        "who are my best customers?",
+        "what were our top 5 selling items last quarter?",
+        "what are our top sellings items this quarter?",
+        "what were our top 10 selling items last month?",
+        "what are the best selling items of all time?",
+        "What are our sellings items?",
+        "show the largest orders",
+        "show the biggest orders",
+        "show the 10 biggest orders",
+        "Who are the top customers this week?",
+        "what are my best sellers?",
+        "what are the largest three orders?",
+        "Who are the best customers?",
+        "What are my top selling items?",
+        "what are my top sellers",
+        "Get me my top sellers.",
+        "Get me my top orders."
+
+      ]
+    },
+    {
+      "label": "singular",
+      "expressions": [
+        "what is my best selling product?",
+        "what is the best selling product?",
+        "what is my best selling item this month?",
+        "what's my best selling item this month?",
+        "what's my best selling item?",
+        "what was the largest order last year?",
+        "show the biggest order",
+        "who was my top customer last month?",
+        "what is my best seller?",
+        "what is the largest order?",
+        "What's our best selling item this month?",
+        "What is my best selling item this week?",
+        "what is my best selling item?",
+        "What is my top item sold?",
+        "What's my top seller?",
+        "What is my top seller?",
+        "Get me my top order.",
+        "Get me the top order."
+      ]
+    }
+  ]
+}

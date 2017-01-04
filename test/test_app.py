@@ -15,7 +15,7 @@ from app import app
 logger = logging.getLogger('BOLT.test')
 
 
-class ClassificationTest(unittest.TestCase):
+class NLPTest(unittest.TestCase):
     """
     Class for unit testing 'Classification' routes in restful_api.py.
     """ 
@@ -24,48 +24,95 @@ class ClassificationTest(unittest.TestCase):
         cls.app = app.test_client()
         cls.app.testing = True
         cls.access_token = os.environ.get('ACCESS_TOKEN')
-        logger.info("TEST SUITE: ClassificationTest <API>")
+        logger.info("TEST SUITE: NLPTest <API>")
 
     @classmethod
     def tearDownClass(cls):
-        logger.info("TEST SUITE PASS: ClassificationTest <API>\n")
+        logger.info("TEST SUITE PASS: NLPTest <API>\n")
 
     def test_analyze_route(self):
         logger.debug("TEST: 'POST' '/nlp/analyze'")
         test_headers = Headers()
         test_headers.add('Content-Type', 'application/json')
         test_headers.add('Authorization', 'Token ' + self.access_token)
-        response = ClassificationTest.app.post('/nlp/analyze',
+        response = NLPTest.app.post('/nlp/analyze',
                                                data=json.dumps(dict(query='What is order 2313?', id='1234')),
                                                headers=test_headers)
         self.assertEqual(response.status_code, 200) 
         result = json.loads(response.get_data(as_text=True))
-        self.assertEqual(result['classification'][0]['intent'], u"get-order")
+        self.assertEqual(result['classification'][0]['intent'], u"get_order")
         second_test_headers = Headers()
         second_test_headers.add('Authorization', 'Token ' + self.access_token)
-        second_response = ClassificationTest.app.post('/nlp/analyze',
+        second_response = NLPTest.app.post('/nlp/analyze',
                                                       data=json.dumps(dict(query='What is order 2313?')),
                                                       headers=second_test_headers)
         self.assertEqual(second_response.status_code, 415)
         logger.info("TEST PASS: 'POST' '/nlp/analyze'")
     
     def test_train_route(self):
-        logger.debug("TEST: 'GET' '/classification/train'")
+        logger.debug("TEST: 'GET' '/nlp/train'")
         test_headers = Headers()
         test_headers.add('Content-Type', 'application/json')
         test_headers.add('Authorization', 'Token ' + self.access_token)
-        response = ClassificationTest.app.get('/classification/train/nb', headers=test_headers)
-        self.assertEqual(response.status_code, 200) 
-        result = json.loads(response.get_data(as_text=True))
-        self.assertEqual(result['message'], "Classifier successfully trained: nb")
-        second_test_headers = Headers()
-        second_test_headers.add('Content-Type', 'application/json')
-        second_test_headers.add('Authorization', 'Token ' + self.access_token)
-        second_response = ClassificationTest.app.get('/classification/train/svm', headers=second_test_headers)
-        self.assertEqual(second_response.status_code, 200) 
-        second_result = json.loads(second_response.get_data(as_text=True))
-        self.assertEqual(second_result['message'], "Classifier successfully trained: svm")
-        logger.info("TEST PASS: 'GET' '/classification/train'")
+
+        """ All models for all types """
+        train_all_response = NLPTest.app.post('/nlp/train', data=json.dumps(dict(all=True)), headers=test_headers)
+        self.assertEqual(train_all_response.status_code, 200)
+        result = json.loads(train_all_response.get_data(as_text=True))
+        self.assertEqual(result['message']['multiclass'], "All updated.")
+        self.assertEqual(result['message']['binary_classifier'], "All updated.")
+        self.assertEqual(result['message']['gazetteer'], "All updated.")
+
+        """ multiclass classifier models """
+        train_all_multiclass_response = NLPTest.app.post('/nlp/train', data=json.dumps(dict(all=False, multiclass={"all": True})), headers=test_headers)
+        self.assertEqual(train_all_multiclass_response.status_code, 200)
+        result = json.loads(train_all_multiclass_response.get_data(as_text=True))
+        self.assertEqual(result['message']['multiclass'], "Multiclass classifiers updated.")
+
+        train_intents_classifier_response = NLPTest.app.post('/nlp/train',
+                                                         data=json.dumps(dict(all=False, multiclass={"all": False, "name":"intents_classifier"})),
+                                                         headers=test_headers)
+        self.assertEqual(train_intents_classifier_response.status_code, 200)
+        result = json.loads(train_intents_classifier_response.get_data(as_text=True))
+        self.assertEqual(result['message']['multiclass'], "The classifier intents_classifier of type multiclass updated.")
+
+        """ binary_classifer classifier models """
+        train_all_binary_classifer_response = NLPTest.app.post('/nlp/train',
+                                                         data=json.dumps(dict(all=False, binary_classifier={"all": True})),
+                                                         headers=test_headers)
+        self.assertEqual(train_all_binary_classifer_response.status_code, 200)
+        result = json.loads(train_all_binary_classifer_response.get_data(as_text=True))
+        self.assertEqual(result['message']['binary_classifier'], "Binary_classifiers updated")
+
+        train_is_plural_response = NLPTest.app.post('/nlp/train',
+                                                             data=json.dumps(dict(all=False, binary_classifier={"all": False,
+                                                                                                         "name": "is_plural"})),
+                                                             headers=test_headers)
+        self.assertEqual(train_is_plural_response.status_code, 200)
+        result = json.loads(train_is_plural_response.get_data(as_text=True))
+        self.assertEqual(result['message']['binary_classifier'],
+                         "The classifier is_plural of type binary_classifier updated.")
+
+        """ gazetteer  models """
+        train_all_gazetteer_response = NLPTest.app.post('/nlp/train',
+                                                               data=json.dumps(
+                                                                   dict(all=False, gazetteer={"all": True})),
+                                                               headers=test_headers)
+        self.assertEqual(train_all_gazetteer_response.status_code, 200)
+        result = json.loads(train_all_gazetteer_response.get_data(as_text=True))
+        self.assertEqual(result['message']['gazetteer'], "All gazetteers have been updated.")
+
+        train_gazetteer_by_key_response = NLPTest.app.post('/nlp/train',
+                                                    data=json.dumps(dict(all=False, gazetteer={"all": False,
+                                                                                                      "key": "8b10af10-011b-11e6-896c-6924b93e8186"})),
+                                                    headers=test_headers)
+        self.assertEqual(train_gazetteer_by_key_response.status_code, 200)
+        result = json.loads(train_gazetteer_by_key_response.get_data(as_text=True))
+        self.assertEqual(result['message']['gazetteer'],
+                         "Gazetteers for the key 8b10af10-011b-11e6-896c-6924b93e8186 updated")
+
+
+        logger.info("TEST PASS: 'GET' '/nlp/train'")
 
 
 class ExpressionsTest(unittest.TestCase):
@@ -326,7 +373,7 @@ class IntentsTest(unittest.TestCase):
         response = IntentsTest.app.get('/database/intents', headers=test_headers)
         result = json.loads(response.get_data(as_text=True))
         self.assertEqual(response.status_code, 200)
-        self.assertIn("get-order", result['intents'])
+        self.assertIn("get_order", result['intents'])
         logger.info("TEST PASS: 'GET' '/database/intents/")
         
     def test_delete_intent_route(self):

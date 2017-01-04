@@ -1,4 +1,4 @@
-'''
+"""
 Created on Jul 27, 2016
 
 @tokenAuthor: Carl Mueller
@@ -10,7 +10,7 @@ Classes:
     Analyze:
         post - Returns the intent classification of the query, and the entities and stopwords of the intent.
     Train:
-        get - Trains the existing classifier object accessed by all '/classification/*' routes.
+        psot - Trains the existing classifier and gazetteer models.
     Expressions:
         get - Returns the expressions for an intent
         post - Adds expression/s to an intent. Returns the update list of expressions for the intent.
@@ -23,7 +23,7 @@ Classes:
         delete- Deletes intent and all expressions associated with that intent (SHOULD MIGRATE EXPRESSIONS INTO UNLABELED EXPRESSION.  Returns current list of intents.
     Health:
         get - Used by AWS Elastic Beanstalk service to monitor health. Returns 200.
-'''
+"""
 import logging
 from flask import jsonify, Response, abort, g
 from flask_restful import Resource
@@ -32,10 +32,14 @@ from webargs.flaskparser import use_args, parser
 from marshmallow import fields
 from functools import partial
 from app.authorization import tokenAuth
-from app.validators import valid_application_type, list_of_strings
+from app.validators import valid_application_type,\
+                           list_of_strings,\
+                           validate_binary_classifier_parameters,\
+                           validate_multiclass_parameters,\
+                           validate_gazetteer_parameters
 from database.database import IntentsDatabaseEngine, ExpressionsDatabaseEngine
 from nlp import Analyzer, Updater
-from utils.exceptions import DatabaseError, DatabaseInputError
+from utils.exceptions import DatabaseError, DatabaseInputError, UpdaterError, AnalyzerError
 
 logger = logging.getLogger('BOLT.api')
 
@@ -74,47 +78,102 @@ class Analyze(Resource):
         :param args: Incoming data from request containing the query and the access key.
         :return: JSON response with the results of the Analyzer on the query
         """
-        analyzer = Analyzer()
-        key = args['key'] if 'key' in args.keys() else None
-        results = analyzer.run_analysis(args['query'], key)
-        estimated_intent = results['classification'][0]['intent']
-        estimated_confidence = results['classification'][0]['confidence']
         try:
+            analyzer = Analyzer()
+            key = args['key'] if 'key' in args.keys() else None
+            results = analyzer.run_analysis(args['query'], key)
+            estimated_intent = results['classification'][0]['intent']
+            estimated_confidence = results['classification'][0]['confidence']
             db = get_db('expressions')
             db.add_unlabeled_expression(args['query'], estimated_intent, estimated_confidence)
+            resp = jsonify(results)
+            return resp
         except DatabaseError as e:
             logger.exception(e.value)
-        resp = jsonify(results)
-        resp.status_code = 200
-        return resp
-        
-        
+            resp = jsonify(e.value)
+            resp.status_code = 500
+            return resp
+        except AnalyzerError as e:
+            logger.exception(e.value)
+            resp = jsonify(e.value)
+            resp.status_code = 500
+            return resp
+
+
 class Train(Resource):
-    
+
     decorators = [tokenAuth.login_required]
     validate_application_json = partial(valid_application_type, 'application/json')
     
     train_args = {
-        'content_type': fields.Str(required=True, load_from='Content-Type', location='headers', validate=validate_application_json)
+        'content_type': fields.Str(required=True, load_from='Content-Type', location='headers', validate=validate_application_json),
+        'all': fields.Bool(required=True),
+        'multiclass': fields.Dict(required=False, validate=validate_multiclass_parameters),
+        'binary_classifier': fields.Dict(required=False, validate=validate_binary_classifier_parameters),
+        'gazetteer': fields.Dict(required=False, validate=validate_gazetteer_parameters)
     }
     
     @use_args(train_args)
-    def get(self, args, classifier):
+    def post(self, args):
         """
-        Trains the existing classification models used by Classifier objects.
-        :param classifier: Classifier type (nb, svm)
-        :return:
+        Endpoint to update classifiers and gazetteer models.
+        Of the form
+            {
+                all: true/false,
+                multiclass:
+                    {
+                        all: true/false,
+                        name: XYZ
+                    },
+                binary_classifier:
+                    {
+                        all: true/false,
+                        name: XYZ
+                    },
+                gazetteer:
+                    {
+                        all: true/false,
+                        key: XYZ
+                    }
+            }
+        :return: Corresponding response object containing message string.
         """
-        if classifier not in ('svm', 'nb'):
-            classifier = 'svm'
-            response_message = "Classifier defaulting to " + classifier + " due to malformed variable URL."
-        else:
-            response_message = "Classifier successfully trained: " + classifier
         updater = Updater()
-        updater.update_classifier(classifier)
-        resp = jsonify(message=response_message)
-        resp.status_code = 200
-        return resp
+        message = {
+            "multiclass": "n/a",
+            "binary_classifier": "n/a",
+            "gazetteer": "n/a"
+        }
+        try:
+            if args['all']:
+                updater.update_all_gazetteers()
+                updater.update_classifiers(multiclass=True, binary_classifier=True)
+                message['multiclass'] = "All updated."
+                message['binary_classifier'] = "All updated."
+                message['gazetteer'] = "All updated."
+                resp = jsonify(message=message)
+                return resp
+            if 'multiclass' in args.keys():
+                if args['multiclass']['all']:
+                    message['multiclass'] = updater.update_classifiers(multiclass=True, binary_classifier=False)
+                else:
+                    message['multiclass'] = updater.update_single_classifier('multiclass', 'intents_classifier')
+            if 'binary_classifier' in args.keys():
+                if args['binary_classifier']['all']:
+                    message['binary_classifier'] = updater.update_classifiers(multiclass=False, binary_classifier=True)
+                else:
+                    message['binary_classifier'] = updater.update_single_classifier('binary_classifier', args['binary_classifier']['name'])
+            if 'gazetteer' in args.keys():
+                if args['gazetteer']['all']:
+                    message['gazetteer'] = updater.update_all_gazetteers()
+                else:
+                    message['gazetteer'] = updater.update_gazetteers_by_key(args['gazetteer']['key'])
+            resp = jsonify(message=message)
+            return resp
+        except UpdaterError as error:
+            resp = jsonify(message=error.value)
+            resp.status_code = 500
+            return resp
 
 
 class Expressions(Resource):
@@ -138,7 +197,8 @@ class Expressions(Resource):
         """
         try:
             db = get_db('expressions')
-            expressions = db.add_expressions_to_intent(intent, args['expressions'])
+            db_results = db.add_expressions_to_intent(intent, args['expressions'])
+            expressions = [x[1] for x in db_results]
             resp = jsonify(intent=intent, expressions=expressions)
             resp.status_code = 200
             return resp
@@ -165,7 +225,8 @@ class Expressions(Resource):
 
         try:
             db = get_db('expressions')
-            expressions = db.get_intent_expressions(intent)
+            db_results = db.get_intent_expressions(intent)
+            expressions = [x[1] for x in db_results]
             resp = jsonify(intent=intent, expressions=expressions)
             resp.status_code = 200
             return resp
@@ -197,7 +258,8 @@ class Expressions(Resource):
         if 'all' in args.keys() and args['all'] == True:
             try:
                 db = get_db('expressions')
-                expressions = db.delete_all_intent_expressions(intent)
+                db_results = db.delete_all_intent_expressions(intent)
+                expressions = [x[1] for x in db_results]
                 resp = jsonify(intent=intent, expressions=expressions)
                 return resp
             except DatabaseError as error:
@@ -211,8 +273,9 @@ class Expressions(Resource):
         elif args['expressions']:
             try:
                 db = get_db('expressions')
-                expressions = db.delete_expressions_from_intent(intent, args['expressions'])
-                resp = jsonify(intent=intent,expressions=expressions, deleted_expressions=args['expressions'])
+                db_results = db.delete_expressions_from_intent(intent, args['expressions'])
+                expressions = [x[1] for x in db_results]
+                resp = jsonify(intent=intent, expressions=expressions, deleted_expressions=args['expressions'])
                 return resp
             except DatabaseError as error:
                 resp = jsonify(error=error.value)

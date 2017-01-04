@@ -13,7 +13,8 @@ def remove_commas(string):
 
 
 def remove_foward_slash(string):
-    string = string.replace("/", "")
+    string = string.replace(" / ", " ")
+    string = re.sub(r'(?<=[a-zA-Z0-9])/(?=[a-zA-Z0-9])', ' ', string)
     return string
 
 
@@ -35,4 +36,9 @@ def dash_to_single_space(string):
 
 def remove_apostrophe(string):
     string = string.replace("\'", "")
+    return string
+
+
+def remove_quotations(string):
+    string = string.replace('\"', '')
     return string

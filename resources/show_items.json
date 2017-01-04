@@ -1,0 +1,64 @@
+{
+  "classes": [
+    {
+      "label": "true",
+      "expressions": [
+        "which items need to be fulfilled?",
+        "what items need to be filled",
+        "what items need to be fulfilled",
+        "can I get a list of the unfulfilled items from order #14369 to #14400?",
+        "show me unfulfilled items, including will call",
+        "Can you give me the updated list of the unfulfilled items/quantities from order #13953 to #13973?",
+        "Show me unfulfilled items, including will call orders",
+        "can I get a list of the unfulfilled items including will call items?",
+        "Can you give me the updated list of unfulfilled items/quantities, including will call items?",
+        "get me all unfulfilled items including will call",
+        "Can you give me the updated list of the unfulfilled items/quantities from order #13581 to #13590?",
+        "how many items need to be filled?",
+        "What items do I need to send out?",
+        "can I get an updated list of the unfulfilled items/quantities?",
+        "what items are unfulfille?",
+        "what items are unfulfilled?",
+        "give me a list of the specific items and quantities I need to fulfill",
+        "give me a list of the specific items and quantities I need to ship out",
+        "give me a list of the specific items and quantities I need to shop out",
+        "What items need to be fulfilled?",
+        "what items need to be filled today?",
+        "what items neeed to be shipped today?",
+        "what items do I need to send out?",
+        "get me all unfulfilled items",
+        "how many unfulfilled items are there?",
+        "what items need to be shipped today?",
+        "what items need to be fulfilled?",
+        "Show me items for all unfufilled orders.",
+        "Show me the items for my unfulfilled orders."
+
+      ]
+    },
+    {
+      "label": "false",
+      "expressions": [
+        "get me all unfulfilled orders.",
+        "What are my unfulfilled orders?",
+        "what are my unfulfilled order?",
+        "show me all unfulfilled orders except for will-call orders",
+        "get all unfulfilled orders excluding will call.",
+        "what unfulfilled orders need to go out?",
+        "How many unfulfilled orders do we have?",
+        "what are my unfulfilled orders?",
+        "can you print all unfulfilled orders?",
+        "what orders does <@U19CGF7N1> need to fulfill today?",
+        "what orders are unfulfilled?",
+        "how many unfulfilled orders do we have?",
+        "how many unfulfilled orders do I have?",
+        "what orders need to be fulfilled",
+        "how many orders need to be filled?",
+        "what orders need to be filled today?",
+        "what orders need to be fulfilled?",
+        "Get me all unfulfilled orders.",
+        "how many unfulfilled orders are there",
+        "how many unfufilled orders?"
+      ]
+    }
+  ]
+}

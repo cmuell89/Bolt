@@ -6,7 +6,7 @@ Created on Jul 4, 2016
 import os
 import json
 import logging
-from database.database import ExpressionsDatabaseEngine
+from database.database import ExpressionsDatabaseEngine, EntitiesDatabaseEngine
 
 logger = logging.getLogger('BOLT.io')
 
@@ -37,13 +37,10 @@ def create_data_for_pipeline_from_file(file_address):
         print("IO error: ", e)
 
 
-def create_data_for_pipeline_from_database():
+def create_data_for_intent_pipeline_from_database():
     """
-    Function that returns an array of array of training data stored in Bolt's postgreSQL database.
-
-    Returns:
-        tuple of paired lists of training documents and labels, in that order.
-        Returns empty arrays if exception occurs.
+    Function that returns an array of array of training data for the intent classifier stored in Bolt's postgreSQL database.
+       :return: [[docs],[labels]] or empty array of arrays if exception occurs
     """
     labels = []
     docs = []
@@ -61,8 +58,36 @@ def create_data_for_pipeline_from_database():
         logger.debug("returning empty arrays")
         return [docs, labels]
 
+def create_data_for_binary_classifier_from_database(entity_name):
+    """
+    Function that returns an array of arays of labeled training data for the binary classifier passed as the entity_name
+    :return: [[docs],[labels]]
+    """
+    labels = []
+    docs = []
+    try:
+        db = EntitiesDatabaseEngine()
+        data = db.get_binary_entity_expressions(entity_name)
+        db.release_database_connection()
+        for datum in data:
+            docs.append(datum[1])
+            if datum[2]:
+                labels.append('true')
+            else:
+                labels.append('false')
+        return [docs, labels]
+    except Exception as e:
+        logger.error("Exception occurred importing database data.")
+        logger.exception(e)
+        logger.debug("returning empty arrays")
+        return [docs, labels]
 
 def get_intents_from_JSON_data(fileAddress):
+    """
+    Gets data from a JSON file.
+    :param fileAddress:
+    :return:
+    """
     with open(fileAddress) as file_:
         data = json.load(file_)
         intents = data["intents"]
