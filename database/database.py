@@ -17,7 +17,7 @@ logger = logging.getLogger('BOLT.db')
 
 nlp_schema = os.environ.get('NLP_SCHEMA')
 
-if os.environ.get('ENVIRONMENT') == 'prod':
+if os.environ.get('ENVIRONMENT') == 'prod' or os.environ.get('ENVIRONMENT') == 'prod_test':
     """ Connect to production database if in prod mode. """
     logger.debug('Created threaded database connection pool for PRODUCTION environment.')
     pool = ThreadedConnectionPool(2,
