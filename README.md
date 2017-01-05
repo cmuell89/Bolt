@@ -78,7 +78,7 @@ Additionally, make sure to create the following file (ensure proper .yml format 
 
 Directory location: 
    
-    root_of_Bolt_app/.ebextensions/01_environment.config
+    root_of_Bolt_app/.ebextensions/02_environment.config
 
 Contents:
 
@@ -93,20 +93,29 @@ Contents:
         option_name: ACCESS_TOKEN
         value: your_access_token
       - namespace: aws:elasticbeanstalk:application:environment
-        option_name: RDS_DB_NAME
+        option_name: BOLT_DB_NAME
         value: dbname
       - namespace: aws:elasticbeanstalk:application:environment
-        option_name: RDS_HOSTNAME
+        option_name: BOLT_HOSTNAME
         value: dbHostEndpoint
       - namespace: aws:elasticbeanstalk:application:environment
-        option_name: RDS_PORT
+        option_name: BOLT_DB_PORT
         value: port
       - namespace: aws:elasticbeanstalk:application:environment
-        option_name: RDS_USERNAME
+        option_name: BOLT_DB_USERNAME
         value: username
       - namespace: aws:elasticbeanstalk:application:environment
-        option_name: RDS_PASSWORD
-        value: password`
+        option_name: BOLT_DB_PASSWORD
+        value: password
+      - namespace: aws:elasticbeanstalk:application:environment
+        option_name: PAPERTRAILS_ADDRESS
+        value: papertrails_address
+      - namespace: aws:elasticbeanstalk:application:environment
+        option_name: PAPERTRAILS_PORT
+        value: papertrails_port
+      - namespace: aws:elasticbeanstalk:application:environment
+        option_name: SECRET_KEY
+        value: secret_key
   
 
 #### Current Release Major Features 
