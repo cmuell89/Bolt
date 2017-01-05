@@ -60,7 +60,10 @@ logs/
 
 # Elastic Beanstalk Files
 .ebextensions/01_environment.config
+.ebextensions/02_environment.config
 
 # Prototyping stuff
 productEntities.json
 productList.txt
+
+
