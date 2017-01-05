@@ -146,8 +146,10 @@ class Analyzer:
             if entity['entity_type'] == 'gazetteer' or entity['entity_type'] == 'simple_gazetteer':
                 if gazetteers is not None:
                     logger.debug("Creating GazetteerAnnotator for: {0}".format(entity['entity_name']))
-                    gaz_annotator = GazetteerAnnotator(entity['entity_name'], gazetteers[entity['entity_name']])
-                    entity_pipeline.add_annotator(gaz_annotator)
+                    """ Check to make sure gazetteers contains the gazetteer type to avoid key error """
+                    if entity['entity_name'] in gazetteers.keys():
+                        gaz_annotator = GazetteerAnnotator(entity['entity_name'], gazetteers[entity['entity_name']])
+                        entity_pipeline.add_annotator(gaz_annotator)
 
         core_annotation = entity_pipeline.analyze(core_annotation)
         return core_annotation.annotations['results']
