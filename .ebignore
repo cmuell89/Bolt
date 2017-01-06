@@ -32,6 +32,9 @@ var/
 /.settings
 /logs
 
+# Specific Files
+/utils/string_stats.py
+
 # virtualenv
 /bolt-env
 
@@ -65,3 +68,5 @@ docs/
 
 # Temp
 spacy.config
+
+/application.wsgi

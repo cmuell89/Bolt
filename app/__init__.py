@@ -2,7 +2,7 @@ from flask import Flask, jsonify, g
 from flask_restful import Api
 from .resources import restful_api, web_client
 import logging
-import settings
+import os
 
 logger = logging.getLogger('BOLT.app')
 
@@ -10,6 +10,7 @@ __all__ = ['application']
 
 application = app = Flask(__name__)
 
+application.secret_key = os.environ.get('SECRET_KEY')
 
 @app.teardown_appcontext
 def close_connection(exception):
