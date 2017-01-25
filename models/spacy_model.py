@@ -11,7 +11,8 @@ I want to see it in action up close before I make use of textacy for calls to Sp
 from functools import partial
 import logging
 
-from cachetools import cached, Cache, hashkey
+from cachetools import cached, Cache
+from cachetools.keys import hashkey
 import spacy
 
 

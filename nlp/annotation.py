@@ -153,8 +153,7 @@ class RegexAnnotator(AbstractAnnotator):
 
     def validate(self, annotation):
         """
-        Valiates that the annotation.annotations dict contains entity types with the name equal to the self.name of the
-        current annotator.
+        Valiates that the annotation.annotations dict contains entity types and that the regexer has been populated
         :param annotation: Annotation object to be updated
         :return: Updated annotation object
         """
@@ -182,8 +181,7 @@ class BinaryRegexAnnotator(AbstractAnnotator):
 
     def validate(self, annotation):
         """
-        Valiates that the annotation.annotations dict contains entity types with the name equal to the self.name of the
-        current annotator.
+        Valiates that the annotation.annotations dict contains entity types and that the regexer has been populated
         :param annotation: Annotation object to be updated
         :return: Updated annotation object
         """
@@ -205,5 +203,33 @@ class BinaryRegexAnnotator(AbstractAnnotator):
             result = True
         else:
             result = False
+        annotation.annotations['results']['entities'].append({"name": self.name, "value": result})
+        return annotation
+
+
+class NaiveNumberAnnotator(AbstractAnnotator):
+    def __init__(self, name, parser):
+        self.parser = parser
+        super().__init__(name)
+
+    def validate(self, annotation):
+        """
+        Valiates that the annotation.annotations dict contains entity types and that the parser has been populated
+        :param annotation: Annotation object to be updated
+        :return: Updated annotation object
+        """
+        if not annotation.annotations['entity_types']:
+            raise AnnotatorValidationError("No entity types found in annotation: " + self.name)
+        if self.parser is None:
+            raise AnnotatorValidationError("Number parser is None type")
+
+    def annotate(self, annotation):
+        """
+        Annotates the annotation object with the results of the Parser object based on an existing match.
+        Appends the results to the annotation.annotations['results']['entities] list
+        :param annotation: The annotation object to update
+        :return: Returns the updated annotation object
+        """
+        result = self.parser.parse(annotation.annotations['original_text'])
         annotation.annotations['results']['entities'].append({"name": self.name, "value": result})
         return annotation

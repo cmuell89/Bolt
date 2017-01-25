@@ -8,9 +8,10 @@ import os
 import logging
 from nlp.clf.classification import ClassificationModelBuilder, ClassificationModelAccessor
 from nlp.annotation import IntentClassificationAnnotator, BinaryClassificationAnnotator,\
-                           GazetteerAnnotator, RegexAnnotator, BinaryRegexAnnotator, Annotation
+                           GazetteerAnnotator, RegexAnnotator, BinaryRegexAnnotator, NaiveNumberAnnotator, Annotation
 from nlp.ner.gazetteer import GazetteerModelAccessor, GazetteerModelBuilder
 from nlp.ner.regexer import Regexer
+from nlp.ner.number_parser import NumberExtractor
 from utils.exceptions import ClassificationModelError, GazetteerModelError, AnalyzerError, UpdaterError
 
 logger = logging.getLogger('BOLT.nlp')
@@ -142,6 +143,11 @@ class Analyzer:
                 logger.debug("Creating BinaryRegexAnnotator for: {0}".format(entity['entity_name']))
                 regex_annotator = BinaryRegexAnnotator(entity['entity_name'], Regexer(entity['regular_expressions']))
                 entity_pipeline.add_annotator(regex_annotator)
+            """ Create a NaiveNumberAnnotator for each number entity type"""
+            if entity['entity_type'] == 'number':
+                logger.debug("Creating NaiveNumberAnnotator for: {0}".format(entity['entity_name']))
+                number_annotator = NaiveNumberAnnotator(entity['entity_name'], NumberExtractor())
+                entity_pipeline.add_annotator(number_annotator)
             """ Access the gazetteer for the appropriate entity types and create an GazetteerAnnotator """
             if entity['entity_type'] == 'gazetteer' or entity['entity_type'] == 'simple_gazetteer':
                 if gazetteers is not None:
