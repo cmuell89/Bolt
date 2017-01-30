@@ -48,19 +48,18 @@ class NumberExtractor:
 
     def parse(self, doc):
         parsed_doc = self.nlp(doc)
-        cardinal_tokens = []
+        numeric_tokens = []
         for token in parsed_doc:
             if token.ent_type_ == 'CARDINAL' or token.ent_type_ == 'MONEY':
-                cardinal_tokens.append(token)
+                numeric_tokens.append(token)
         text = ''
-        for token in cardinal_tokens:
+        for token in numeric_tokens:
             text += token.orth_ + ' '
             text.strip(' ')
         try:
             return int(text)
         except ValueError as e:
             return self.text2num(text)
-
 
     def text2num(self, text):
         if len(text) == 0:
