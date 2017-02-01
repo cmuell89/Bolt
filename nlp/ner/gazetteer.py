@@ -8,7 +8,7 @@ import os
 import logging
 from nltk.corpus import stopwords
 from nltk.stem.porter import PorterStemmer
-from utils.string_cleaners import remove_apostrophe, normalize_whitespace, remove_question_mark, dash_to_single_space, remove_foward_slash
+from utils.string_cleaners import remove_apostrophe, normalize_whitespace, remove_question_mark, dash_to_single_space, remove_foward_slash, remove_quotations, remove_commas
 from utils.exceptions import DatabaseError, DatabaseInputError, GazetteerModelError
 from database.database import ExternalDatabaseEngine
 from nlp.ner.trie import GramTrieBuilder, SimpleTrieBuilder, DictionaryBuilder, TrieNode
@@ -167,6 +167,7 @@ class Gazetteer:
 
         """ Create a list of the query ngrams to be searched in the Trie """
         query = self._clean_query(query).lower()
+        logger.debug(query)
         query = [w for w in query.split(' ') if w.lower() not in custom_stopwords]
         query_grams = self.dict_builder.ngrammer(query, 2, len(query)+1)
         query_grams = sorted(query_grams, key=lambda word: len(word), reverse=True)
@@ -249,5 +250,6 @@ class Gazetteer:
         query = dash_to_single_space(query)
         query = remove_apostrophe(query)
         query = remove_foward_slash(query)
-        query = remove_question_mark(query)
+        query = remove_quotations(query)
+        query = remove_commas(query)
         return query
