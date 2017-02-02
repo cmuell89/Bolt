@@ -4,14 +4,15 @@ Created on Nov 3, 2016
 @author: Carl Mueller
 @company: Lightning in a Bot, Inc
 """
-import os
 import logging
-from nlp.clf.classification import ClassificationModelBuilder, ClassificationModelAccessor
-from nlp.annotation import IntentClassificationAnnotator, BinaryClassificationAnnotator,\
+
+from nlp.annotation import IntentClassificationAnnotator, BinaryClassificationAnnotator, DatetimeAnnotator, \
                            GazetteerAnnotator, RegexAnnotator, BinaryRegexAnnotator, NaiveNumberAnnotator, Annotation
+from nlp.clf.classification import ClassificationModelBuilder, ClassificationModelAccessor
+from nlp.datetime import DucklingFactory, DucklingDatetimeParser
 from nlp.ner.gazetteer import GazetteerModelAccessor, GazetteerModelBuilder
-from nlp.ner.regexer import Regexer
 from nlp.ner.number_parser import NumberExtractor
+from nlp.ner.regexer import Regexer
 from utils.exceptions import ClassificationModelError, GazetteerModelError, AnalyzerError, UpdaterError
 
 logger = logging.getLogger('BOLT.nlp')
@@ -22,6 +23,7 @@ gaz_builder = GazetteerModelBuilder()
 clf_builder.initialize_classification_models(multiclass=True, binary_classifier=True)
 gaz_builder.initialize_gazetteer_models()
 
+duckling_factory = DucklingFactory
 
 class Updater:
     """
@@ -92,6 +94,7 @@ class Analyzer:
     def __init__(self):
         self.gaz_accessor = GazetteerModelAccessor()
         self.clf_accessor = ClassificationModelAccessor()
+        self.duckling_factory = DucklingFactory()
 
     def run_analysis(self, query, key=None):
         """
@@ -148,6 +151,18 @@ class Analyzer:
                 logger.debug("Creating NaiveNumberAnnotator for: {0}".format(entity['entity_name']))
                 number_annotator = NaiveNumberAnnotator(entity['entity_name'], NumberExtractor())
                 entity_pipeline.add_annotator(number_annotator)
+            """ Create a NaiveNumberAnnotator for each number entity type"""
+            if entity['entity_type'] == 'number':
+                logger.debug("Creating NaiveNumberAnnotator for: {0}".format(entity['entity_name']))
+                number_annotator = NaiveNumberAnnotator(entity['entity_name'], NumberExtractor())
+                entity_pipeline.add_annotator(number_annotator)
+            """ Create a NaiveNumberAnnotator for each number entity type"""
+            if entity['entity_type'] == 'datetime':
+                logger.debug("Creating DatetimeAnnotator for: {0}".format(entity['entity_name']))
+                duckling_instance = self.duckling_factory.getDucklingInstance()
+                parser = DucklingDatetimeParser(duckling_instance)
+                datetime_annotator = DatetimeAnnotator(entity['entity_name'], parser)
+                entity_pipeline.add_annotator(datetime_annotator)
             """ Access the gazetteer for the appropriate entity types and create an GazetteerAnnotator """
             if entity['entity_type'] == 'gazetteer' or entity['entity_type'] == 'simple_gazetteer':
                 if gazetteers is not None:
