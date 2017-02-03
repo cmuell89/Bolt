@@ -9,7 +9,7 @@ import logging
 from nlp.annotation import IntentClassificationAnnotator, BinaryClassificationAnnotator, DatetimeAnnotator, \
                            GazetteerAnnotator, RegexAnnotator, BinaryRegexAnnotator, NaiveNumberAnnotator, Annotation
 from nlp.clf.classification import ClassificationModelBuilder, ClassificationModelAccessor
-from nlp.datetime import DucklingFactory, DucklingDatetimeParser
+from nlp.ner.datetime import DucklingFactory, DucklingDatetimeParser
 from nlp.ner.gazetteer import GazetteerModelAccessor, GazetteerModelBuilder
 from nlp.ner.number_parser import NumberExtractor
 from nlp.ner.regexer import Regexer

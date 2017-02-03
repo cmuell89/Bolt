@@ -1,5 +1,4 @@
 from duckling import Duckling
-
 loaded_duckling = Duckling(minimum_heap_size='64m', maximum_heap_size='128m')
 loaded_duckling.load()
 
@@ -18,5 +17,7 @@ class DucklingDatetimeParser:
         self.duckling = duckling_instance
 
     def parse(self, query):
-        return self.duckling.parse(query, dim_filter="time")
+        results = self.duckling.parse(query, dim_filter="time")
+        values = results[-1]['value'] if len(results) > 0 else None
+        return values
 
