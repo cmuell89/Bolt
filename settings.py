@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 import logging.handlers
 import sys
 import os
+import nltk
 
 """
 ENVIRONMENT 
@@ -11,6 +12,11 @@ ENVIRONMENT
 if os.path.isfile(os.path.join(os.path.dirname(__file__), '.env')):
     dotenv_path = join(dirname(__file__), '.env')
     load_dotenv(dotenv_path)
+
+"""
+nltk_data path spec
+"""
+nltk.data.path.append(os.environ.get('NLTK_DATA_PATH'))
 
 """
 LOGGING
