@@ -12,6 +12,7 @@ application = app = Flask(__name__)
 
 application.secret_key = os.environ.get('SECRET_KEY')
 
+
 @app.teardown_appcontext
 def close_connection(exception):
     logger.debug('Tearing down app context')
