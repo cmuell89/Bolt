@@ -7,7 +7,6 @@ import psycopg2
 from utils import io
 from os.path import join, dirname
 from dotenv import load_dotenv
-import csv
 import os
 
 if __name__ == '__main__':

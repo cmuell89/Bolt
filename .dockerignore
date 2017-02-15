@@ -1,0 +1,11 @@
+/.git
+
+# Project folders
+prototyping/
+resources/
+scripts/
+
+# Config files
+.env
+Dockerrun.aws.json
+.dockercfg.json
