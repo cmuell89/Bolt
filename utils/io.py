@@ -38,7 +38,7 @@ def create_data_for_pipeline_from_file(file_address):
 
 def create_data_for_intent_pipeline_from_database():
     """
-    Function that returns an array of array of training data for the intent classifier stored in bolt's postgreSQL database.
+    Function that returns an array of array of training data for the intent classifier stored in Bolt's postgreSQL database.
        :return: [[docs],[labels]] or empty array of arrays if exception occurs
     """
     labels = []
