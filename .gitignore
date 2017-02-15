@@ -51,16 +51,22 @@ docs/_build/
 
 # Configuration stuff
 .env
+.dockercfg.json
 
 # virtualenv
 /bolt-env
+/env
 
 # logging
 logs/
 
+# language models and data
+models/language/
+
 # Elastic Beanstalk Files
 .ebextensions/01_environment.config
 .ebextensions/02_environment.config
+.elasticbeanstalk
 
 # Prototyping stuff
 productEntities.json
