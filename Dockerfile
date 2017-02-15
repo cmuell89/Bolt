@@ -1,7 +1,7 @@
 FROM  phusion/passenger-full
 MAINTAINER Carl Mueller <carl@lightninginabot.com>
 
-ENV APP_NAME bolt
+ENV APP_NAME Bolt
 
 # use baseimage-docker’s init process
 CMD ["/sbin/my_init"]
