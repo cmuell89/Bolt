@@ -1,0 +1,17 @@
+{
+ "AWSEBDockerrunVersion": "1",
+ "Authentication": {
+   "Bucket": "bolt-docker-bucket",
+   "Key": ".dockercfg"
+ },
+ "Image": {
+    "Name": "cmuell89/bolt",
+    "Update": "true"
+  },
+ "Ports": [
+   {
+     "ContainerPort": "80"
+   }
+ ],
+ "Logging": "/var/log/nginx"
+}
