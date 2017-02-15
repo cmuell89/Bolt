@@ -67,3 +67,5 @@ productEntities.json
 productList.txt
 
 
+# Ignore .ssh
+config/docker/production/.ssh
