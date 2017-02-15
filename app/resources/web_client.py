@@ -10,7 +10,7 @@ Class: ValidateExpression - Contains post method for to handle form data coming 
 '''
 import logging
 from functools import partial
-from flask import request, Response, redirect, g, render_template, flash, url_for
+from flask import request, Response, redirect, g, flash, url_for
 from flask.views import MethodView
 from webargs import validate
 from webargs.flaskparser import use_args
