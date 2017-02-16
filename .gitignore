@@ -77,3 +77,4 @@ application.wsgi
 # Ignore .ssh
 config/docker/production/.ssh
 
+/.dockercfg

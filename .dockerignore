@@ -9,3 +9,4 @@ scripts/
 .env
 Dockerrun.aws.json
 .dockercfg.json
+/.dockercfg
