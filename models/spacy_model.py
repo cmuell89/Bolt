@@ -11,6 +11,7 @@ I want to see it in action up close before I make use of textacy for calls to Sp
 from functools import partial
 import logging
 
+import os
 from cachetools import cached, Cache
 from cachetools.keys import hashkey
 import spacy
@@ -44,5 +45,8 @@ def load_spacy(name, **kwargs):
     Raises:
         RuntimeError: if package can't be loaded
     """
+    spacy_datapath = os.environ.get('SPACY_DATA_PATH')
+    logger.info('Spacy datapath: "%s"', spacy_datapath)
+    spacy.util.set_data_path(spacy_datapath)
     logger.info('Caching "%s" language spaCy', name)
     return spacy.load(name, **kwargs)

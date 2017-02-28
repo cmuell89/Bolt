@@ -3,7 +3,6 @@ Created on Jul 4, 2016
 
 @author: carl
 """
-import os
 import json
 import logging
 from database.database import ExpressionsDatabaseEngine, EntitiesDatabaseEngine
