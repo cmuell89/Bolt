@@ -12,7 +12,8 @@ __all__ = ['application']
 application = app = Flask(__name__)
 
 """ SSL """
-sslify = SSLify(app, skips=['aws-eb-health'])
+if(os.environ.get("ENVIRONMENT") == 'prod'):
+    sslify = SSLify(app, skips=['aws-eb-health'])
 
 application.secret_key = os.environ.get('SECRET_KEY')
 
