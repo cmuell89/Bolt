@@ -568,6 +568,7 @@ class Health(Resource):
         Health endpoint used by AWS elastic beanstalk to determine the load/stress on current deployment.
         :return: 200 response.
         """
+        logger.info('Health Check')
         resp = Response()
         return resp
 

@@ -9,8 +9,9 @@ dotenv==0.0.5
 Flask==0.12
 Flask-HTTPAuth==3.2.2
 Flask-RESTful==0.3.5
+Flask-SSLify==0.1.5
 flexmock==0.10.2
-itsdangerous==0.24
+itsdangerous==0.24git s
 Jinja2==2.9.5
 MarkupSafe==0.23
 marshmallow==2.12.2

@@ -1,5 +1,6 @@
-from flask import Flask, jsonify, g
+from flask import Flask, g
 from flask_restful import Api
+from flask_sslify import SSLify
 from .resources import restful_api, web_client
 import logging
 import os
@@ -9,6 +10,9 @@ logger = logging.getLogger('BOLT.app')
 __all__ = ['application']
 
 application = app = Flask(__name__)
+
+""" SSL """
+sslify = SSLify(app, skips=['aws-eb-health'])
 
 application.secret_key = os.environ.get('SECRET_KEY')
 
@@ -38,3 +42,5 @@ api.add_resource(restful_api.ArchivedExpressions, '/database/archived_expression
 api.add_resource(restful_api.Analyze, '/nlp/analyze')
 api.add_resource(restful_api.Train, '/nlp/train')
 api.add_resource(restful_api.Health, '/aws-eb-health')
+
+

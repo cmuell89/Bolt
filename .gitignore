@@ -75,3 +75,7 @@ productList.txt
 
 # Ignore .ssh
 config/docker/production/.ssh
+/passenger.3000.log
+/passenger.3000.pid.lock
+/elb-acm.json
+/passenger.3000.pid
