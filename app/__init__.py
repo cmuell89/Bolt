@@ -1,6 +1,7 @@
 from flask import Flask, g
 from flask_restful import Api
-from flask_sslify import SSLify
+# from flask_sslify import SSLify
+from utils.sslify import SSLify
 from .resources import restful_api, web_client
 import logging
 import os
@@ -13,7 +14,7 @@ application = app = Flask(__name__)
 
 """ SSL """
 if(os.environ.get("ENVIRONMENT") == 'prod'):
-    sslify = SSLify(app, skips=['aws-eb-health'])
+    sslify = SSLify(app, permanent=True, skips=['aws-eb-health'], no_redirects=['nlp', 'database'])
 
 application.secret_key = os.environ.get('SECRET_KEY')
 

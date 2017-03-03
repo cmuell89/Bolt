@@ -4,3 +4,4 @@ Dockerrun.aws.json
 /passenger.3000.log
 /passenger.3000.pid.lock
 /elb-acm.json
+/.env
