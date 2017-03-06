@@ -1,33 +1,35 @@
-###CHANGE LOG
+# CHANGE LOG
 
-#### Development TODO's
+##### Development TODO's
 
-##### Not Started:
+###### Not Started:
 
-- [ ] Start prototyping datetime parsing
-  - In talks with maintainer of SpaCy
-  - User proposed regex based toy library
-  - Perhaps create a microserver to ping Duckling.
 - [ ] Create location and geographical parsing
     - Look into geograpy library
-- [ ] Integrate SpaCy NER for numbers and names
 - [ ] Create synonym based regex parser
 - [ ] Develop annotator groups (sort of like mini pipelines)
-- [ ] Create bot specific annotator capability
 - [ ] Write tests for Annotators and Pipelines
-- [ ] Remove choice of SVM of NB from classification buildign / training (feature is never used)
+- [ ] Remove choice of SVM of NB from classification building / training (feature is never used)
 
-##### In-Progress:
-
+###### In-Progress:
+- [] Reconfiguring papertrails deployment
 
 ##### Version Change Log:
+
+###### Version 0.5: Date time parsing, number parsing, forcing SSL, Regex parsing
+- [x] Integrate SpaCy NER for numbers
+- [x] Start prototyping datetime parsing
+- [x] Create bot specific annotator capability
+- [x] Regex based annotator
+- [x] Force HTTPS on all API endpoints.
+- [x] Docker deployment
 
 ###### Version 0.4: Logging, Binary Classification Annotators, Binary Regex Annotators, Update Routes, .env based schema
 - [x] In app logging to Papertrails, transimission syslog of Apache to Papertrails 
 - [x] COMMENT/DOCUMENTATION OVERHAUL => START STRONG, FINISH STRONG
 - [x] Work on gazetteer specificity
 - [x] Start prototyping 'Trait' parsing 
-- [x] Create ReGex annotor capability
+- [x] Create ReGex annotator capability
     - [x] Code
     - [x] Test
 - [x] Build test database to mimic production database for testing.
@@ -41,7 +43,7 @@
 - [x] Expanding Train class set of endpoints to train classifiers and gazetteers piecemeal.
     - [x] Code
     - [x] Test
-- [x] Choose schema search path via environement variable 
+- [x] Choose schema search path via environment variable
    
 ###### Version 0.3: Major change for gazeteer and analysis pipeline
 

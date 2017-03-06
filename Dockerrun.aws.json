@@ -5,7 +5,7 @@
    "Key": ".dockercfg"
  },
  "Image": {
-    "Name": "cmuell89/bolt-ssl-test",
+    "Name": "cmuell89/bolt-ssl-test:latest",
     "Update": "true"
   },
  "Ports": [
