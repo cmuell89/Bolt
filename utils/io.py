@@ -57,6 +57,7 @@ def create_data_for_intent_pipeline_from_database():
         logger.debug("returning empty arrays")
         return [docs, labels]
 
+
 def create_data_for_binary_classifier_from_database(entity_name):
     """
     Function that returns an array of arays of labeled training data for the binary classifier passed as the entity_name
@@ -80,6 +81,7 @@ def create_data_for_binary_classifier_from_database(entity_name):
         logger.exception(e)
         logger.debug("returning empty arrays")
         return [docs, labels]
+
 
 def get_intents_from_JSON_data(fileAddress):
     """

@@ -4,7 +4,6 @@ Created on October 26, 2016
 @author: Carl L. Mueller
 @copyright: Lightning in a Bot, Inc
 """
-import os
 import logging
 from nltk.corpus import stopwords
 from nltk.stem.porter import PorterStemmer

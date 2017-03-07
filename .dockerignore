@@ -1,4 +1,12 @@
 /.git
+
+# Project folders
+prototyping/
+resources/
+scripts/
+
+# Config files
+.env
 Dockerrun.aws.json
 .dockercfg.json
 /passenger.3000.log
@@ -6,4 +14,4 @@ Dockerrun.aws.json
 /elb-acm.json
 /.env
 /server.crt
-/server.key
+/.dockercfg

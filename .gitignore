@@ -72,7 +72,6 @@ models/language/
 productEntities.json
 productList.txt
 
-
 # Ignore .ssh
 config/docker/production/.ssh
 /passenger.3000.log
@@ -81,3 +80,7 @@ config/docker/production/.ssh
 /passenger.3000.pid
 /server.crt
 /server.key
+/config/docker/production/.ssh
+
+/.dockercfg
+
