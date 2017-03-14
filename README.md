@@ -12,32 +12,32 @@ tweaks to appropriately set up Bolt.
 #### PostgreSQL
 Ensure you have postgresql setup accordingly.
 ```
-    sudo apt install postgresql postgresql-client postgresql-contrib libpq-dev
+sudo apt install postgresql postgresql-client postgresql-contrib libpq-dev
 ```
 #### Development Dependencies
 Be sure to install the following development dependencies (Debian):
 ```
-    sudo apt install libffi-dev
-    sudo apt install python3-dev
-    sudo apt install python-psycopg2
+sudo apt install libffi-dev
+sudo apt install python3-dev
+sudo apt install python-psycopg2
 ```
 #### Virtual Environment
 Setup up your viritual environment using your systems python3, at least python 3.4.
 ```
-    sudo apt install virutalenv
-    cd $local/bolt/directory
-    virtualenv -p python3 env
+sudo apt install virutalenv
+cd $local/bolt/directory
+virtualenv -p python3 env
 ```
 Activate using
 
-    source pathToBolt/env/bin/activate
+```source pathToBolt/env/bin/activate```
 
 #### Python packages
 See requirements.txt for dependency requirements.
 Activate virtual environment, then
 
 ```
-    pip install -r requirements.txt
+pip install -r requirements.txt
 ```
   
 Additional dependencies may be required for individual packages required by Bolt.
@@ -50,13 +50,13 @@ First ensure that the following directories exist:
    
 Then download SpaCy lanuage parsing model (large file, may take some time):
 ```
-    source pathToBolt/env/bin/activate
-    python -m spacy.en.download all --data-path pathToBolt/models/language/spacy
+source pathToBolt/env/bin/activate
+python -m spacy.en.download all --data-path pathToBolt/models/language/spacy
 ```
 Download NLTK stopwords data:
 ```
-    source pathToBolt/env/bin/activate
-    python -m nltk.downloader -d pathToBolt/models/language/nltk_data stopwords
+source pathToBolt/env/bin/activate
+python -m nltk.downloader -d pathToBolt/models/language/nltk_data stopwords
 ```
 
 
