@@ -46,7 +46,7 @@ ADD ./config/docker/production/bolt_nginx_http_directives.conf /etc/nginx/conf.d
 # Papertrails logging
 ADD ./config/docker/production/log_files.yml /etc/
 ADD ./config/docker/production/logrotate_nginx.conf /etc/logrorate.d/
-ADD ./config/docker/production/logrorate.conf /etc/
+ADD ./config/docker/production/logrotate.conf /etc/
 
 # create virtual env
 RUN cd /home/app/${APP_NAME} &&\
