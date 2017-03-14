@@ -169,6 +169,63 @@ chown -R www-data:adm /var/log/nginx/
 
 chown -R app:app "$dir"
 ```
+`deb_install.sh`: Script that is run during docker image build. Installs any .deb packages wanted on the image.
+```angular2html
+#!/usr/bin/env bash
+
+dpkg -i /home/app/Bolt/config/docker/production/deb_dir/*.deb
+```
+Current packages:
+   - `remote-syslog2_0.20-beta1_amd64.deb`
+
+######Papertrails remote logging configuration
+Bolt logs nginx error.log and access.log to Papertrails using remote-syslog2.
+
+`log_files.yml`: Used to configure remote-syslog2
+```angular2html
+files:
+  - /var/log/nginx/access.log
+  - /var/log/nginx/error.log
+hostname: bolt
+destination:
+  host: logs4.papertrailapp.com
+  port: 32540
+  protocol: tls
+```
+`logrotate.conf`: logrotate daemon configuration file
+```angular2html
+# see "man logrotate" for details
+# rotate log files weekly
+weekly
+# keep 4 weeks worth of backlogs
+rotate 4
+# create new (empty) log files after rotating old ones
+create
+# uncomment this if you want your log files compressed
+#compress
+# RPM packages drop log rotation information into this directory
+include /etc/logrotate.d
+# no packages own wtmp -- we'll rotate them here
+/var/log/wtmp {
+    monthly
+    create 0664 root utmp
+    rotate 1
+}   
+```
+`logrotate_nginx.conf`: nginx lograote configuration for logrotate daemon
+```angular2html
+/var/log/nginx/*.log {
+ weekly
+ rotate 52
+ compress
+  missingok
+  notifempty
+  sharedscripts
+  postrotate
+      [ ! -f /var/run/nginx.pid ] || kill -USR1 `cat /var/run/nginx.pid`
+  endscript
+}
+```
 
 ####Troubleshooting
 Bolt's docker images are quite massive. 1.7gb as of the current version. This is due to the saving of language models in the application directory structure. Redeplying a new version over an currently deployed container can sometimes result in failure. If this is the case, try emplying a blue green (which you probably should be doing anyways) style of delpoyment.
