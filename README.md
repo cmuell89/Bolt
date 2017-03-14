@@ -11,112 +11,169 @@ tweaks to appropriately set up Bolt.
 
 #### PostgreSQL
 Ensure you have postgresql setup accordingly.
-
+```
     sudo apt install postgresql postgresql-client postgresql-contrib libpq-dev
-
+```
 #### Development Dependencies
 Be sure to install the following development dependencies (Debian):
-
+```
     sudo apt install libffi-dev
     sudo apt install python3-dev
     sudo apt install python-psycopg2
-    sudo apt install libpq-dev
-
+```
 #### Virtual Environment
 Setup up your viritual environment using your systems python3, at least python 3.4.
-
+```
     sudo apt install virutalenv
     cd $local/bolt/directory
-    virtualenv -p python3 bolt-env
-
+    virtualenv -p python3 env
+```
 Activate using
 
-    source $(TopLevelBoltDirectory)/bolt-env/bin/activate
+    source pathToBolt/env/bin/activate
 
 #### Python packages
 See requirements.txt for dependency requirements.
 Activate virtual environment, then
 
-      pip install -r requirements.txt
+```
+    pip install -r requirements.txt
+```
   
 Additional dependencies may be required for individual packages required by Bolt.
 
-#### Language Models
-Make sure to activate virtual environment then install the following language models.
-  - python -m spacy.en.download
-Run nltk downloader
-  - python
-  - import nltk
-  - nltk.downloader()
-  - Follow instructions to download 'stopwords'
+#### Language Modeels
+First ensure that the following directories exist:
+
+   1) pathToBolt/models/language/spacy
+   2) pathToBolt/models/language/nltk_data
+   
+Then download SpaCy lanuage parsing model (large file, may take some time):
+```
+    source pathToBolt/env/bin/activate
+    python -m spacy.en.download all --data-path pathToBolt/models/language/spacy
+```
+Download NLTK stopwords data:
+```
+    source pathToBolt/env/bin/activate
+    python -m nltk.downloader -d pathToBolt/models/language/nltk_data stopwords
+```
 
 
 ## Deploy Requirements
-Deploying onto Elastic Beanstalk requires the CLI tool eb (you can also use the more general aws CLI tool)
+Bolt is now being deployed to Elastic Beanstalk using Docker. It utilizes Phusions Passenger docker image.
+As the image use is a Ubuntu 16.04 image, Bolt currently deploys using Docker similar to that of a VM rather than
+the more standard containerization. It is not ideal but required if using the Passenger / Ngnix image for production
+deployment.
 
 ### New Version Deployment
-When deploying new versions of Bolt from the CLI locally to production create a test environment on 
-Elastic Beanstalk first! 
+When deploying new versions of Bolt from the CLI locally to production create a test environment on
+Elastic Beanstalk first!
 
-#### Blue Green Deployment
+#### Blue-Green Deployment
 
-1. Enter current environment.
-2. Clone environment labeling it as blue or green (will depend on previous release)
-3. Enter NEW environment
+1. Create new environment and deploy using docker platform.
 4. Deploy new app version to NEW environment.
 5. Test, test, test
 6. Swap environment URLs from old environment.
-7. Delete old environment (or shutdown via EC2 console)
+7. Delete old environment
 
 
 #### Deployment steps
-To configure the current Bolt version to deploy to the test environment, run:
+After ensuring that the Docker image on Lightning in a Bot's dockerhub account is the correct version, deployment on a new Elastic Beanstalk environment uses a specific configuration file.
 
-    eb init 
+Create (if it does not exist) the file `Dockerrun.aws.json` with the below contents in the top level of your Bolt directory structure:
 
-Additionally, make sure to create the following file (ensure proper .yml format 2 space indents!):
-
-Directory location: 
-   
-    root_of_Bolt_app/.ebextensions/02_environment.config
-
-Contents:
-
-    option_settings:
-      - namespace: aws:elasticbeanstalk:application:environment
-        option_name: ENVIRONMENT
-        value: prod
-      - namespace: aws:elasticbeanstalk:application:environment
-        option_name: NLP_SCHEMA
-        value: nlp
-      - namespace: aws:elasticbeanstalk:application:environment
-        option_name: ACCESS_TOKEN
-        value: your_access_token
-      - namespace: aws:elasticbeanstalk:application:environment
-        option_name: BOLT_DB_NAME
-        value: dbname
-      - namespace: aws:elasticbeanstalk:application:environment
-        option_name: BOLT_HOSTNAME
-        value: dbHostEndpoint
-      - namespace: aws:elasticbeanstalk:application:environment
-        option_name: BOLT_DB_PORT
-        value: port
-      - namespace: aws:elasticbeanstalk:application:environment
-        option_name: BOLT_DB_USERNAME
-        value: username
-      - namespace: aws:elasticbeanstalk:application:environment
-        option_name: BOLT_DB_PASSWORD
-        value: password
-      - namespace: aws:elasticbeanstalk:application:environment
-        option_name: PAPERTRAILS_ADDRESS
-        value: papertrails_address
-      - namespace: aws:elasticbeanstalk:application:environment
-        option_name: PAPERTRAILS_PORT
-        value: papertrails_port
-      - namespace: aws:elasticbeanstalk:application:environment
-        option_name: SECRET_KEY
-        value: secret_key
+```
+{
+ "AWSEBDockerrunVersion": "1",
+ "Authentication": {
+   "Bucket": "bolt-docker-bucket",
+   "Key": ".dockercfg"
+ },
+ "Image": {
+    "Name": "cmuell89/bolt:latest",
+    "Update": "true"
+  },
+ "Ports": [
+   {
+     "ContainerPort": "80"
+   }
+ ],
+ "Logging": "/var/log/nginx"
+}
+```
+When deploying a new Elastic Beanstalk server, make sure to choose single docker container platform. 
+AS the source for you application, choose to Upload your own be sure to choose the Dockerrun.aws.json file.
   
+The deploy will fail initially as you have to add your environment variables to the configuration using the Elastic Beanstalk UI.
+
+##### Server configurations
+Files located in config/docker/production.
+
+`bolt_nginx.conf`: 
+The main nginx server configuratino for the Passenger Phusion image running nginx:
+```
+server {
+    listen 80 default_server;
+    server_name localhost;
+    root /home/app/Bolt/public;
+    passenger_enabled on;
+    passenger_user app;
+    passenger_app_env production;
+    passenger_python /home/app/Bolt/env/bin/python3;
+    passenger_min_instances 1;
+}
+```
+
+`bolt_nginx_env.conf`:
+Declared environment variables to be assigned via the Elastic Beanstalk console:
+```
+env ENVIRONMENT;
+env NLP_SCHEMA;
+env ACCESS_TOKEN;
+env BOLT_DB_NAME;
+env BOLT_DB_HOSTNAME;
+env BOLT_DB_PORT;
+env BOLT_DB_USERNAME;
+env BOLT_DB_PASSWORD;
+env SECRET_KEY;
+env PAPERTRAILS_ADDRESS;
+env PAPERTRAILS_PORT;
+env SPACY_DATA_PATH;
+env NLTK_DATA_PATH;
+```
+
+`bolt_nginx_http_directives.conf`:
+nginx directives of the http block:
+```
+passenger_max_pool_size 1;
+passenger_pre_start http://localhost;
+```
+`passenger_max_pool_size` limits the number of sub server application processes poxied by nginx and passeneger.
+`passenger_pre_start` allows nginx to self ping and start the application.
+
+
+`boot.sh`: startup script that is run everytime the docker instance is restarted.
+```
+#!/bin/sh
+
+dir="/home/app/Bolt"
+logfile="/var/log/Bolt.log"
+
+touch "$logfile"
+chown -R app:app "$logfile"
+
+mkdir -p /var/log/nginx/
+chown -R www-data:adm /var/log/nginx/
+
+chown -R app:app "$dir"
+```
+
+####Troubleshooting
+Bolt's docker images are quite massive. 1.7gb as of the current version. This is due to the saving of language models in the application directory structure. Redeplying a new version over an currently deployed container can sometimes result in failure. If this is the case, try emplying a blue green (which you probably should be doing anyways) style of delpoyment.
+
+
 
 #### Current Release Major Features 
 ###### (See CHANGE.md for specific version updates)
@@ -132,6 +189,11 @@ Contents:
     - Currently uses two pipelines
         - The first is the initial classification
         - The second is constructed with annotators that only exist in the entity_type results from the first annotator pipeline
+    - Annotators
+        - Gazeeteer
+        - Datetime (jPype to Duckling jar)
+        - number parsing
+        - regex based pasring
 - Caching of SpaCy model
 - Routes
 	- /nlp/analyze => returns intent classification and product name matches of a given expression
@@ -159,6 +221,14 @@ Contents:
 		- post => Add intent passed in request payload to database
 		- get => Gets all the existing intents stored in the database
 		- delete => Deletes intent and all associated expressions
+	- /database/unlabeled_expressions
+	    - post => Add unlabeled epxression
+		- get => Gets all unlabeled_expressions
+		- delete => Deletes expression by id
+	- /database/archived_expressions
+	    - post => Add archived epxression
+		- get => Gets all archived_expressions
+		- delete => Deletes expression by id
 	- /aws-eb-health
 		- health test for Elastic Beanstalk
 - Database
@@ -193,21 +263,6 @@ Contents:
 	- Delete intent entities
 	- Delete entity
 	- Delete binary_classifier entity link froms expression
-	
 - Error Handling
 	- Custom errors that raise exceptions to the route level to respond with appropriate error messages and status codes
 - Logging
-
-##### Development Notes
-- latest yum package dependencies required on Amazon Linux EC2 instance. These are preinstalled on an Amazon AMI and used for deploys: 
-    - postgresql94-devel.x86_64: []
-    - libffi-devel.x86_64: [] 
-    - gcc48.x86_64: []
-    - gcc48-gfortran.x86_64: []
-    - libpng-devel.x86_64: [] 
-    - freetype-devel.x86_64: []
-    - lapack-devel.x86_64: []
-    - blas-devel.x86_64: []
-    - libpng-devel.x86_64: []
-    - zlib-devel.x86_64: []
-    - atlas-devel.x86_64: []
