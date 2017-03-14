@@ -14,4 +14,6 @@ Dockerrun.aws.json
 /elb-acm.json
 /.env
 /server.crt
+/server.key
 /.dockercfg
+/.elasticbeanstalk/
