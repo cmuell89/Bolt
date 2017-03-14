@@ -12,7 +12,7 @@ Flask-HTTPAuth==3.2.2
 Flask-RESTful==0.3.5
 Flask-SSLify==0.1.5
 flexmock==0.10.2
-itsdangerous==0.24git s
+itsdangerous==0.24
 Jinja2==2.9.5
 JPype1==0.6.2
 MarkupSafe==0.23
