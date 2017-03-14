@@ -23,15 +23,14 @@ LOGGING
 """
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 stdoutHandler = logging.StreamHandler(sys.stdout)
+stderrHandler = logging.StreamHandler(sys.stderr)
+stderrHandler.setFormatter(formatter)
 stdoutHandler.setFormatter(formatter)
 paperTrailsHandler = logging.handlers.SysLogHandler(address=(os.environ.get('PAPERTRAILS_ADDRESS')
                                                              , int(os.environ.get('PAPERTRAILS_PORT'))))
 paperTrailsHandler.setFormatter(formatter)
 
 application_logger = logging.getLogger('BOLT')
-application_logger.addHandler(stdoutHandler)
-application_logger.addHandler(paperTrailsHandler)
-
 
 if os.environ.get('ENVIRONMENT') == 'dev':
     """ Only used for development purposes since werkzeug server is replaced by Apache and mod_wsgi in production """
@@ -42,6 +41,8 @@ if os.environ.get('ENVIRONMENT') == 'dev':
     application_logger.setLevel(logging.DEBUG)
     application_logger.info("Running in development mode. Logging with level DEBUG")
 elif os.environ.get('ENVIRONMENT') == 'test':
+    application_logger.addHandler(stdoutHandler)
+    application_logger.addHandler(paperTrailsHandler)
     application_logger.setLevel(logging.INFO)
     application_logger.info("Running in test mode. Logging with level INFO")
 elif os.environ.get('ENVIRONMENT') == 'prod':
