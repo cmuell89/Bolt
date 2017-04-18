@@ -15,6 +15,7 @@ import os
 from cachetools import cached, Cache
 from cachetools.keys import hashkey
 import spacy
+import en_core_web_sm
 
 
 logger = logging.getLogger('BOLT.spacy')
@@ -45,8 +46,6 @@ def load_spacy(name, **kwargs):
     Raises:
         RuntimeError: if package can't be loaded
     """
-    spacy_datapath = os.environ.get('SPACY_DATA_PATH')
-    logger.info('Spacy datapath: "%s"', spacy_datapath)
-    spacy.util.set_data_path(spacy_datapath)
+
     logger.info('Caching "%s" language spaCy', name)
-    return spacy.load(name, **kwargs)
+    return en_core_web_sm.load(**kwargs)

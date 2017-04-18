@@ -5,7 +5,7 @@
    "Key": ".dockercfg"
  },
  "Image": {
-    "Name": "cmuell89/bolt:latest",
+    "Name": "cmuell89/bolt",
     "Update": "true"
   },
  "Ports": [
