@@ -1,3 +1,4 @@
+import pprint
 from duckling import Duckling
 loaded_duckling = Duckling(minimum_heap_size='64m', maximum_heap_size='128m')
 loaded_duckling.load()
@@ -18,6 +19,14 @@ class DucklingDatetimeParser:
 
     def parse(self, query):
         results = self.duckling.parse(query, dim_filter="time")
-        values = results[-1]['value'] if len(results) > 0 else None
+        results = list(filter(lambda x: self._latent_filter(x), results))
+        values = results[0]['value'] if len(results) > 0 else None
         return values
 
+    def _latent_filter(self, entry):
+        if 'latent' in entry.keys():
+            if entry['latent'] is not True:
+                return True
+            else:
+                return False
+        return True
