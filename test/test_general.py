@@ -116,9 +116,7 @@ class EntitiesDatabaseTest(unittest.TestCase, CustomAssertions):
         db = EntitiesDatabaseEngine()
         results = db.add_entity('second_test_entity', 'test_type', ['reg1', 'reg2'], ['key1', 'key2'])
         self.assertListOfTuples(results, [int, str, str, list, list])
-        entities = []
-        for result in results:
-            entities.append(result[1])
+        entities = [result[1] for result in results]
         self.assertIn('second_test_entity', entities)
         for result in results:
             if result[1] == 'second_test_entity':
@@ -150,14 +148,10 @@ class EntitiesDatabaseTest(unittest.TestCase, CustomAssertions):
         db = EntitiesDatabaseEngine()
         results = db.add_entity('second_test_entity', 'test_type', ['reg1', 'reg2'],
                                 ['key1', 'key2'])
-        entities = []
-        for result in results:
-            entities.append(result[1])
+        entities = [result[1] for result in results]
         self.assertIn('second_test_entity', entities)
         results = db.delete_entity('second_test_entity')
-        entities = []
-        for result in results:
-            entities.append(result[1])
+        entities = [result[1] for result in results]
         self.assertNotIn('second_test_entity', entities)
         db.release_database_connection()
         logger.info("TEST PASS: delete_entity()")
@@ -506,7 +500,7 @@ class ClassifierTest(unittest.TestCase):
         logger.debug("TEST: _tokenize_text()")
         builder = ClassificationModelBuilder()
         test = builder._tokenize_text("What is the best selling item of  all  time?")
-        actual = [u"what", u"be", u"the", u"best", u"sell", u"item", u"of", u"all", u"time"]
+        actual = [u"what", u"be", u"the", u"good", u"sell", u"item", u"of", u"all", u"time"]
         self.assertListEqual(test, actual)
         logger.info("TEST PASS: _tokenize_text()")
 

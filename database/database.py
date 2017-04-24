@@ -475,7 +475,7 @@ class EntitiesDatabaseEngine(CoreDatabase):
             logger.exception(e.pgerror)
             raise DatabaseError(e.pgerror)
 
-    def update_entity(self, entity_name, **kwargs):
+    def update_entity(self, current_entity_name, **kwargs):
         """
         Updates entities
         :param entity_name: Name of entity
@@ -484,7 +484,7 @@ class EntitiesDatabaseEngine(CoreDatabase):
         """
         try:
             self.cur.execute("SELECT * FROM entities "
-                             "WHERE entity_name = %s", (entity_name,))
+                             "WHERE entity_name = %s", (current_entity_name,))
             current_entity = self.cur.fetchall()[0]
             """ Set all current values of the entity to be updated"""
             entity_id = current_entity[0]

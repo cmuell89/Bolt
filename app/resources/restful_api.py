@@ -68,7 +68,8 @@ class Analyze(Resource):
     analyze_args = {
         'content_type': fields.Str(required=True, load_from='Content-Type', location='headers', validate=validate_application_json),
         'query': fields.Str(required=True, validate=validate.Length(min=1)),
-        'key': fields.Str(required=False, validate=validate.Length(min=1))
+        'key': fields.Str(required=False, validate=validate.Length(min=1)),
+        "save_expression": fields.Bool(required=False, default=False)
     }
     
     @use_args(analyze_args)
@@ -84,8 +85,9 @@ class Analyze(Resource):
             results = analyzer.run_analysis(args['query'], key)
             estimated_intent = results['classification'][0]['intent']
             estimated_confidence = results['classification'][0]['confidence']
-            db = get_db('expressions')
-            db.add_unlabeled_expression(args['query'], estimated_intent, estimated_confidence)
+            if(args['save_expression']):
+                db = get_db('expressions')
+                db.add_unlabeled_expression(args['query'], estimated_intent, estimated_confidence)
             resp = jsonify(results)
             return resp
         except DatabaseError as e:

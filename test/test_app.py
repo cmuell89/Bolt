@@ -23,6 +23,7 @@ class NLPTest(unittest.TestCase):
     def setUpClass(cls):
         cls.app = app.test_client()
         cls.app.testing = True
+        cls.expressions_db = ExpressionsDatabaseEngine()
         cls.access_token = os.environ.get('ACCESS_TOKEN')
         logger.info("TEST SUITE: NLPTest <API>")
 
@@ -36,18 +37,38 @@ class NLPTest(unittest.TestCase):
         test_headers.add('Content-Type', 'application/json')
         test_headers.add('Authorization', 'Token ' + self.access_token)
         response = NLPTest.app.post('/nlp/analyze',
-                                               data=json.dumps(dict(query='What is order 2313?', id='1234')),
+                                               data=json.dumps(dict(query='What is order 2313?', key='1234', save_expression=False)),
                                                headers=test_headers)
         self.assertEqual(response.status_code, 200) 
         result = json.loads(response.get_data(as_text=True))
         self.assertEqual(result['classification'][0]['intent'], u"get_order")
+        logger.info("TEST PASS: 'POST' '/nlp/analyze'")
+
+    def test_analyze_save_expression(self):
+        logger.debug("TEST: 'POST' '/nlp/analyze save_expression flag'")
+        test_headers = Headers()
+        test_headers.add('Content-Type', 'application/json')
+        test_headers.add('Authorization', 'Token ' + self.access_token)
+        response = NLPTest.app.post('/nlp/analyze',
+                                    data=json.dumps(dict(query='What is order 123412341234?', key='1234', save_expression=False)),
+                                    headers=test_headers)
+        self.assertEqual(response.status_code, 200)
+        expressions = [x[1] for x in NLPTest.expressions_db.get_unlabeled_expressions()]
+        self.assertNotIn('What is order 123412341234?', expressions)
         second_test_headers = Headers()
         second_test_headers.add('Authorization', 'Token ' + self.access_token)
         second_response = NLPTest.app.post('/nlp/analyze',
-                                                      data=json.dumps(dict(query='What is order 2313?')),
-                                                      headers=second_test_headers)
-        self.assertEqual(second_response.status_code, 415)
+                                    data=json.dumps(
+                                        dict(query='What is order 123412341234?', key='1234', save_expression=True)),
+                                    headers=test_headers)
+        self.assertEqual(second_response.status_code, 200)
+        db_results = NLPTest.expressions_db.get_unlabeled_expressions()
+        expressions = [x[1] for x in db_results]
+        self.assertIn('What is order 123412341234?', expressions)
+        id = [x[0] for x in db_results if x[1] == 'What is order 123412341234?'][0]
+        NLPTest.expressions_db.delete_unlabeled_expression_by_id(id)
         logger.info("TEST PASS: 'POST' '/nlp/analyze'")
+
     
     def test_train_route(self):
         logger.debug("TEST: 'GET' '/nlp/train'")
