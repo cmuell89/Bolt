@@ -249,7 +249,7 @@ class DatetimeAnnotator(AbstractAnnotator):
         if not annotation.annotations['entity_types']:
             raise AnnotatorValidationError("No entity types found in annotation: " + self.name)
         if self.parser is None:
-            raise AnnotatorValidationError("Number parser is None type")
+            raise AnnotatorValidationError("Datetime parser is None type")
 
     def annotate(self, annotation):
         """
@@ -259,5 +259,35 @@ class DatetimeAnnotator(AbstractAnnotator):
         :return: Returns the updated annotation object
         """
         result = self.parser.parse(annotation.annotations['original_text'])
+        annotation.annotations['results']['entities'].append({"name": self.name, "value": result})
+        return annotation
+
+class FuzzyMatcherAnnotator(AbstractAnnotator):
+    def __init__(self, name, fuzzymatcher, search_list):
+        self.fuzzymatcher = fuzzymatcher
+        self.search_list = search_list
+        super().__init__(name)
+
+    def validate(self, annotation):
+        """
+        Valiates that the annotation.annotations dict contains entity types and that the parser has been populated
+        :param annotation: Annotation object to be updated
+        :return: Updated annotation object
+        """
+        if not annotation.annotations['entity_types']:
+            raise AnnotatorValidationError("No entity types found in annotation: " + self.name)
+        if self.fuzzymatcher is None:
+            raise AnnotatorValidationError("FuzzyFinder  is None type")
+
+    def annotate(self, annotation):
+        """
+        Annotates the annotation object with the results of the Parser object based on an existing match.
+        Appends the results to the annotation.annotations['results']['entities] list
+        :param annotation: The annotation object to update
+        :return: Returns the updated annotation object
+        """
+        original_text = annotation.annotations['original_text']
+        results = self.fuzzymatcher.find(original_text, self.search_list)
+        result = results[0] if len(results) > 0 else None
         annotation.annotations['results']['entities'].append({"name": self.name, "value": result})
         return annotation

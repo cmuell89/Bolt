@@ -7,11 +7,13 @@ Created on Nov 3, 2016
 import logging
 
 from nlp.annotation import IntentClassificationAnnotator, BinaryClassificationAnnotator, DatetimeAnnotator, \
-                           GazetteerAnnotator, RegexAnnotator, BinaryRegexAnnotator, NaiveNumberAnnotator, Annotation
+                           GazetteerAnnotator, RegexAnnotator, BinaryRegexAnnotator, NaiveNumberAnnotator, \
+                           FuzzyMatcherAnnotator, Annotation
 from nlp.clf.classification import ClassificationModelBuilder, ClassificationModelAccessor
-from nlp.ner.datetime import DucklingFactory, DucklingDatetimeParser
+from nlp.ner.duckling_datetime import DucklingFactory, DucklingDatetimeParser
 from nlp.ner.gazetteer import GazetteerModelAccessor, GazetteerModelBuilder
 from nlp.ner.number_parser import NumberExtractor
+from nlp.ner.fuzzy_matcher import FuzzyMatcher
 from nlp.ner.regexer import Regexer
 from utils.exceptions import ClassificationModelError, GazetteerModelError, AnalyzerError, UpdaterError
 
@@ -136,21 +138,32 @@ class Analyzer:
                 clf = self.clf_accessor.get_classification_pipeline('binary_classifier', entity['entity_name'])
                 binary_clf_annotator = BinaryClassificationAnnotator(entity['entity_name'], clf)
                 entity_pipeline.add_annotator(binary_clf_annotator)
+
             """ Create a RegexAnnotator for each regex entity type"""
             if entity['entity_type'] == 'regex':
                 logger.debug("Creating RegexAnnotator for: {0}".format(entity['entity_name']))
                 regex_annotator = RegexAnnotator(entity['entity_name'], Regexer(entity['regular_expressions']))
                 entity_pipeline.add_annotator(regex_annotator)
+
             """ Create a BinaryRegexAnnotator for each regex entity type"""
             if entity['entity_type'] == 'binary_regex':
                 logger.debug("Creating BinaryRegexAnnotator for: {0}".format(entity['entity_name']))
                 regex_annotator = BinaryRegexAnnotator(entity['entity_name'], Regexer(entity['regular_expressions']))
                 entity_pipeline.add_annotator(regex_annotator)
+
             """ Create a NaiveNumberAnnotator for each number entity type"""
             if entity['entity_type'] == 'number':
                 logger.debug("Creating NaiveNumberAnnotator for: {0}".format(entity['entity_name']))
                 number_annotator = NaiveNumberAnnotator(entity['entity_name'], NumberExtractor())
                 entity_pipeline.add_annotator(number_annotator)
+
+            """ Create a FuzzyMatchAnnotator for each fuzzy_match entity type"""
+            if entity['entity_type'] == 'fuzzy_match':
+                logger.debug("Creating FuzzyFindAnnotator for: {0}".format(entity['entity_name']))
+                logger.debug("Entity Keywords: {}".format(entity['keywords']))
+                fuzzy_matcher_annotator = FuzzyMatcherAnnotator(entity['entity_name'], FuzzyMatcher(), entity['keywords'])
+                entity_pipeline.add_annotator(fuzzy_matcher_annotator)
+
             """ Create a DatetimeAnnotator for each number entity type"""
             if entity['entity_type'] == 'datetime':
                 logger.debug("Creating DatetimeAnnotator for: {0}".format(entity['entity_name']))
@@ -158,6 +171,7 @@ class Analyzer:
                 parser = DucklingDatetimeParser(duckling_instance)
                 datetime_annotator = DatetimeAnnotator(entity['entity_name'], parser)
                 entity_pipeline.add_annotator(datetime_annotator)
+
             """ Access the gazetteer for the appropriate entity types and create an GazetteerAnnotator """
             if entity['entity_type'] == 'gazetteer' or entity['entity_type'] == 'simple_gazetteer':
                 if gazetteers is not None:
