@@ -68,7 +68,6 @@ class NLPTest(unittest.TestCase):
         id = [x[0] for x in db_results if x[1] == 'What is order 123412341234?'][0]
         NLPTest.expressions_db.delete_unlabeled_expression_by_id(id)
         logger.info("TEST PASS: 'POST' '/nlp/analyze'")
-
     
     def test_train_route(self):
         logger.debug("TEST: 'GET' '/nlp/train'")
