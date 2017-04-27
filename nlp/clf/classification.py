@@ -297,7 +297,8 @@ class IntentClassifier(AbstractClassifier):
                 entity = {
                     "entity_name": result[1],
                     "entity_type": result[2],
-                    "regular_expressions": result[3]
+                    "regular_expressions": result[3],
+                    "keywords": result[4]
                 }
                 entities.append(entity)
             results['intents'] = top_3
