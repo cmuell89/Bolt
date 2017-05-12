@@ -8,7 +8,7 @@ import logging
 from nltk.corpus import stopwords
 from nltk.stem.porter import PorterStemmer
 from utils.string_cleaners import remove_apostrophe, normalize_whitespace, remove_question_mark, dash_to_single_space, remove_foward_slash, remove_quotations, remove_commas
-from utils.exceptions import DatabaseError, DatabaseInputError, GazetteerModelError
+from utils.exceptions import DatabaseError, DatabaseInputError, GazetteerModelError, UpdaterError
 from database.database import ExternalDatabaseEngine
 from nlp.ner.trie import GramTrieBuilder, SimpleTrieBuilder, DictionaryBuilder, TrieNode
 
@@ -67,6 +67,8 @@ class GazetteerModelBuilder:
                 GAZETTEERS[gazetteer_type][key] = new_gazetteer
             else:
                 GAZETTEERS[gazetteer_type][key] = new_gazetteer
+        else:
+            raise UpdaterError("Gazzetteer model creation fail. No entities were found for key: {0}".format(key))
 
     def update_gazetteer_models_by_key(self, key):
         """
@@ -75,6 +77,11 @@ class GazetteerModelBuilder:
         """
         global GAZETTEERS
 
+        db = ExternalDatabaseEngine()
+        keys = db.get_keys()
+        db.release_database_connection()
+        if key not in keys:
+            raise UpdaterError("Key not available in database. Cannot update/create gazetteer.")
         logger.debug("Updating gazetteer models for key: {0}".format(key))
         for gazetteer_type in GAZETTEERS.keys():
             self.create_new_gazetteer_model(gazetteer_type, key)

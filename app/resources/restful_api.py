@@ -39,7 +39,7 @@ from app.validators import valid_application_type,\
                            validate_gazetteer_parameters
 from database.database import IntentsDatabaseEngine, ExpressionsDatabaseEngine
 from nlp import Analyzer, Updater
-from utils.exceptions import DatabaseError, DatabaseInputError, UpdaterError, AnalyzerError
+from utils.exceptions import DatabaseError, DatabaseInputError, UpdaterError, AnalyzerError, GazetteerModelError
 
 logger = logging.getLogger('BOLT.api')
 
@@ -172,9 +172,13 @@ class Train(Resource):
                     message['gazetteer'] = updater.update_gazetteers_by_key(args['gazetteer']['key'])
             resp = jsonify(message=message)
             return resp
-        except UpdaterError as error:
+        except GazetteerModelError as error:
             resp = jsonify(message=error.value)
             resp.status_code = 500
+            return resp
+        except UpdaterError as error:
+            resp = jsonify(message=error.value)
+            resp.status_code = 400
             return resp
 
 
