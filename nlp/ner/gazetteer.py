@@ -76,13 +76,6 @@ class GazetteerModelBuilder:
         :param key: the key used to access the specific gazetteer hashed within the dictionary.
         """
         global GAZETTEERS
-
-        db = ExternalDatabaseEngine()
-        keys = db.get_keys()
-        db.release_database_connection()
-        if key not in keys:
-            raise UpdaterError("Key not available in database. Cannot update/create gazetteer.")
-        logger.debug("Updating gazetteer models for key: {0}".format(key))
         for gazetteer_type in GAZETTEERS.keys():
             self.create_new_gazetteer_model(gazetteer_type, key)
 
@@ -116,6 +109,15 @@ class GazetteerModelBuilder:
             raise GazetteerModelError(error.value)
         except DatabaseInputError as error:
             raise GazetteerModelError(error.value)
+
+    def check_if_key_exists(self, key):
+        db = ExternalDatabaseEngine()
+        keys = db.get_keys()
+        db.release_database_connection()
+        if key in keys:
+            return True
+        else:
+            return False
 
 
 class GazetteerModelAccessor:

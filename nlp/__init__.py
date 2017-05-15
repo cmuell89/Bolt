@@ -83,6 +83,10 @@ class Updater:
         :return: Successful message.
         """
         try:
+
+            if not self.gaz_builder.check_if_key_exists(key):
+                raise UpdaterError("Key not available in database. Cannot update/create gazetteer.")
+            logger.debug("Updating gazetteer models for key: {0}".format(key))
             self.gaz_builder.update_gazetteer_models_by_key(key)
             return "Gazetteers for the key {0} updated".format(key)
         except GazetteerModelError as error:
