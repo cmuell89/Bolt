@@ -231,7 +231,7 @@ Note that you are referencing the recently pushed docker image `cmuell89/bolt:bl
 7. Test that new environment can be reached via https.
 8. Terminate old environment.
 
-####Troubleshooting
+#### Troubleshooting
 Bolt's docker images, despite the smaller SpaCy language model, are still quite large. 500-600mb as of the current version. This is due to the saving of language models in the application directory structure. 
 
 1) Re-deployment faile:
