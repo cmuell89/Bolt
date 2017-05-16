@@ -2,7 +2,7 @@
 Web Server hosting Lightning in a Bot's NLP prototype system.
 
 ## Local Python Environment
-The interpreter environment is a virtual environment running Python version 3.5 (3.4 on Amazon Linux EC2 isntance).
+The interpreter environment is a virtual environment running Python version 3.5 (3.4 on Amazon Linux EC2 instance).
 
 ### Local setup
 
@@ -22,7 +22,7 @@ sudo apt install python3-dev
 sudo apt install python-psycopg2
 ```
 #### Virtual Environment
-Setup up your viritual environment using your system's python3 interpreter (>v3.4).
+Setup up your virtual environment using your system's python3 interpreter (>v3.4).
 ```
 sudo apt install virutalenv
 cd $local/bolt/directory
@@ -47,7 +47,7 @@ First ensure that the following directory exist:
 
 - pathToBolt/models/language/nltk_data
    
-Then download SpaCy lanuage parsing model (large file, may take some time):
+Then download SpaCy language parsing model (large file, may take some time):
 ```
 source pathToBolt/env/bin/activate
 python -m spacy download en_core_web_md
@@ -61,7 +61,7 @@ python -m nltk.downloader -d pathToBolt/models/language/nltk_data stopwords
 ##### Server configurations
 
 `config/docker/production/bolt_nginx.conf`: 
-The main nginx server configuratino for the Passenger Phusion image running nginx:
+The main nginx server configuration for the Passenger Phusion image running nginx:
 ```
 server {
     listen 80 default_server;
@@ -99,7 +99,7 @@ nginx directives of the http block:
 passenger_max_pool_size 1;
 passenger_pre_start http://localhost;
 ```
-`passenger_max_pool_size` limits the number of sub server application processes proxied by nginx and passeneger.
+`passenger_max_pool_size` limits the number of sub server application processes proxied by nginx and passenger.
 `passenger_pre_start` allows nginx to self ping and start the application.
 
 
@@ -124,7 +124,7 @@ chown -R app:app "$dir"
 
 dpkg -i /home/app/Bolt/config/docker/production/deb_dir/*.deb
 ```
-Current packages/files that should be preinstalled into the directory:
+Current packages/files that should be pre-installed into the directory:
    - `remote-syslog2_0.20-beta1_amd64.deb`
 
 ###### Papertrails remote logging configuration
@@ -221,12 +221,12 @@ Create (if it does not exist) the file `Dockerrun.aws.json` with the below conte
 Note that you are referencing the recently pushed docker image `cmuell89/bolt:blue` or `cmuell89/bolt:green` in the `Dockerrun.aws.json` file.
 
 #### Blue-Green Deployment
-1. When deploying a new Elastic Beanstalk server, please name the Elastic Beanstalk server environment accoriding to the blue or green deployment i.e. `bolt-green` or `bolt-blue`.
+1. When deploying a new Elastic Beanstalk server, please name the Elastic Beanstalk server environment according to the blue or green deployment i.e. `bolt-green` or `bolt-blue`.
 2. make sure to choose 'generic single docker' Elastic Beanstalk server platform. 
 3. Choose t4-medium EC2 instance and allow for 16gb of hard drive space.
 3. As the source for you application, choose to `Upload your own` and be sure to choose the Dockerrun.aws.json file.
 4. The deploy will fail initially as you have to add your environment variables to the configuration using the Elastic Beanstalk UI from the previous deployed environment or emulating your .env file.
-5. Switch environment over to https in the `configuration` tab listening on port 443 using the SSL certficate ID `lightninginabot.com`.
+5. Switch environment over to https in the `configuration` tab listening on port 443 using the SSL certificate ID `lightninginabot.com`.
 6. Once new environment is stable (healthy), swap environment URLS.
 7. Test that new environment can be reached via https.
 8. Terminate old environment.
@@ -234,15 +234,15 @@ Note that you are referencing the recently pushed docker image `cmuell89/bolt:bl
 #### Troubleshooting
 Bolt's docker images, despite the smaller SpaCy language model, are still quite large. 500-600mb as of the current version. This is due to the saving of language models in the application directory structure. 
 
-1) Re-deployment faile:
-    - Re-deploying a new version over an currently deployed container in an AWS environment can sometimes result in failure. If this is the case, try emplying a blue-green style of deployment (which you probably should be doing anyways).
+1) Re-deployment fail:
+    - Re-deploying a new version over an currently deployed container in an AWS environment can sometimes result in failure. If this is the case, try employing a blue-green style of deployment (which you probably should be doing anyways).
 
 
 
 #### Current Release Major Features 
 ###### (See CHANGE.md for specific version updates)
 
-- Scikit learn based classfication
+- Scikit learn based classification
 	- Scikit learn pipeline
 	- training data pulled from postgres db
 	- confidence metrics for classification results
