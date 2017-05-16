@@ -22,7 +22,7 @@ sudo apt install python3-dev
 sudo apt install python-psycopg2
 ```
 #### Virtual Environment
-Setup up your viritual environment using your systems python3, at least python 3.4.
+Setup up your viritual environment using your system's python3 interpreter (>v3.4).
 ```
 sudo apt install virutalenv
 cd $local/bolt/directory
@@ -43,15 +43,14 @@ pip install -r requirements.txt
 Additional dependencies may be required for individual packages required by Bolt.
 
 #### Language Modeels
-First ensure that the following directories exist:
+First ensure that the following directory exist:
 
-   1) pathToBolt/models/language/spacy
-   2) pathToBolt/models/language/nltk_data
+- pathToBolt/models/language/nltk_data
    
 Then download SpaCy lanuage parsing model (large file, may take some time):
 ```
 source pathToBolt/env/bin/activate
-python -m spacy.en.download all --data-path pathToBolt/models/language/spacy
+python -m spacy download en_core_web_md
 ```
 Download NLTK stopwords data:
 ```
@@ -59,59 +58,9 @@ source pathToBolt/env/bin/activate
 python -m nltk.downloader -d pathToBolt/models/language/nltk_data stopwords
 ```
 
-
-## Deploy Requirements
-Bolt is now being deployed to Elastic Beanstalk using Docker. It utilizes Phusions Passenger docker image.
-As the image use is a Ubuntu 16.04 image, Bolt currently deploys using Docker similar to that of a VM rather than
-the more standard containerization. It is not ideal but required if using the Passenger / Ngnix image for production
-deployment.
-
-### New Version Deployment
-When deploying new versions of Bolt from the CLI locally to production create a test environment on
-Elastic Beanstalk first!
-
-#### Blue-Green Deployment
-
-1. Create new environment and deploy using docker platform.
-4. Deploy new app version to NEW environment.
-5. Test, test, test
-6. Swap environment URLs from old environment.
-7. Delete old environment
-
-
-#### Deployment steps
-After ensuring that the Docker image on Lightning in a Bot's dockerhub account is the correct version, deployment on a new Elastic Beanstalk environment uses a specific configuration file.
-
-Create (if it does not exist) the file `Dockerrun.aws.json` with the below contents in the top level of your Bolt directory structure:
-
-```
-{
- "AWSEBDockerrunVersion": "1",
- "Authentication": {
-   "Bucket": "bolt-docker-bucket",
-   "Key": ".dockercfg"
- },
- "Image": {
-    "Name": "cmuell89/bolt:latest",
-    "Update": "true"
-  },
- "Ports": [
-   {
-     "ContainerPort": "80"
-   }
- ],
- "Logging": "/var/log/nginx"
-}
-```
-When deploying a new Elastic Beanstalk server, make sure to choose single docker container platform. 
-AS the source for you application, choose to Upload your own be sure to choose the Dockerrun.aws.json file.
-  
-The deploy will fail initially as you have to add your environment variables to the configuration using the Elastic Beanstalk UI.
-
 ##### Server configurations
-Files located in config/docker/production.
 
-`bolt_nginx.conf`: 
+`config/docker/production/bolt_nginx.conf`: 
 The main nginx server configuratino for the Passenger Phusion image running nginx:
 ```
 server {
@@ -126,7 +75,7 @@ server {
 }
 ```
 
-`bolt_nginx_env.conf`:
+`config/docker/production/bolt_nginx_env.conf`:
 Declared environment variables to be assigned via the Elastic Beanstalk console:
 ```
 env ENVIRONMENT;
@@ -144,13 +93,13 @@ env SPACY_DATA_PATH;
 env NLTK_DATA_PATH;
 ```
 
-`bolt_nginx_http_directives.conf`:
+`config/docker/production/bolt_nginx_http_directives.conf`:
 nginx directives of the http block:
 ```
 passenger_max_pool_size 1;
 passenger_pre_start http://localhost;
 ```
-`passenger_max_pool_size` limits the number of sub server application processes poxied by nginx and passeneger.
+`passenger_max_pool_size` limits the number of sub server application processes proxied by nginx and passeneger.
 `passenger_pre_start` allows nginx to self ping and start the application.
 
 
@@ -175,13 +124,13 @@ chown -R app:app "$dir"
 
 dpkg -i /home/app/Bolt/config/docker/production/deb_dir/*.deb
 ```
-Current packages:
+Current packages/files that should be preinstalled into the directory:
    - `remote-syslog2_0.20-beta1_amd64.deb`
 
-######Papertrails remote logging configuration
+###### Papertrails remote logging configuration
 Bolt logs nginx error.log and access.log to Papertrails using remote-syslog2.
 
-`log_files.yml`: Used to configure remote-syslog2
+`config/docker/production/log_files.yml`: Used to configure remote-syslog2
 ```angular2html
 files:
   - /var/log/nginx/access.log
@@ -212,7 +161,7 @@ include /etc/logrotate.d
     rotate 1
 }   
 ```
-`logrotate_nginx.conf`: nginx lograote configuration for logrotate daemon
+`config/docker/production/logrotate_nginx.conf`: nginx lograote configuration for logrotate daemon
 ```angular2html
 /var/log/nginx/*.log {
  weekly
@@ -227,8 +176,66 @@ include /etc/logrotate.d
 }
 ```
 
+## Deploy Requirements
+Bolt is now being deployed to Elastic Beanstalk using Docker. It utilizes Phusion's Passenger docker image.
+As the image is a Ubuntu 16.04 image, Bolt currently deploys using Docker similar to that of a VM rather than
+the more standard usage of containerization technology. The resulting image is fairly large, and while it is not ideal, it is required if using the Passenger / Ngnix image for production
+deployment.
+
+### New Version Deployment
+When deploying new versions of Bolt from the CLI locally to production create a test environment on
+Elastic Beanstalk first!
+
+#### Deployment steps
+After ensuring that the Docker image on Lightning in a Bot's dockerhub account is the correct version, deployment on a new Elastic Beanstalk environment uses a specific configuration file.
+
+To build and push the docker image, ensure you are logged into LIAB's docker account, then in the top-level directory of Bolt run the following:
+
+```
+docker build -t cmuell89/bolt:[blue or green] .
+docker push cmuell89/bolt:[blue or green]
+```
+Note that you will be creating a docker image called `cmuell89/bolt:blue` or `cmuell89/bolt:green`.
+
+Create (if it does not exist) the file `Dockerrun.aws.json` with the below contents in the top level of your Bolt directory structure:
+
+```
+{
+ "AWSEBDockerrunVersion": "1",
+ "Authentication": {
+   "Bucket": "bolt-docker-bucket",
+   "Key": ".dockercfg"
+ },
+ "Image": {
+    "Name": "cmuell89/bolt:[blue or green]",
+    "Update": "true"
+  },
+ "Ports": [
+   {
+     "ContainerPort": "80"
+   }
+ ],
+ "Logging": "/var/log/nginx"
+}
+```
+Note that you are referencing the recently pushed docker image `cmuell89/bolt:blue` or `cmuell89/bolt:green` in the `Dockerrun.aws.json` file.
+
+#### Blue-Green Deployment
+1. When deploying a new Elastic Beanstalk server, please name the Elastic Beanstalk server environment accoriding to the blue or green deployment i.e. `bolt-green` or `bolt-blue`.
+2. make sure to choose 'generic single docker' Elastic Beanstalk server platform. 
+3. Choose t4-medium instance and allow for 16gb of harddrive space.
+3. AS the source for you application, choose to Upload your own be sure to choose the Dockerrun.aws.json file.
+4. The deploy will fail initially as you have to add your environment variables to the configuration using the Elastic Beanstalk UI from the previous deployed environment or emulating your .env file.
+5. Switch environment over to https in the 'configuration' tab listening on port 443 using the SSL certficate ID `lightninginabot.com`.
+6. Once new environment is stable (healthy), swap environment URLS and terminate old environment.
+environment.
+
+
 ####Troubleshooting
-Bolt's docker images are quite massive. 1.7gb as of the current version. This is due to the saving of language models in the application directory structure. Redeplying a new version over an currently deployed container can sometimes result in failure. If this is the case, try emplying a blue green (which you probably should be doing anyways) style of delpoyment.
+Bolt's docker images, despite the smaller SpaCy language model, are still quite large. 500-600mb as of the current version. This is due to the saving of language models in the application directory structure. 
+
+1) Re-deployment faile:
+    - Re-deploying a new version over an currently deployed container in an AWS environment can sometimes result in failure. If this is the case, try emplying a blue-green style of deployment (which you probably should be doing anyways).
 
 
 
