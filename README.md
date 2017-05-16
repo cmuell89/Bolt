@@ -103,7 +103,7 @@ passenger_pre_start http://localhost;
 `passenger_pre_start` allows nginx to self ping and start the application.
 
 
-`boot.sh`: startup script that is run everytime the docker instance is restarted.
+`config/docker/production/boot.sh`: startup script that is run everytime the docker instance is restarted.
 ```
 #!/bin/sh
 
@@ -118,7 +118,7 @@ chown -R www-data:adm /var/log/nginx/
 
 chown -R app:app "$dir"
 ```
-`deb_install.sh`: Script that is run during docker image build. Installs any .deb packages wanted on the image.
+`config/docker/production/deb_install.sh`: Script that is run during docker image build. Installs any .deb packages wanted on the image.
 ```angular2html
 #!/usr/bin/env bash
 
@@ -141,7 +141,7 @@ destination:
   port: 32540
   protocol: tls
 ```
-`logrotate.conf`: logrotate daemon configuration file
+`config/docker/production/logrotate.conf`: logrotate daemon configuration file
 ```angular2html
 # see "man logrotate" for details
 # rotate log files weekly
