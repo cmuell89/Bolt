@@ -67,8 +67,6 @@ class GazetteerModelBuilder:
                 GAZETTEERS[gazetteer_type][key] = new_gazetteer
             else:
                 GAZETTEERS[gazetteer_type][key] = new_gazetteer
-        else:
-            raise UpdaterError("Gazzetteer model creation fail. No entities were found for key: {0}".format(key))
 
     def update_gazetteer_models_by_key(self, key):
         """
