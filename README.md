@@ -223,13 +223,13 @@ Note that you are referencing the recently pushed docker image `cmuell89/bolt:bl
 #### Blue-Green Deployment
 1. When deploying a new Elastic Beanstalk server, please name the Elastic Beanstalk server environment accoriding to the blue or green deployment i.e. `bolt-green` or `bolt-blue`.
 2. make sure to choose 'generic single docker' Elastic Beanstalk server platform. 
-3. Choose t4-medium instance and allow for 16gb of harddrive space.
-3. AS the source for you application, choose to Upload your own be sure to choose the Dockerrun.aws.json file.
+3. Choose t4-medium EC2 instance and allow for 16gb of hard drive space.
+3. As the source for you application, choose to `Upload your own` and be sure to choose the Dockerrun.aws.json file.
 4. The deploy will fail initially as you have to add your environment variables to the configuration using the Elastic Beanstalk UI from the previous deployed environment or emulating your .env file.
-5. Switch environment over to https in the 'configuration' tab listening on port 443 using the SSL certficate ID `lightninginabot.com`.
-6. Once new environment is stable (healthy), swap environment URLS and terminate old environment.
-environment.
-
+5. Switch environment over to https in the `configuration` tab listening on port 443 using the SSL certficate ID `lightninginabot.com`.
+6. Once new environment is stable (healthy), swap environment URLS.
+7. Test that new environment can be reached via https.
+8. Terminate old environment.
 
 ####Troubleshooting
 Bolt's docker images, despite the smaller SpaCy language model, are still quite large. 500-600mb as of the current version. This is due to the saving of language models in the application directory structure. 
