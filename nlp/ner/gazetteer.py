@@ -32,10 +32,12 @@ class GazetteerModelBuilder:
             gazetteer_types = ['product_name', 'product_type', 'vendor']
             db = ExternalDatabaseEngine()
             keys = db.get_keys()
-            db.release_database_connection()
             for key in keys:
-                for gaz_type in gazetteer_types:
-                    self.create_new_gazetteer_model(gaz_type, key)
+                # Restrict creation of gazetteers by product count.
+                if db.get_product_count_by_key(key) <= 8000:
+                    for gaz_type in gazetteer_types:
+                        self.create_new_gazetteer_model(gaz_type, key)
+            db.release_database_connection()
             logger.info('Completed building GAZETTEERS global dict.')
         except DatabaseError as error:
             raise GazetteerModelError(error.value)
