@@ -98,6 +98,24 @@ class ExternalDatabaseEngine(CoreDatabase):
             logger.exception(e.pgerror)
             raise DatabaseError(e.pgerror)
 
+    def get_product_count_by_key(self, key):
+        """
+        Returns a count of the number of product name entities for the given key.
+        param key: key used to filter database results
+        :return: count of number of product name entities
+        """
+        try:
+            self.cur.execute("SELECT count(product_name) "
+                             "FROM public.entities "
+                             "WHERE key = %s", (key,))
+            logger.debug("Retrieving count of product entities from shopify database for given key.")
+            product_count = [x[0] for x in self.cur.fetchall()][0]
+            return product_count
+        except psycopg2.Error as e:
+            self.conn.rollback()
+            logger.exception(e.pgerror)
+            raise DatabaseError(e.pgerror)
+
     def get_product_types_by_key(self, key):
         """
         Retrieves a list of unique product types from database for the give key.
